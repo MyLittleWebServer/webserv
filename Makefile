@@ -47,7 +47,9 @@ RED = \033[31m
 sources1 :=	main.cpp
 
 sources1 += Utils.cpp \
-			Server.cpp
+			Server.cpp \
+			Kqueue.cpp \
+			EventHandler.cpp
 
 # ---- Bonus ---- #
 
@@ -112,6 +114,6 @@ dbg: CFLAGS += -fsanitize=address -g3 -D PORT=1234
 dbg: fclean all
 	./$(EXEC)
 
-test: CFLAGS += -D PORT=9876
+test: CFLAGS += -D PORT=3000
 test: all
 	./$(EXEC)
