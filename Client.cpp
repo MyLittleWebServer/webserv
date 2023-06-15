@@ -19,6 +19,7 @@ void	Client::receiveData(void)
 	while (1)
 	{
 		int n = recv(this->_sd, buf, RECEIVE_LEN, 0);
+		std::cout << "n: " << n << '\n';
 		if (n <= 0)
 		{
 			if (n < 0)
@@ -28,7 +29,7 @@ void	Client::receiveData(void)
 		buf[n] = '\0';
 		this->_request += buf;
 		std::memset(buf, 0, sizeof(buf));
-		if (n < RECEIVE_LEN - 1 || recv(this->_sd, NULL, RECEIVE_LEN, MSG_PEEK) == -1)
+		if (n < RECEIVE_LEN || recv(this->_sd, buf, RECEIVE_LEN, MSG_PEEK) == -1)
 		{
 			std::cout << "received data from " << this->_sd << ": " << this->_request << std::endl;
 			return ;
