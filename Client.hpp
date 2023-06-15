@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#define RECEIVE_LEN 65535
+#define RECEIVE_LEN 10
 
 class Client
 {
