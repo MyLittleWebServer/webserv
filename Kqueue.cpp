@@ -1,8 +1,8 @@
 #include "Kqueue.hpp"
 
 int Kqueue::_kq = 0;
-std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>(); // 변경 이벤트 저장
-struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {}; // 이벤트를 받을 배열, 최대 8개의 이벤트 동시 처리
+std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>();
+struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {};
 
 Kqueue::Kqueue(void)
 {
@@ -34,7 +34,7 @@ int Kqueue::newEvents()
 	int new_events = kevent(_kq, &_eventsToAdd[0], _eventsToAdd.size(), _eventList, CONCURRENT_EVENTS, NULL);
 	if (new_events == -1)
 		exitWithPerror("kevent() error\n" + std::string(strerror(errno)));
-	_eventsToAdd.clear(); // clear _eventsToAdd for new changes
+	_eventsToAdd.clear();
 	return (new_events);
 }
 

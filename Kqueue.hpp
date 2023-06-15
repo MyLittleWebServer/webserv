@@ -15,8 +15,8 @@ class Kqueue
 
 protected :
 	static int                         _kq;
-	static std::vector<struct kevent>  _eventsToAdd; // 변경 이벤트 저장
-	static struct kevent _eventList[CONCURRENT_EVENTS]; // 이벤트를 받을 배열, 최대 8개의 이벤트 동시 처리
+	static std::vector<struct kevent>  _eventsToAdd;
+	static struct kevent _eventList[CONCURRENT_EVENTS];
 public:
 	Kqueue(void);
 	Kqueue(const Kqueue& src);
