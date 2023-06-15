@@ -14,28 +14,27 @@
 
 #include "Kqueue.hpp"
 #include "Utils.hpp"
+#include "Client.hpp"
+
+class Client;
 
 class EventHandler : public Kqueue
 {
 private:
-	std::map<int, std::string> _clients;
+	std::map<int, Client> _clients;
 	const uintptr_t _serverSocket;
 	struct kevent *_currentEvent;
-	enum
-	{
-		E_NONE = 0b00000001,
-		E_ERROR = 0b00000010,
-		E_READ = 0b00000100,
-		E_WRITE = 0b00001000,
-	};
 
+	void	acceptClient();
+	void	registClient(const uintptr_t clientSocket);
 public :
 	EventHandler(uintptr_t serverSocket);
 	EventHandler(const EventHandler& src);
 	virtual ~EventHandler(void);
 	EventHandler& operator=(EventHandler const& rhs);
 
-	void	errorOccuration();
+	void	checkStatus();
+	void	checkErrorOnSocket();
 	void	setCurrentEvent(int i);
 	void	branchCondition();
 };
