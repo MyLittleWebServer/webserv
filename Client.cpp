@@ -14,19 +14,25 @@ Client::~Client(void)
 
 void	Client::receiveData(void)
 {	
-	char buf[1024];
-	int n = read(this->_sd, buf, sizeof(buf));
-	if (n <= 0)
+	char buf[RECEIVE_LEN + 1];
+
+	while (1)
 	{
-		if (n < 0)
-			throw std::runtime_error("Client read error!");
-		throw std::logic_error("Client disconnected!");
-	}
-	else
-	{
+		int n = recv(this->_sd, buf, RECEIVE_LEN, 0);
+		if (n <= 0)
+		{
+			if (n < 0)
+				throw std::runtime_error("Client read error!");
+			throw std::runtime_error("Client disconnected!");
+		}
 		buf[n] = '\0';
 		this->_request += buf;
-		std::cout << "received data from " << this->_sd << ": " << this->_request << std::endl;
+		std::memset(buf, 0, sizeof(buf));
+		if (n < RECEIVE_LEN - 1 || recv(this->_sd, NULL, RECEIVE_LEN, MSG_PEEK) == -1)
+		{
+			std::cout << "received data from " << this->_sd << ": " << this->_request << std::endl;
+			return ;
+		}
 	}
 }
 

@@ -2,10 +2,13 @@
 # define Client_HPP
 
 #include <iostream>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <map>
 #include <string>
+
+#define RECEIVE_LEN 65535
 
 class Client
 {
