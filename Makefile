@@ -47,6 +47,7 @@ RED = \033[31m
 sources1 :=	main.cpp
 
 sources1 += Utils.cpp \
+			Client.cpp \
 			Server.cpp \
 			Kqueue.cpp \
 			EventHandler.cpp
