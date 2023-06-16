@@ -18,6 +18,8 @@ Content-Type: application/x-www-form-urlencoded
 key1=value1&key2=value2&key3=value3
 */
 
+AMethod::AMethod() {}
+
 AMethod::AMethod(std::string &request) : _request(request), _responseFlag(false) {}
 
 AMethod::~AMethod() {}
@@ -36,29 +38,51 @@ AMethod::~AMethod() {}
 // 	this->_method = firstLinefeed.substr(0, requestFindFirstBlank); // method 할당
 // }
 
-void AMethod::requestVector(std::string _request, std::vector<std::string> _requestVector)
+void AMethod::splitLinesByCRLF(void)
 {
-	size_t startPos = 0;
-	size_t delimeter = _request.find("\r\n");
+	size_t pos = 0;
+	size_t delimeter = this->_request.find("\r\n");
 	while (delimeter != std::string::npos)
 	{
-		std::string chunk = _request.substr(startPos, delimeter);
-		_requestVector.push_back(chunk);
-		startPos = delimeter + 1;
-		size_t delimeter = _request.find("\r\n", startPos);
+		std::string chunk = this->_request.substr(pos, delimeter);
+		this->_linesBuffer.push_back(chunk);
+		pos = delimeter + 2;
+		delimeter = this->_request.find("\r\n", pos);
 	}
 }
 
-void AMethod::requestParser(std::vector<std::string> _requestVector)
+void AMethod::parseRequestLine(void)
 {
-	std::string firstLine = _requestVector[0];
-	std::istringstream iss(firstLine);
+	std::string firstLine(this->_linesBuffer[0]);
+	this->_linesBuffer.pop_front();
 
+	std::istringstream iss(firstLine);
 	iss >> this->_method >> this->_path >> this->_protocol;
 }
 
-void AMethod::requestSplitByColon(std::vector<std::string> _requestVector)
+void AMethod::parseHeaderFields(void)
 {
+	std::deque<std::string>::const_iterator it = this->_linesBuffer.begin();
+	std::deque<std::string>::const_iterator end = this->_linesBuffer.end();
+
+	std::string key;
+	std::string value;
+
+	size_t	pos = 0;
+	while (it != end)
+	{
+		pos = (*it).find(": ");
+		key = (*it).substr(0, pos);
+		value = (*it).substr(pos + 2, (*it).size() - pos - 2);
+		this->_linesBuffer.pop_front();
+		this->_headerFields.insert(std::pair<std::string, std::string>(key, value));
+		++it;
+		if (*it == "") // body가 존재할 경우 멈춤
+		{
+			this->_linesBuffer.pop_front();
+			break ;
+		}
+	}
 }
 
 const std::string &AMethod::getResponse(void) const
