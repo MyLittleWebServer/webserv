@@ -8,10 +8,11 @@ class DELETE : public AMethod
     private :
     public :
         DELETE() {};
+        DELETE(std::string &request) : AMethod(request) {}
         ~DELETE() {};
 
-        void parseRequest(std::string _request, std::string _method, \
-		std::map<std::string, std::string> _headMapper) {}
+        void parseRequest () {}
+		void createResponse() {}
 };
 
 #endif 

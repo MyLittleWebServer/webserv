@@ -6,12 +6,14 @@
 class POST : public AMethod
 {
 	private :
+		std::string body;
 	public :
 		POST() {};
+        POST(std::string &request) : AMethod(request) {}
 		~POST() {};
 
-		void parseRequest(std::string _request, std::string _method, \
-		std::map<std::string, std::string> _headMapper) {}
+		void parseRequest() {}
+		void createResponse() {}
 };
 
 #endif 
