@@ -33,4 +33,11 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class NposException : public std::runtime_error {
+   public:
+    NposException();
+
+    virtual const char* what() const throw();
+  };
 };

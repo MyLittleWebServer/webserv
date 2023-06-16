@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../utils/reader/include/Reader.hpp"
+#include "../parser/include/ConfigParser.hpp"
 #include "IConfig.hpp"
 
 /**
@@ -22,8 +23,6 @@
 class Config : public IConfig {
  private:
   static std::string DEFAULT_PATH;
-  std::string _user;
-  unsigned int _port;
   IReader& _reader;
 
   Config();
@@ -31,11 +30,16 @@ class Config : public IConfig {
   virtual ~Config();
   Config(const Config& src);
   Config& operator=(const Config& src);
+
+  /**
+   * @brief Config 객체 초기화 수행
+   * @param file_path 설정 파일 경로
+   * @author middlefitting
+   * @date 2023.06.15
+   */
   void init(const std::string file_path);
 
  public:
-  virtual std::string getUser();
-  virtual unsigned int getPort();
   static Config& getInstance(const std::string file_path);
 
   static Config& getInstance();

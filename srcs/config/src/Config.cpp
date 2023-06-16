@@ -14,8 +14,7 @@ Config::Config(const Config& src) : _reader(src._reader) { *this = src; }
 
 Config& Config::operator=(const Config& src) {
   if (this != &src) {
-    this->_user = src._user;
-    this->_port = src._port;
+    // do something
   }
   return *this;
 }
@@ -30,20 +29,21 @@ Config& Config::getInstance(const std::string file_path) {
   return instance;
 }
 
-std::string Config::getUser() { return this->_user; }
-
-unsigned int Config::getPort() { return this->_port; }
-
-/**
- * @brief Config 객체 초기화 수행
- * @param file_path 설정 파일 경로
- * @author middlefitting
- * @date 2023.06.15
- */
 void Config::init(const std::string file_path) {
   (void)file_path;
   std::cout << "Config::init() called" << std::endl;
   std::cout << file_path << std::endl;
   std::string file = _reader.read(file_path);
   std::cout << file << std::endl;
+
+  IConfigParser& parser = ConfigParser::getInstance();
+
+  RootConfig rootConfig = RootConfig();
+  IRootConfig* root_config =
+      (IRootConfig*)parser.parse(&rootConfig, file, ROOT);
+  (void)root_config;
+  std::cout << "root_config->getUser(): " << root_config->getUser()
+            << std::endl;
+  std::cout << "root_config->getWorkerProcesses(): "
+            << root_config->getWorkerProcesses() << std::endl;
 }

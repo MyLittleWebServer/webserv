@@ -33,3 +33,10 @@ ExceptionThrower::FileStatusFailedException::FileStatusFailedException()
 const char* ExceptionThrower::FileStatusFailedException::what() const throw() {
   return std::runtime_error::what();
 }
+
+ExceptionThrower::NposException::NposException()
+    : std::runtime_error(NPOS_STATUS) {}
+
+const char* ExceptionThrower::NposException::what() const throw() {
+  return std::runtime_error::what();
+}

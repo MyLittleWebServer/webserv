@@ -9,7 +9,5 @@
  */
 class IConfig {
  public:
-  virtual std::string getUser() = 0;
-  virtual unsigned int getPort() = 0;
   // virtual static T& getInstance(std::string file_path) = 0;
 };
