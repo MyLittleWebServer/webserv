@@ -1,14 +1,16 @@
 #include "../include/ConfigParser.hpp"
 
-ConfigParser::ConfigParser() {}
+ConfigParser::ConfigParser() : _reader(Reader::getInstance()) {}
 
 ConfigParser::~ConfigParser() {}
 
-ConfigParser::ConfigParser(const ConfigParser& src) { *this = src; }
+ConfigParser::ConfigParser(const ConfigParser& src) : _reader(src._reader) {
+  *this = src;
+}
 
 ConfigParser& ConfigParser::operator=(const ConfigParser& src) {
   if (this != &src) {
-    // do something
+    _reader = src._reader;
   }
   return *this;
 }
@@ -19,20 +21,26 @@ ConfigParser& ConfigParser::getInstance() {
 }
 
 // { ROOT, PROXY, MIME_TYPES, SERVER, LOCATION }
-IChildConfig* ConfigParser::parse(IChildConfig* child_config,
-                                  const std::string& config_data,
-                                  ConfigType config_type) {
+void ConfigParser::parse(IChildConfig* child_config,
+                         const std::string& config_data,
+                         ConfigType config_type) {
   switch (config_type) {
     case ROOT:
-      return parseRoot((IRootConfig*)child_config, config_data);
+      defaultParse(child_config, config_data);
+      break;
+    case PROXY:
+      parseInclude(child_config, config_data, "proxy.conf");
+      break;
+    case MIME_TYPES:
+      parseInclude(child_config, config_data, "mime.types");
       break;
     default:
-      return child_config;
+      return;
   }
 }
 
-IRootConfig* ConfigParser::parseRoot(IRootConfig* root_config,
-                                     const std::string& config_data) {
+void ConfigParser::defaultParse(IChildConfig* config,
+                                const std::string& config_data) {
   int ind = 0;
   std::string key;
   std::string value;
@@ -41,9 +49,30 @@ IRootConfig* ConfigParser::parseRoot(IRootConfig* root_config,
     try {
       key = getWord(config_data, ind, WHITE_SPACE);
       value = getWord(config_data, ind, ";");
-      root_config->setVariable(key, value);
-    } catch (const std::exception& e) {
-      return root_config;
+      config->setVariable(key, value);
+    } catch (const ExceptionThrower::NposException& e) {
+      break;
+    }
+  }
+}
+
+void ConfigParser::parseInclude(IChildConfig* config,
+                                const std::string& config_data,
+                                std::string file_name) {
+  int ind = 0;
+  std::string key;
+  std::string value;
+  size_t f_len = file_name.length();
+
+  while (true) {
+    try {
+      key = getWord(config_data, ind, WHITE_SPACE);
+      value = getWord(config_data, ind, ";");
+      if (key == "include" && value.length() >= f_len &&
+          value.substr(value.length() - f_len, f_len) == file_name)
+        return defaultParse(config, _reader.read(value));
+    } catch (const ExceptionThrower::NposException& e) {
+      break;
     }
   }
 }

@@ -39,11 +39,11 @@ void Config::init(const std::string file_path) {
   IConfigParser& parser = ConfigParser::getInstance();
 
   RootConfig rootConfig = RootConfig();
-  IRootConfig* root_config =
-      (IRootConfig*)parser.parse(&rootConfig, file, ROOT);
-  (void)root_config;
-  std::cout << "root_config->getUser(): " << root_config->getUser()
-            << std::endl;
+  parser.parse(&rootConfig, file, ROOT);
+  std::cout << "root_config->getUser(): " << rootConfig.getUser() << std::endl;
   std::cout << "root_config->getWorkerProcesses(): "
-            << root_config->getWorkerProcesses() << std::endl;
+            << rootConfig.getWorkerProcesses() << std::endl;
+  ProxyConfig proxyConfig = ProxyConfig();
+
+  parser.parse(&proxyConfig, file, PROXY);
 }
