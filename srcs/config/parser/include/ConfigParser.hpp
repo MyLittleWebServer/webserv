@@ -4,6 +4,7 @@
 
 #include "../../../exception/include/ExceptionThrower.hpp"
 #include "../../../utils/reader/include/Reader.hpp"
+#include "../../child_config/mime_types_config/include/MimeTypesConfig.hpp"
 #include "../../child_config/proxy_config/include/ProxyConfig.hpp"
 #include "../../child_config/root_config/include/RootConfig.hpp"
 #include "IConfigParser.hpp"

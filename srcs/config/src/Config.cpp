@@ -46,4 +46,7 @@ void Config::init(const std::string file_path) {
   ProxyConfig proxyConfig = ProxyConfig();
 
   parser.parse(&proxyConfig, file, PROXY);
+
+  MimeTypesConfig mimeTypesConfig = MimeTypesConfig();
+  parser.parse(&mimeTypesConfig, file, MIME_TYPES);
 }
