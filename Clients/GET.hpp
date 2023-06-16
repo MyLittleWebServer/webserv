@@ -11,8 +11,8 @@ class GET : public AMethod
         GET(std::string &request) : AMethod(request) {}
         ~GET() {}
 
-        void parseRequest(std::string _request, std::string _method, \
-		std::map<std::string, std::string> _headMapper) {}
+        void parseRequest(void) {}
+		void createResponse() {}
 };
 
 #endif 
