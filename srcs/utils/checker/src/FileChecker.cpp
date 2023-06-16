@@ -36,3 +36,8 @@ void FileChecker::failCheck(std::ofstream& file) const {
     throw ExceptionThrower::FileStatusFailedException();
   }
 }
+
+FileChecker& FileChecker::getInstance() {
+  static FileChecker instance;
+  return instance;
+}

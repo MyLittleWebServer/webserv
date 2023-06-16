@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "../../checker/include/IFileChecker.hpp"
+#include "../../checker/include/FileChecker.hpp"
 #include "IReader.hpp"
 
 /**
@@ -16,11 +16,13 @@ class Reader : public IReader {
  private:
   IFileChecker& checker;
 
- public:
-  Reader(IFileChecker& checker);
+  Reader();
   virtual ~Reader(void);
   Reader(Reader const& src);
   Reader& operator=(Reader const& src);
 
+ public:
   std::string read(std::string filename);
+
+  static Reader& getInstance();
 };

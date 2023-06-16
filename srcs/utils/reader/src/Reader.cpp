@@ -1,6 +1,6 @@
 #include "../include/Reader.hpp"
 
-Reader::Reader(IFileChecker& checker) : checker(checker) {}
+Reader::Reader() : checker(FileChecker::getInstance()) {}
 
 Reader::~Reader(void) {}
 
@@ -26,4 +26,9 @@ std::string Reader::read(std::string filename) {
   }
   ipf.close();
   return result;
+}
+
+Reader& Reader::getInstance() {
+  static Reader instance;
+  return instance;
 }
