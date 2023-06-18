@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../../child_config/include/IChildConfig.hpp"
+#include "../../child_config/server_config/include/ServerConfig.hpp"
 
 typedef enum { ROOT, PROXY, MIME_TYPES, SERVER, LOCATION } ConfigType;
 
@@ -15,4 +16,6 @@ class IConfigParser {
  public:
   virtual void parse(IChildConfig* child_config, const std::string& config_data,
                      ConfigType config_type) = 0;
+  virtual std::list<IServerConfig*> generateServers(
+      const std::string& config_data) = 0;
 };

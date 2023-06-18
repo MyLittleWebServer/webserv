@@ -15,9 +15,6 @@ ProxyConfig& ProxyConfig::operator=(const ProxyConfig& src) {
 
 void ProxyConfig::setVariable(const std::string& key,
                               const std::string& value) {
-  // std::cout << "ProxyConfig::setVariable() called" << std::endl;
-  // std::cout << "key: " << key << std::endl;
-  // std::cout << "value: " << value << std::endl;
   _data.insert(
       std::pair<std::string, unsigned int>(key, std::atoi(value.c_str())));
 }

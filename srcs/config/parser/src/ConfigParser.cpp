@@ -20,13 +20,12 @@ ConfigParser& ConfigParser::getInstance() {
   return instance;
 }
 
-// { ROOT, PROXY, MIME_TYPES, SERVER, LOCATION }
 void ConfigParser::parse(IChildConfig* child_config,
                          const std::string& config_data,
                          ConfigType config_type) {
   switch (config_type) {
     case ROOT:
-      defaultParse(child_config, config_data);
+      parseDefault(child_config, config_data);
       break;
     case PROXY:
       parseInclude(child_config, config_data, "proxy.conf");
@@ -39,7 +38,7 @@ void ConfigParser::parse(IChildConfig* child_config,
   }
 }
 
-void ConfigParser::defaultParse(IChildConfig* config,
+void ConfigParser::parseDefault(IChildConfig* config,
                                 const std::string& config_data) {
   int ind = 0;
   std::string key;
@@ -70,11 +69,78 @@ void ConfigParser::parseInclude(IChildConfig* config,
       value = getWord(config_data, ind, ";");
       if (key == "include" && value.length() >= f_len &&
           value.substr(value.length() - f_len, f_len) == file_name)
-        return defaultParse(config, _reader.read(value));
+        return parseDefault(config, _reader.read(value));
     } catch (const ExceptionThrower::NposException& e) {
       break;
     }
   }
+}
+
+std::list<IServerConfig*> ConfigParser::generateServers(
+    const std::string& config_data) {
+  int ind = 0;
+  std::string key;
+  std::string value;
+  std::list<IServerConfig*> server_list;
+
+  while (true) {
+    try {
+      key = getWord(config_data, ind, WHITE_SPACE);
+      if (key == "server") {
+        server_list.push_back(parseAndGenerateServer(ind, config_data));
+        continue;
+      }
+      value = getWord(config_data, ind, ";");
+    } catch (const ExceptionThrower::NposException& e) {
+      return server_list;
+    }
+  }
+}
+
+IServerConfig* ConfigParser::parseAndGenerateServer(
+    int& ind, const std::string& config_data) {
+  std::string key = getWord(config_data, ind, WHITE_SPACE);
+  std::string value;
+  keyCheck(key, "{", INVALID_SERVER_CONFIG);
+  IServerConfig* serverConfig = new ServerConfig();
+
+  while (true) {
+    try {
+      key = getWord(config_data, ind, WHITE_SPACE);
+      if (key == "}") return serverConfig;
+      if (key == "location") {
+        value = getWord(config_data, ind, WHITE_SPACE);
+        serverConfig->addLocationConfig(
+            parseAndGenerateLocation(ind, config_data, value));
+        continue;
+      }
+      value = getWord(config_data, ind, ";");
+      serverConfig->setVariable(key, value);
+    } catch (const ExceptionThrower::NposException& e) {
+      throw ExceptionThrower::InvalidConfigException(INVALID_SERVER_CONFIG);
+    }
+  }
+  return serverConfig;
+}
+
+ILocationConfig* ConfigParser::parseAndGenerateLocation(
+    int& ind, const std::string& config_data, std::string route) {
+  std::string key = getWord(config_data, ind, WHITE_SPACE);
+  std::string value;
+  keyCheck(key, "{", INVALID_LOCATION_CONFIG);
+  ILocationConfig* locationConfig = new LocationConfig(route);
+
+  while (true) {
+    try {
+      key = getWord(config_data, ind, WHITE_SPACE);
+      if (key == "}") return locationConfig;
+      value = getWord(config_data, ind, ";");
+      locationConfig->setVariable(key, value);
+    } catch (const ExceptionThrower::NposException& e) {
+      throw ExceptionThrower::InvalidConfigException(INVALID_LOCATION_CONFIG);
+    }
+  }
+  return locationConfig;
 }
 
 std::string ConfigParser::getWord(const std::string& config_data, int& ind,
@@ -90,4 +156,9 @@ std::string ConfigParser::getWord(const std::string& config_data, int& ind,
 
 void ConfigParser::nposCheck(size_t value) {
   if (value == std::string::npos) throw ExceptionThrower::NposException();
+}
+
+void ConfigParser::keyCheck(const std::string& key, const std::string& expect,
+                            std::string msg) {
+  if (key != expect) throw ExceptionThrower::InvalidConfigException(msg);
 }

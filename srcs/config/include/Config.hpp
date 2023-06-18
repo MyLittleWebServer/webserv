@@ -12,9 +12,8 @@
  *   RootConfig
  *   ProxyConfig
  *   MimeTypesConfig
- *   HttpConfig
- *     ServerConfig[]
- *       LocationConfig[]
+ *   ServerConfig[]
+ *     LocationConfig[]
  *
  * @author middlefitting
  * @date 2023.06.16
@@ -24,6 +23,11 @@ class Config : public IConfig {
  private:
   static std::string DEFAULT_PATH;
   IReader& _reader;
+  IConfigParser& _parser;
+  RootConfig _root_config;
+  ProxyConfig _proxy_config;
+  MimeTypesConfig _mime_types_config;
+  std::list<IServerConfig*> _server_configs;
 
   Config();
   Config(const std::string path);

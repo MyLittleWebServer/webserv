@@ -2,19 +2,41 @@
 
 std::string Config::DEFAULT_PATH = "config/mginx.conf";
 
-Config::Config() : _reader(Reader::getInstance()) { init(DEFAULT_PATH); }
+Config::Config()
+    : _reader(Reader::getInstance()), _parser(ConfigParser::getInstance()) {
+  init(DEFAULT_PATH);
+}
 
-Config::Config(const std::string file_path) : _reader(Reader::getInstance()) {
+Config::Config(const std::string file_path)
+    : _reader(Reader::getInstance()), _parser(ConfigParser::getInstance()) {
   init(file_path);
 }
 
-Config::~Config() {}
+Config::~Config() {
+  for (std::list<IServerConfig*>::iterator it = _server_configs.begin();
+       it != _server_configs.end(); ++it) {
+    ServerConfig* tmp = dynamic_cast<ServerConfig*>(*it);
+    delete tmp;
+  }
+}
 
-Config::Config(const Config& src) : _reader(src._reader) { *this = src; }
+Config::Config(const Config& src) : _reader(src._reader), _parser(src._parser) {
+  *this = src;
+}
 
 Config& Config::operator=(const Config& src) {
   if (this != &src) {
-    // do something
+    _reader = src._reader;
+    _parser = src._parser;
+    _root_config = src._root_config;
+    _proxy_config = src._proxy_config;
+    _mime_types_config = src._mime_types_config;
+    for (std::list<IServerConfig*>::const_iterator it =
+             src._server_configs.begin();
+         it != src._server_configs.end(); ++it) {
+      ServerConfig* tmp = dynamic_cast<ServerConfig*>(*it);
+      _server_configs.push_back(new ServerConfig(*tmp));
+    }
   }
   return *this;
 }
@@ -30,23 +52,9 @@ Config& Config::getInstance(const std::string file_path) {
 }
 
 void Config::init(const std::string file_path) {
-  (void)file_path;
-  std::cout << "Config::init() called" << std::endl;
-  std::cout << file_path << std::endl;
   std::string file = _reader.read(file_path);
-  std::cout << file << std::endl;
-
-  IConfigParser& parser = ConfigParser::getInstance();
-
-  RootConfig rootConfig = RootConfig();
-  parser.parse(&rootConfig, file, ROOT);
-  std::cout << "root_config->getUser(): " << rootConfig.getUser() << std::endl;
-  std::cout << "root_config->getWorkerProcesses(): "
-            << rootConfig.getWorkerProcesses() << std::endl;
-  ProxyConfig proxyConfig = ProxyConfig();
-
-  parser.parse(&proxyConfig, file, PROXY);
-
-  MimeTypesConfig mimeTypesConfig = MimeTypesConfig();
-  parser.parse(&mimeTypesConfig, file, MIME_TYPES);
+  _parser.parse(&_root_config, file, ROOT);
+  _parser.parse(&_proxy_config, file, PROXY);
+  _parser.parse(&_mime_types_config, file, MIME_TYPES);
+  _server_configs = _parser.generateServers(file);
 }
