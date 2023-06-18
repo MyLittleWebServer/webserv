@@ -40,4 +40,11 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class InvalidConfigException : public std::invalid_argument {
+   public:
+    InvalidConfigException(std::string message);
+
+    virtual const char* what() const throw();
+  };
 };

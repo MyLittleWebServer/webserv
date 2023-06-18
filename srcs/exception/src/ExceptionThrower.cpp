@@ -40,3 +40,11 @@ ExceptionThrower::NposException::NposException()
 const char* ExceptionThrower::NposException::what() const throw() {
   return std::runtime_error::what();
 }
+
+ExceptionThrower::InvalidConfigException::InvalidConfigException(
+    std::string message)
+    : std::invalid_argument(message) {}
+
+const char* ExceptionThrower::InvalidConfigException::what() const throw() {
+  return std::invalid_argument::what();
+}
