@@ -16,12 +16,17 @@ NAME		=	webserv
 
 CC			=	c++
 STD			=	-std=c++98
-CFLAGS		=	-Wall -Wextra -Werror $(STD) $(DBGS)
+CFLAGS		=	-Wall -Wextra -Werror $(STD) $(DBGS) $(INCLUDE)
 DBGS		=	-fsanitize=address -g3
 
 RM			=	rm -rf
 
-object_dir	=	./objects
+OBJ_DIR	=	./objects
+
+# ---- INCLUDE ---- #
+
+INCLUDE_DIRS = $(shell find . -type d -name "include")
+INCLUDE = $(patsubst %, -I %, $(INCLUDE_DIRS))
 
 # ---- TEST ---- #
 
@@ -46,26 +51,51 @@ RED = \033[31m
 
 sources1 :=	main.cpp
 
-sources1 += Utils.cpp \
-			Client.cpp \
-			Server.cpp \
-			Kqueue.cpp \
-			EventHandler.cpp
+sources1 +=	Client.cpp
 
-# ---- Bonus ---- #
+sources1 +=	Server.cpp \
+						Kqueue.cpp \
+						EventHandler.cpp
 
-sources2 :=	
+# ---- Config ---- #
+
+sources1 += Config.cpp \
+						ConfigParser.cpp \
+						RootConfig.cpp \
+						ProxyConfig.cpp \
+						MimeTypesConfig.cpp \
+						ServerConfig.cpp \
+						LocationConfig.cpp
+
+# ---- Exception ---- #
+
+sources1 +=	ExceptionThrower.cpp
+
+# ---- Utils ---- #
+
+sources1 += FileChecker.cpp \
+						Reader.cpp \
+						Utils.cpp
+
+sources2 = test.cpp
+
+# ---- SRC ---- #
+
+SRCS = $(shell for name in $(sources1); do find . -name $$name; done)
+SRCSS = $(patsubst ./%,%,$(SRCS))
+
+SRCS_BONUS = $(shell for name in $(sources2); do find . -name $$name; done)
+SRCS_BONUS := $(patsubst ./%,%,$(SRCS_BONUS))
 
 # ---- Elements ---- #
 
 all_sources = $(sources1) $(sources2)
-
-objects1 = $(sources1:.cpp=.o)
-objects2 = $(sources2:.cpp=.o)
+objects1 = $(SRCSS:.cpp=.o)
+objects2 = $(SRCS_BONUS:.cpp=.o)
 all_objects = $(objects1) $(objects2)
 
 define objects_goal
-$(addprefix $(object_dir)/, $(call $(if $(filter bonus, $(MAKECMDGOALS)), objects2, objects1))) 
+$(addprefix $(OBJ_DIR)/, $(call $(if $(filter bonus, $(MAKECMDGOALS)), objects2, objects1))) 
 endef
 
 define react
@@ -79,19 +109,19 @@ endef
 all : $(NAME)
 
 $(NAME) : $(objects_goal)
-	@$(CC) $(CFLAGS) -o $(EXEC) $(objects_goal) 
+	@$(CC) $(CFLAGS) -o $(NAME) $(objects_goal)
 	@echo "$(DELINE) $(MAGENTA)$@ $(RESET) is compiled $(GREEN)$(BOLD) OK ✅ $(RESET)"
 
 bonus : $(NAME)
 
-$(object_dir)/%.o : %.cpp
-	@mkdir -p $(object_dir)/$(dir $^)
+$(OBJ_DIR)/%.o : %.cpp
+	@mkdir -p $(OBJ_DIR)/$(dir $^)
 	@$(CC) $(CFLAGS) -c $^ -o $@
 	@echo " $(MAGENTA)$(NAME) $(RESET)objects file compiling... $(DELINE)$(GREEN) $^ $(RESET)$(CURSUP)"
 
 clean :
 	@$(RM) $(all_objects)
-	@rm -rf $(object_dir)
+	@rm -rf $(OBJ_DIR)
 	@echo "$(RED) Delete$(BOLD) objects $(RESTINT)file $(RESET)"
 
 fclean : clean
@@ -104,14 +134,13 @@ re : fclean
 	
 # ---- Test ---- #
 
-
 leaks: export MallocStackLogging=1
 leaks: CFLAGS += -D LEAKS -g3
 leaks: fclean all
 	./$(EXEC)
 leaks: export MallocStackLogging=0
 
-dbg: CFLAGS += -fsanitize=address -g3 -D PORT=1234
+dbg: CFLAGS += -fsanitize=address -g3 -D PORT=8080
 dbg: fclean all
 	./$(EXEC)
 
