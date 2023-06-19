@@ -30,7 +30,7 @@ private:
 public :
 	EventHandler(uintptr_t serverSocket);
 	EventHandler(const EventHandler& src);
-	virtual ~EventHandler(void);
+	virtual ~EventHandler();
 	EventHandler& operator=(EventHandler const& rhs);
 
 	void	checkStatus();
