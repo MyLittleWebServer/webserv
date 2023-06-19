@@ -11,8 +11,8 @@ class DELETE : public AMethod
         DELETE(std::string &request) : AMethod(request) {}
         ~DELETE() {};
 
-        void parseRequest () {}
-		void createResponse() {}
+        void parseRequestMessage() {}
+		void createResponseMessage() {}
 };
 
 #endif 
