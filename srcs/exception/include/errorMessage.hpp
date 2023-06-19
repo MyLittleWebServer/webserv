@@ -11,3 +11,6 @@ static const std::string INVALID_SERVER_CONFIG = "Invalid server config block";
 
 static const std::string INVALID_LOCATION_CONFIG =
     "Invalid location config block";
+
+static const std::string NOT_SUPPORT_CONFIG =
+    "Config does not support in this program";
