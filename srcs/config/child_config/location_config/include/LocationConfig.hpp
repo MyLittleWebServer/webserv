@@ -14,6 +14,12 @@ class LocationConfig : public ILocationConfig {
   std::map<std::string, std::string> _data;
   LocationConfig();
 
+  static const std::string DEFAULT_ROOT;
+  static const std::string DEFAULT_ALLOW_METHOD;
+  static const std::string DEFAULT_INDEX;
+  static const std::string DEFAULT_AUTO_INDEX;
+  static const std::string DEFAULT_LIMIT_CLIENT_BODY_SIZE;
+
  public:
   LocationConfig(const std::string& route);
   virtual ~LocationConfig();
@@ -21,4 +27,12 @@ class LocationConfig : public ILocationConfig {
   LocationConfig& operator=(const LocationConfig& src);
 
   virtual void setVariable(const std::string& key, const std::string& value);
+
+  std::string getVariable(const std::string& key);
+
+  virtual std::string getRoot();
+  virtual std::map<std::string, bool> getAllowMethod();
+  virtual std::string getIndex();
+  virtual std::string getAutoindex();
+  virtual size_t getLimitClientBodySize();
 };

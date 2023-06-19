@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IRootConfig.hpp"
+#include "map"
 
 /**
  * @brief Root 설정 파일 정보를 제공하는 클래스
@@ -9,8 +10,10 @@
  */
 class RootConfig : public IRootConfig {
  private:
-  std::string _user;
-  std::string _worker_processes;
+  std::map<std::string, std::string> _data;
+
+  static const std::string DEFAULT_USER;
+  static const std::string DEFAULT_WORKER_PROCESSES;
 
  public:
   RootConfig();
@@ -20,6 +23,8 @@ class RootConfig : public IRootConfig {
 
   virtual void setVariable(const std::string& key, const std::string& value);
 
-  std::string getUser() const;
-  std::string getWorkerProcesses() const;
+  std::string getUser();
+  size_t getWorkerProcesses();
+
+  std::string getVariable(const std::string& key);
 };

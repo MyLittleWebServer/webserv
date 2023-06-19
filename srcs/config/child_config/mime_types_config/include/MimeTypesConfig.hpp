@@ -20,4 +20,6 @@ class MimeTypesConfig : public IMimeTypesConfig {
   MimeTypesConfig& operator=(const MimeTypesConfig& src);
 
   virtual void setVariable(const std::string& key, const std::string& value);
+
+  std::string getVariable(const std::string& key);
 };

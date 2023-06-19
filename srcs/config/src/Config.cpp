@@ -58,3 +58,11 @@ void Config::init(const std::string file_path) {
   _parser.parse(&_mime_types_config, file, MIME_TYPES);
   _server_configs = _parser.generateServers(file);
 }
+
+IRootConfig& Config::getRootConfig() { return _root_config; }
+
+IProxyConfig& Config::getProxyConfig() { return _proxy_config; }
+
+IMimeTypesConfig& Config::getMimeTypesConfig() { return _mime_types_config; }
+
+std::list<IServerConfig*> Config::getServerConfigs() { return _server_configs; }

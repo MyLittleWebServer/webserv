@@ -11,7 +11,11 @@
  */
 class ProxyConfig : public IProxyConfig {
  private:
-  std::map<std::string, unsigned int> _data;
+  std::map<std::string, size_t> _data;
+
+  static const size_t CLIENT_MAX_BODY_SIZE = 1000000;
+  static const size_t REQUEST_URI_LIMIT_SIZE = 1024;
+  static const size_t REQUEST_HEADER_LIMIT_SIZE = 256;
 
  public:
   ProxyConfig();
@@ -20,4 +24,10 @@ class ProxyConfig : public IProxyConfig {
   ProxyConfig& operator=(const ProxyConfig& src);
 
   virtual void setVariable(const std::string& key, const std::string& value);
+
+  std::string getVariable(const std::string& key);
+
+  virtual std::size_t getClientMaxBodySize();
+  virtual std::size_t getRequestUriLimitSize();
+  virtual std::size_t getRequestHeaderLimitSize();
 };

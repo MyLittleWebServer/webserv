@@ -9,4 +9,7 @@
  */
 class IProxyConfig : public IChildConfig {
  public:
+  virtual std::size_t getClientMaxBodySize() = 0;
+  virtual std::size_t getRequestUriLimitSize() = 0;
+  virtual std::size_t getRequestHeaderLimitSize() = 0;
 };

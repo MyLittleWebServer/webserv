@@ -47,4 +47,9 @@ class Config : public IConfig {
   static Config& getInstance(const std::string file_path);
 
   static Config& getInstance();
+
+  virtual IRootConfig& getRootConfig();
+  virtual IProxyConfig& getProxyConfig();
+  virtual IMimeTypesConfig& getMimeTypesConfig();
+  virtual std::list<IServerConfig*> getServerConfigs();
 };

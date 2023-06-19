@@ -15,6 +15,13 @@ class ServerConfig : public IServerConfig {
   std::map<std::string, std::string> _data;
   std::list<ILocationConfig*> _location_configs;
 
+  static const std::string LISTEN;
+  static const std::string SERVER_NAME;
+  static const std::string ERROR_PAGE;
+  static const std::string ACCESS_LOG;
+  static const std::string ROOT;
+  static const std::string CGI;
+
  public:
   ServerConfig();
   virtual ~ServerConfig();
@@ -23,4 +30,14 @@ class ServerConfig : public IServerConfig {
 
   virtual void setVariable(const std::string& key, const std::string& value);
   virtual void addLocationConfig(ILocationConfig* location_config);
+
+  std::string getVariable(const std::string& key);
+
+  std::list<ILocationConfig*> getLocationConfigs();
+  size_t getListen();
+  std::string getServerName();
+  std::string getErrorPage();
+  std::string getAccessLog();
+  std::string getRoot();
+  std::string getCgi();
 };
