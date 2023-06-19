@@ -14,7 +14,7 @@
 #include "./Clients/GET.hpp"
 #include "./Clients/POST.hpp"
 
-#define TRANSFER_LEN 10
+#define RECEIVE_LEN 1000
 
 class Client {
  private:
@@ -22,18 +22,29 @@ class Client {
   std::string _request;
   AMethod *_method;
 
-  static char _buf[TRANSFER_LEN + 1];
+  static char _buf[RECEIVE_LEN + 1];
+
+  bool checkIfReceiveFinished(ssize_t n) const;
 
  public:
-  Client(void);
+  Client();
   Client(const uintptr_t sd);
-  virtual ~Client(void);
+  virtual ~Client();
 
  public:
-  void receiveData(void);
-  void makeResponse(void);
-  void sendData(std::map<int, Client> &_clients);
-  void newHTTPMethod(void);
+  void receiveRequest();
+  void makeResponse();
+  void sendResponse(std::map<int, Client> &_clients);
+  void newHTTPMethod();
+
+  class RecvFailException : public std::exception {
+   public:
+    const char *what() const throw();
+  };
+  class DisconnectedDuringRecvException : public std::exception {
+   public:
+    const char *what() const throw();
+  };
 };
 
 #endif
