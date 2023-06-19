@@ -32,4 +32,6 @@
 *.app
 
 *.swp
-*.vscode/
+*.vscode
+*settings.json
+
