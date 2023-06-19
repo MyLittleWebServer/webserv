@@ -3,16 +3,17 @@
 
 #include "AMethod.hpp"
 
-class GET : public AMethod
-{
-    private :
-    public :
-        GET() {}
-        GET(std::string &request) : AMethod(request) {}
-        ~GET() {}
+class GET : public AMethod {
+ private:
+  void getFilePath(void);
 
-        void parseRequest(void) {}
-		void createResponse() {}
+ public:
+  GET();
+  GET(std::string &request);
+  ~GET();
+
+  void parseRequestMessage();
+  void createResponseMessage();
 };
 
-#endif 
+#endif
