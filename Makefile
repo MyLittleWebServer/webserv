@@ -50,7 +50,12 @@ sources1 += Utils.cpp \
 			Client.cpp \
 			Server.cpp \
 			Kqueue.cpp \
-			EventHandler.cpp
+			EventHandler.cpp 
+
+sources1 += Clients/AMethod.cpp \
+						Clients/GET.cpp
+						# Clients/Post.cpp \
+						# Clients/Delete.cpp \
 
 # ---- Bonus ---- #
 
@@ -96,7 +101,6 @@ clean :
 
 fclean : clean
 	@$(RM) $(NAME)
-	@$(RM) $(TEST)
 	@echo "$(RED) Delete$(BOLD) $(NAME) $(RESTINT)file $(RESET)"
 
 re : fclean
@@ -111,7 +115,7 @@ leaks: fclean all
 	./$(EXEC)
 leaks: export MallocStackLogging=0
 
-dbg: CFLAGS += -fsanitize=address -g3 -D PORT=1234
+dbg: CFLAGS += -fsanitize=address -g3 -D PORT=3002
 dbg: fclean all
 	./$(EXEC)
 
