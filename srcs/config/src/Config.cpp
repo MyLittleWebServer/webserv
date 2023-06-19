@@ -1,6 +1,6 @@
 #include "../include/Config.hpp"
 
-std::string Config::DEFAULT_PATH = "config/mginx.conf";
+std::string Config::DEFAULT_PATH = "config/default.conf";
 
 Config::Config()
     : _reader(Reader::getInstance()), _parser(ConfigParser::getInstance()) {
