@@ -31,5 +31,7 @@
 *.out
 *.app
 
+*.swp
 *.vscode
 *settings.json
+
