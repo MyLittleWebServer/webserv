@@ -14,3 +14,5 @@ static const std::string INVALID_LOCATION_CONFIG =
 
 static const std::string NOT_SUPPORT_CONFIG =
     "Config does not support in this program";
+
+static const std::string errMSG404 = "Not Found\r\n";
