@@ -29,11 +29,17 @@ void EventHandler::branchCondition() {
   if (this->_currentEvent->filter == EVFILT_READ) {
     if (this->_currentEvent->ident == _serverSocket)
       acceptClient();
-    else if (_clients.find(this->_currentEvent->ident) != _clients.end()) {
+    else if (this->_clients.find(this->_currentEvent->ident) !=
+             this->_clients.end()) {
       try {
-        _clients[this->_currentEvent->ident].receiveRequest();
-        _clients[this->_currentEvent->ident].newHTTPMethod();
-        _clients[this->_currentEvent->ident].makeResponse();
+        Client &currClient = this->_clients[this->_currentEvent->ident];
+        currClient.receiveRequest();
+        currClient.newHTTPMethod();
+        currClient.getMethod()->parseRequest();
+        currClient.getMethod()->matchServerConf(getBoundPort(_currentEvent));
+        currClient.getMethod()->validatePath();
+        currClient.getMethod()->doRequest();
+        currClient.getMethod()->createResponse();
       } catch (std::exception &e) {
         disconnectClient(this->_currentEvent->ident, this->_clients);
         std::cerr << e.what() << '\n';
@@ -41,7 +47,7 @@ void EventHandler::branchCondition() {
     }
   } else if (this->_currentEvent->filter == EVFILT_WRITE) {
     try {
-      _clients[this->_currentEvent->ident].sendResponse(_clients);
+      this->_clients[this->_currentEvent->ident].sendResponse(this->_clients);
     } catch (std::exception &e) {
       std::cerr << e.what() << '\n';
     };
