@@ -57,6 +57,13 @@ sources1 +=	Server.cpp \
 						Kqueue.cpp \
 						EventHandler.cpp
 
+# ---- Method ---- #
+sources1 +=	AMethod.cpp \
+						GET.cpp \
+						POST.cpp \
+						DELETE.cpp \
+						PUT.cpp
+
 # ---- Config ---- #
 
 sources1 += Config.cpp \
@@ -76,8 +83,6 @@ sources1 +=	ExceptionThrower.cpp
 sources1 += FileChecker.cpp \
 						Reader.cpp \
 						Utils.cpp
-
-sources2 = test.cpp
 
 # ---- SRC ---- #
 
