@@ -9,10 +9,10 @@
 #include <map>
 #include <string>
 
-#include "./Clients/AMethod.hpp"
-#include "./Clients/DELETE.hpp"
-#include "./Clients/GET.hpp"
-#include "./Clients/POST.hpp"
+#include "AMethod.hpp"
+#include "DELETE.hpp"
+#include "GET.hpp"
+#include "POST.hpp"
 
 #define RECEIVE_LEN 1000
 
@@ -32,10 +32,10 @@ class Client {
   virtual ~Client();
 
  public:
+  AMethod *getMethod() const;
   void receiveRequest();
-  void makeResponse();
-  void sendResponse(std::map<int, Client> &_clients);
   void newHTTPMethod();
+  void sendResponse(std::map<int, Client> &_clients);
 
   class RecvFailException : public std::exception {
    public:
