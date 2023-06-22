@@ -4,13 +4,16 @@
 #include "AMethod.hpp"
 
 class POST : public AMethod {
- public:
-  POST() {}
-  POST(std::string &request) : AMethod(request) {}
-  ~POST() {}
+ private:
+  void generateFile();
 
-  void parseRequestMessage() {}
-  void createResponseMessage() {}
+ public:
+  POST();
+  POST(std::string& request);
+  ~POST();
+
+  void doMethod();
+  void createResponse();
 };
 
 #endif

@@ -1,18 +1,21 @@
 #ifndef DELETE_HPP
 #define DELETE_HPP
 
+#include <unistd.h>
+
+#include <cstdio>
+#include <iostream>
+
 #include "AMethod.hpp"
 
-class DELETE : public AMethod
-{
-    private :
-    public :
-        DELETE() {};
-        DELETE(std::string &request) : AMethod(request) {}
-        ~DELETE() {};
+class DELETE : public AMethod {
+ public:
+  DELETE(){};
+  DELETE(std::string &request) {}
+  ~DELETE(){};
 
-        void parseRequestMessage() {}
-		void createResponseMessage() {}
+  void doRequest() {}
+  void createResponse() {}
 };
 
-#endif 
+#endif
