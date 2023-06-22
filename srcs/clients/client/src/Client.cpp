@@ -35,18 +35,16 @@ void Client::receiveRequest(void) {
   }
 }
 
-void Client::makeResponse() {
-  this->_method->parseRequestMessage();
-  this->_method->createResponseMessage();
-}
-
 void Client::sendResponse(std::map<int, Client> &clients) {
   std::map<int, Client>::iterator it = clients.find(this->_sd);
   if (it != clients.end() && this->_method != NULL &&
       this->_method->getResponseFlag() == true) {
     const std::string &response = this->_method->getResponse();
     ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-    if (n == -1) throw std::runtime_error("Client send error!");
+    if (n == -1) {
+      disconnectClient(this->_sd, clients);
+      throw std::runtime_error("Client send error!");
+    }
     this->_request.clear();
     delete this->_method;
     this->_method = NULL;
@@ -70,6 +68,8 @@ void Client::newHTTPMethod(void) {
   }
   throw std::runtime_error("501 Not implemented");
 }
+
+AMethod *Client::getMethod() const { return this->_method; }
 
 const char *Client::RecvFailException::what() const throw() {
   return ("error occured in recv()");
