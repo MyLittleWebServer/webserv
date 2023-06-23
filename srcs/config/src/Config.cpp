@@ -41,10 +41,7 @@ Config& Config::operator=(const Config& src) {
   return *this;
 }
 
-Config& Config::getInstance() {
-  static Config instance;
-  return instance;
-}
+Config& Config::getInstance() { return getInstance(DEFAULT_PATH); }
 
 Config& Config::getInstance(const std::string file_path) {
   static Config instance(file_path);
