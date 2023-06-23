@@ -8,6 +8,8 @@
 
 #include "Config.hpp"
 #include "GET.hpp"
+#include "Status.hpp"
+#include "Utils.hpp"
 
 class AMethod {
  protected:
@@ -19,7 +21,7 @@ class AMethod {
   std::string _path;
   std::string _protocol;
   std::string _CGI;
-  int _statusCode;
+  Status _statusCode;
 
   std::list<std::string> _linesBuffer;
   std::map<std::string, std::string> _headerFields;
@@ -36,6 +38,10 @@ class AMethod {
   void setDefaultLocation(
       std::list<ILocationConfig *>::const_iterator defaultLocation);
 
+  void assembleResponseLine(void);
+  virtual void assembleResponseHeader(void) = 0;
+  void assembleResponseBody(void);
+
  public:
   AMethod();
   AMethod(std::string &request);
@@ -45,10 +51,11 @@ class AMethod {
   void matchServerConf(short port);
   void validatePath(void);
   virtual void doRequest(void) = 0;
-  void createResponse(void);
+  virtual void createSuccessResponse(void) = 0;
+  virtual void createErrorResponse(void);
 
-  const std::string &getResponse(void) const;
   bool getResponseFlag(void) const;
+  const std::string &getResponse(void) const;
 };
 
 #endif
