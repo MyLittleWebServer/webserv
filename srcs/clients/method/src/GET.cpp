@@ -1,3 +1,4 @@
+
 #include "GET.hpp"
 
 #include <dirent.h>
@@ -18,52 +19,79 @@ void GET::doRequest(void) {
     this->_path += _matchedLocation->getIndex();
   }
   if (access(pathIndex.c_str(), R_OK) == 0) {
-    _statusCode = 200;
-    prepareFileContent(pathIndex);
-    if (this->_fileContent == "") {  // 반환할 content가 없음
-      _statusCode = 204;
+    this->_statusCode = OK;
+    prepareBody(pathIndex);
+    if (this->_body == "") {  // 반환할 content가 없음
+      this->_statusCode = NO_CONTENT;
     }
   } else if (this->_path[this->_path.size() - 1] == '/' &&
              _matchedLocation->getAutoindex() == "on" &&
              access(pathIndex.c_str(), R_OK) < 0) {
-    _statusCode = 200;
+    this->_statusCode = OK;
     prepareFileList(this->_path);
   } else {
-    _statusCode = 404;
+    throw(this->_statusCode = NOT_FOUND);
   }
 }
 
-void GET::appendFileContent(void) {
-  this->_response += "\r\n" + this->_fileContent;
-}
+void GET::appendBody(void) { this->_response += "\r\n" + this->_body; }
 
 void GET::prepareFileList(const std::string& path) {
   DIR* dir;
   struct dirent* ent;
 
-  this->_fileContent = "<html><body>";
+  this->_body = "<html><body>";
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
-      this->_fileContent += "<p>";
-      this->_fileContent += ent->d_name;
-      this->_fileContent += "</p>";
+      this->_body += "<p>";
+      this->_body += ent->d_name;
+      this->_body += "</p>";
     }
     closedir(dir);
   } else {
-    _statusCode = 403;
-    this->_fileContent = "Could not open directory";
-    return;
+    this->_body = "Could not open directory";
+    throw(this->_statusCode = FORBIDDEN);
   }
-  this->_fileContent += "</body></html>";
+  this->_body += "</body></html>";
 }
 
-void GET::prepareFileContent(const std::string& pathIndex) {
+void GET::prepareBody(const std::string& pathIndex) {
   std::ifstream file(pathIndex.c_str(), std::ios::in);
   std::string buff;
-  while (std::getline(file, buff)) this->_fileContent += buff + "\r\n";
+  while (std::getline(file, buff)) this->_body += buff + "\r\n";
   this->_responseFlag = true;
   file.close();
 }
+
+void GET::createSuccessResponse(void) {
+  assembleResponseLine();
+  this->_response += getCurrentTime();
+
+  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
+
+  GET* child = dynamic_cast<GET*>(this);
+  if (child != NULL) child->appendBody();
+}
+
+/* GET 요청
+GET /hello.txt HTTP/1.1
+User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.71 zlib/1.2.3 Host:
+www.example.com Accept-Lanuage: en, mi
+*/
+
+/* GET 응답
+"http://example.com/index.html"
+HTTP/1.1 200 OK
+Date: Mon, 27 Jul 2009 12:28:53 GMT
+Server: Apache
+Last-Modified: Wed, 22 Jul 2009 19:15:56 GMT ETag: "34aa387-d-1568eb00"
+Accept-Ranges: bytes
+Content-Length: 51
+Vary: Accept-Encoding
+Content-Type: text/plain
+
+Hello World! My payload includes a trailing CRLF.
+*/
 
 /*
 # : 8081 / test
