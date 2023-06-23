@@ -18,42 +18,34 @@ void POST::doMethod() {
   if (bodySize > _matchedLocation->getLimitClientBodySize()) {
     this->_statusCode = 413;
   } else {
-    this->_statusCode = 201;
+    this->_statusCode = CREATED;
     this->generateFile();
   }
 }
 
 void POST::generateFile() {
-  if (access(this->_path.c_str(), F_OK) < 0) {
-    this->_statusCode = 403;
-    return;
-  }
+  if (access(this->_path.c_str(), F_OK) < 0)
+    throw(this->_statusCode = FORBIDDEN);
   std::ofstream file(this->_path.c_str(), std::ios::out);
-  if (!file.is_open()) {
-    this->_statusCode = 500;
-    return;
-  }
+  if (!file.is_open()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
   std::list<std::string>::const_iterator it = this->_linesBuffer.begin();
   std::list<std::string>::const_iterator end = this->_linesBuffer.end();
   while (it != end) {
     file << *it++;
-    if (file.fail()) {
-      this->_statusCode = 500;
-      return;
-    }
+    if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
   }
   file.close();
-  if (file.fail()) this->_statusCode = 500;
+  if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
 }
 
-void POST::createResponse(void) {
-  std::stringstream ss;
-  ss << this->_statusCode;
-  this->_response += "HTTP/1.1 " + ss.str();
-  this->_response += " OK\r\n";
-  this->_response += "Content-Type: " + _headerFields["content-type"];
-  this->_response += "; charset=" + _headerFields["accept-charset"] + "\r\n";
+void POST::createSuccessResponse(void) {
+  this->_response += "HTTP/1.1 ";
+  this->_response += statusCodes[this->_statusCode].code;
+  this->_response += statusCodes[this->_statusCode].message;
+  this->_response += "\r\n";
+  this->_response += getCurrentTime();
 
+  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
   this->_responseFlag = true;
 }
 
