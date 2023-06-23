@@ -31,15 +31,17 @@ void EventHandler::branchCondition() {
       acceptClient();
     else if (this->_clients.find(this->_currentEvent->ident) !=
              this->_clients.end()) {
+      Client &currClient = this->_clients[this->_currentEvent->ident];
       try {
-        Client &currClient = this->_clients[this->_currentEvent->ident];
         currClient.receiveRequest();
         currClient.newHTTPMethod();
         currClient.getMethod()->parseRequest();
         currClient.getMethod()->matchServerConf(getBoundPort(_currentEvent));
         currClient.getMethod()->validatePath();
         currClient.getMethod()->doRequest();
-        currClient.getMethod()->createResponse();
+        currClient.getMethod()->createSuccessResponse();
+      } catch (enum Status &code) {
+        currClient.getMethod()->createErrorResponse();
       } catch (std::exception &e) {
         disconnectClient(this->_currentEvent->ident, this->_clients);
         std::cerr << e.what() << '\n';
