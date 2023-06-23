@@ -92,7 +92,7 @@ void AMethod::parseRequestLine(void) {
   // std::cout << "path: " << this->_path << std::endl;
   // std::cout << "protocol: " << this->_protocol << std::endl;
   if (this->_method == "" || this->_path == "" || this->_protocol == "")
-    throw std::runtime_error("400 Bad Request");
+    throw(this->_statusCode = BAD_REQUEST);
 }
 
 void AMethod::parseHeaderFields(void) {
@@ -203,26 +203,33 @@ void AMethod::parseRequest(void) {
   this->parseHeaderFields();
 }
 
-void AMethod::createResponse(void) {
-  std::stringstream ss;
-  ss << this->_statusCode;
-  this->_response += "HTTP/1.1" + ss.str();
-  if (this->_statusCode == 404) {  // TODO: map으로 합시다. key값으로 들어가고
-    this->_response += errMSG404;
-    this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-    this->_response += "\r\n";
-    this->_response += "<html><body><h1>404 Not Found</h1></body></html>\r\n";
-    return;
-  } else {
-    this->_response += "HTTP/1.1 " + ss.str() + "\r\n";
-    this->_response += " OK\r\n";  // ss.str(); 받아오는 녀석
-    this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-  }
+void AMethod::assembleResponseLine(void) {
+  this->_response = "HTTP/1.1 " + statusCodes[this->_statusCode].code + " " +
+                    statusCodes[this->_statusCode].message + "\r\n";
+}
 
-  GET *child = dynamic_cast<GET *>(this);
-  if (child != NULL)
-    child->appendFileContent();
-  else if (_method == "POST") {
+void AMethod::assembleResponseBody(void) {
+  this->_response += "\r\n";
+  if (statusCodes[this->_statusCode].body != NULL) {
+    this->_response += statusCodes[this->_statusCode].body;
+    return;
+  }
+}
+
+void AMethod::createErrorResponse(void) {
+  assembleResponseLine();
+
+  if (_statusCode == NOT_FOUND) {
+    this->_response += "Content-Type: text/html\r\n";
+    this->_response += "Content-Length: 50\r\n";
+
+    assembleResponseBody();
     this->_response += "\r\n";
+    this->_response += "<!DOCTYPE html>
+                       < html >
+                       <head><title> 404 Not Found</ title></ head><body>
+                       <h1> Not Found</ h1>
+                       <p> The requested URL was not found on this server.</ p>
+                       </ body></ html>\r\n ";
   }
 }
