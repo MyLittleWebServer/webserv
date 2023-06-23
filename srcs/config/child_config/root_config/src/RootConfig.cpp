@@ -25,13 +25,13 @@ void RootConfig::setVariable(const std::string& key, const std::string& value) {
     _data.insert(std::pair<std::string, std::string>(key, value));
 }
 
-std::string RootConfig::getUser() { return getVariable("user"); }
+const std::string& RootConfig::getUser() { return getVariable("user"); }
 
 size_t RootConfig::getWorkerProcesses() {
   return std::atoi(getVariable("worker_processes").c_str());
 }
 
-std::string RootConfig::getVariable(const std::string& key) {
+const std::string& RootConfig::getVariable(const std::string& key) {
   std::map<std::string, std::string>::iterator it = _data.find(key);
   if (it != _data.end()) {
     return it->second;

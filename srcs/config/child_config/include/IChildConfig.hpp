@@ -14,5 +14,5 @@ class IChildConfig {
   virtual void setVariable(const std::string& key,
                            const std::string& value) = 0;
 
-  virtual std::string getVariable(const std::string& key) = 0;
+  virtual const std::string& getVariable(const std::string& key) = 0;
 };

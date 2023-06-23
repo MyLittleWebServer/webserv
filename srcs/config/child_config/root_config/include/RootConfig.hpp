@@ -23,8 +23,8 @@ class RootConfig : public IRootConfig {
 
   virtual void setVariable(const std::string& key, const std::string& value);
 
-  std::string getUser();
+  const std::string& getUser();
   size_t getWorkerProcesses();
 
-  std::string getVariable(const std::string& key);
+  const std::string& getVariable(const std::string& key);
 };

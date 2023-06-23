@@ -31,13 +31,13 @@ class ServerConfig : public IServerConfig {
   virtual void setVariable(const std::string& key, const std::string& value);
   virtual void addLocationConfig(ILocationConfig* location_config);
 
-  std::string getVariable(const std::string& key);
+  virtual const std::string& getVariable(const std::string& key);
 
   std::list<ILocationConfig*> getLocationConfigs();
   size_t getListen();
-  std::string getServerName();
-  std::string getErrorPage();
-  std::string getAccessLog();
-  std::string getRoot();
-  std::string getCgi();
+  const std::string& getServerName();
+  const std::string& getErrorPage();
+  const std::string& getAccessLog();
+  const std::string& getRoot();
+  const std::string& getCgi();
 };

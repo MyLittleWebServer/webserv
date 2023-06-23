@@ -9,6 +9,6 @@
  */
 class IRootConfig : public IChildConfig {
  public:
-  virtual std::string getUser() = 0;
+  const virtual std::string& getUser() = 0;
   virtual size_t getWorkerProcesses() = 0;
 };
