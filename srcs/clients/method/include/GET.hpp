@@ -5,9 +5,10 @@
 
 class GET : public AMethod {
  private:
-  std::string _fileContent;
+  std::string _body;
+
   void prepareFileList(const std::string& path);
-  void prepareFileContent(const std::string& pathIndex);
+  void prepareBody(const std::string& pathIndex);
 
  public:
   GET();
@@ -15,7 +16,8 @@ class GET : public AMethod {
   ~GET();
 
   void doRequest();
-  void appendFileContent();
+  void appendBody();
+  void createSuccessResponse();
 };
 
 #endif
