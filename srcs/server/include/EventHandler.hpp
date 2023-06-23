@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "Client.hpp"
+#include "ExceptionThrower.hpp"
 #include "Kqueue.hpp"
 #include "Utils.hpp"
 
