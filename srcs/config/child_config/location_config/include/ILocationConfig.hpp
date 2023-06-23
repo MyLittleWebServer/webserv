@@ -11,6 +11,7 @@
  */
 class ILocationConfig : public IChildConfig {
  public:
+  virtual std::string getRoute() = 0;
   virtual std::string getRoot() = 0;
   virtual std::map<std::string, bool> getAllowMethod() = 0;
   virtual std::string getIndex() = 0;

@@ -30,6 +30,7 @@ class LocationConfig : public ILocationConfig {
 
   std::string getVariable(const std::string& key);
 
+  virtual std::string getRoute();
   virtual std::string getRoot();
   virtual std::map<std::string, bool> getAllowMethod();
   virtual std::string getIndex();

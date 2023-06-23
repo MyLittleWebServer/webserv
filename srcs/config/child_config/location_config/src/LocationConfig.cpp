@@ -45,6 +45,8 @@ std::string LocationConfig::getVariable(const std::string& key) {
   throw ExceptionThrower::InvalidConfigException(NOT_SUPPORT_CONFIG);
 }
 
+std::string LocationConfig::getRoute() { return getVariable("route"); }
+
 std::string LocationConfig::getRoot() { return getVariable("root"); }
 
 std::map<std::string, bool> LocationConfig::getAllowMethod() {
