@@ -1,7 +1,7 @@
+#include "Config.hpp"
 #include "EventHandler.hpp"
 #include "Kqueue.hpp"
 #include "Server.hpp"
-#include "config/include/Config.hpp"
 
 #ifdef LEAKS
 void leakCheck() { system("leaks webserv"); }
@@ -15,10 +15,13 @@ int main(int ac, char** av) {
     if (ac > 2) {
       std::cout << "Usage: ./webserv <config_file(optional)>" << std::endl;
       return (1);
+    } else if (ac == 2) {
+      Config& config = Config::getInstance(av[1]);
+    } else {
+      Config& config = Config::getInstance("config/default.conf");
     }
-    Config& config = Config::getInstance("config/default.conf");
     (void)config;
-    (void)av;
+
     Server server;
     server.startServer();
     Kqueue eventQueue;
@@ -35,7 +38,6 @@ int main(int ac, char** av) {
         eventHandler.checkStatus();
       }
     }
-
   } catch (...) {
     std::cout << "fatal error" << std::endl;
   }
