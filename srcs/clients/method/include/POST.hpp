@@ -12,8 +12,8 @@ class POST : public AMethod {
   POST(std::string& request);
   ~POST();
 
-  void doMethod();
-  void createResponse();
+  void doRequest();
+  void createSuccessResponse();
 };
 
 #endif
