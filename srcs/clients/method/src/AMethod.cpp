@@ -71,19 +71,15 @@ void AMethod::splitLinesByCRLF(void) {
 }
 
 void AMethod::parseRequestLine(void) {
-  int delim_cnt = 0;
-  size_t pos = 0;
   const std::string &firstLine(this->_linesBuffer.front());
-  size_t delimeter = firstLine.find(" ");
-  if (delimeter == std::string::npos) {
-    throw std::runtime_error("request has bad indentation!");
+  int delim_cnt = 0;
+  size_t pos = firstLine.find(" ", 0);
+  while (pos != std::string::npos) {
+    delim_cnt++;
+    pos = firstLine.find(" ", ++pos);
   }
-  while (delimeter != std::string::npos) {
-    delim_cnt += 1;
-    pos = delimeter + 1;
-    delimeter = firstLine.find(" ", pos);
-  }
-  if (delim_cnt != 2) throw std::runtime_error("request has bad indentation!");
+  if (delim_cnt != 2) throw(this->_statusCode = BAD_REQUEST);
+
   std::istringstream iss(firstLine);
   this->_linesBuffer.pop_front();
   iss >> this->_method >> this->_path >> this->_protocol;
