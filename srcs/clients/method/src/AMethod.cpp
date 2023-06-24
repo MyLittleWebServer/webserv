@@ -188,7 +188,7 @@ void AMethod::validatePath(void) {
       if (end == pos) end++;
       this->_path =
           currRoute + this->_path.substr(end, this->_path.size() - end);
-      if (this->checkPathForm() == false) this->_statusCode = 404;
+      if (this->checkPathForm() == false) this->_statusCode = NOT_FOUND;
       return;
     }
     if (currRoute == "/") defaultLocation = it;
@@ -204,8 +204,11 @@ void AMethod::parseRequest(void) {
 }
 
 void AMethod::assembleResponseLine(void) {
-  this->_response = "HTTP/1.1 " + statusCodes[this->_statusCode].code + " " +
-                    statusCodes[this->_statusCode].message + "\r\n";
+  this->_response = "HTTP/1.1 ";
+  this->_response += statusCodes[this->_statusCode].code;
+  this->_response += " ";
+  this->_response += statusCodes[this->_statusCode].message;
+  this->_response += "\r\n";
 }
 
 void AMethod::assembleResponseBody(void) {
@@ -217,19 +220,20 @@ void AMethod::assembleResponseBody(void) {
 }
 
 void AMethod::createErrorResponse(void) {
-  assembleResponseLine();
-
-  if (_statusCode == NOT_FOUND) {
-    this->_response += "Content-Type: text/html\r\n";
-    this->_response += "Content-Length: 50\r\n";
-
-    assembleResponseBody();
-    this->_response += "\r\n";
-    this->_response += "<!DOCTYPE html>
-                       < html >
-                       <head><title> 404 Not Found</ title></ head><body>
-                       <h1> Not Found</ h1>
-                       <p> The requested URL was not found on this server.</ p>
-                       </ body></ html>\r\n ";
+  this->assembleResponseLine();
+  // redirection response (300). need to replace the url with actual url
+  if (statusCodes[this->_statusCode].body == NULL) {
+    this->_response += "Location: ";
+    this->_response += "http://example.com/redirect_url\r\n";
+    this->_responseFlag = true;
+    return;
   }
+  // response for status code 400 ~ 500
+  this->_response += "Content-Type: text/html\r\n";
+  this->_response += "Content-Length: ";
+  this->_response += itos(statusCodes[this->_statusCode].contentLength);
+  this->_response += "\r\n\r\n";
+  this->_response += statusCodes[this->_statusCode].body;
+  this->_response += "\r\n";
+  this->_responseFlag = true;
 }
