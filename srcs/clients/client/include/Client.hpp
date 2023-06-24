@@ -11,6 +11,7 @@
 
 #include "AMethod.hpp"
 #include "DELETE.hpp"
+#include "DummyMethod.hpp"
 #include "GET.hpp"
 #include "POST.hpp"
 

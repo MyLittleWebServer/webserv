@@ -66,7 +66,8 @@ void Client::newHTTPMethod(void) {
     this->_method = new DELETE(this->_request);
     return;
   }
-  throw std::runtime_error("501 Not implemented");
+  this->_method = new DummyMethod(NOT_IMPLEMENTED);
+  throw(NOT_IMPLEMENTED);
 }
 
 AMethod *Client::getMethod() const { return this->_method; }
