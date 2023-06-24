@@ -7,15 +7,16 @@
 #include <iostream>
 
 #include "AMethod.hpp"
+#include "Status.hpp"
 
 class DELETE : public AMethod {
  public:
-  DELETE(){};
-  DELETE(std::string &request) {}
-  ~DELETE(){};
+  DELETE();
+  DELETE(std::string &request);
+  ~DELETE();
 
-  void doRequest() {}
-  void createResponse() {}
+  void doRequest(void);
+  void createSuccessResponse(void);
 };
 
 #endif
