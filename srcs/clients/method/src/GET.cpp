@@ -68,9 +68,10 @@ void GET::createSuccessResponse(void) {
   this->_response += getCurrentTime();
 
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-
-  GET* child = dynamic_cast<GET*>(this);
-  if (child != NULL) child->appendBody();
+  this->_response += "Content-Length: ";
+  this->_response += itos(this->_body.size());
+  this->_response += "\r\n";
+  this->appendBody();
 }
 
 /* GET 요청
