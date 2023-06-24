@@ -40,7 +40,6 @@ class AMethod {
 
   void assembleResponseLine(void);
   virtual void assembleResponseHeader(void) = 0;
-  void assembleResponseBody(void);
 
  public:
   AMethod();

@@ -207,14 +207,6 @@ void AMethod::assembleResponseLine(void) {
   this->_response += "\r\n";
 }
 
-void AMethod::assembleResponseBody(void) {
-  this->_response += "\r\n";
-  if (statusCodes[this->_statusCode].body != NULL) {
-    this->_response += statusCodes[this->_statusCode].body;
-    return;
-  }
-}
-
 void AMethod::createErrorResponse(void) {
   this->assembleResponseLine();
   // redirection response (300). need to replace the url with actual url
