@@ -229,7 +229,7 @@ void AMethod::createErrorResponse(void) {
     return;
   }
   // response for status code 400 ~ 500
-  this->_response += "Content-Type: text/html\r\n";
+  this->_response += "Content-Type: text/plain\r\n";
   this->_response += "Content-Length: ";
   this->_response += itos(statusCodes[this->_statusCode].contentLength);
   this->_response += "\r\n\r\n";
