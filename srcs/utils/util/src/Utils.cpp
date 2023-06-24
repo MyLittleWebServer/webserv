@@ -34,3 +34,9 @@ std::string getCurrentTime() {
 
   return (date);
 }
+
+std::string itos(int num) {
+  std::stringstream ss;
+  ss << num;
+  return (ss.str());
+}
