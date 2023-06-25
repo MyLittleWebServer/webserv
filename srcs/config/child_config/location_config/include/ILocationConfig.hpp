@@ -11,9 +11,10 @@
  */
 class ILocationConfig : public IChildConfig {
  public:
-  virtual std::string getRoot() = 0;
-  virtual std::map<std::string, bool> getAllowMethod() = 0;
-  virtual std::string getIndex() = 0;
-  virtual std::string getAutoindex() = 0;
+  virtual const std::string& getRoute() = 0;
+  virtual const std::string& getRoot() = 0;
+  virtual const std::map<std::string, bool>& getAllowMethod() = 0;
+  virtual const std::string& getIndex() = 0;
+  virtual const std::string& getAutoindex() = 0;
   virtual size_t getLimitClientBodySize() = 0;
 };

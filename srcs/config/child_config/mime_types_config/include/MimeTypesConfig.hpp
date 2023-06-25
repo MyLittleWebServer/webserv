@@ -21,5 +21,5 @@ class MimeTypesConfig : public IMimeTypesConfig {
 
   virtual void setVariable(const std::string& key, const std::string& value);
 
-  std::string getVariable(const std::string& key);
+  virtual const std::string& getVariable(const std::string& key);
 };
