@@ -1,16 +1,20 @@
 #include "Utils.hpp"
 
+#include <netinet/in.h>
+#include <sys/event.h>
+#include <sys/socket.h>
+
 #include <ctime>
 
-void exitWithPerror(const std::string &msg) {
+void throwWithPerror(const std::string &msg) {
   std::cerr << msg << std::endl;
-  exit(EXIT_FAILURE);
+  throw(EXIT_FAILURE);
 }
 
-void disconnectClient(int client_fd, std::map<int, Client> &clients) {
+void disconnectClient(int client_fd, std::map<int, Client *> &clients) {
   close(client_fd);
   clients.erase(client_fd);
-  std::cout << "Client " << client_fd << " disconnected!" << std::endl;
+  std::cout << "Client " << client_fd << "disconnected!" << std::endl;
 }
 
 short getBoundPort(const struct kevent *_currentEvent) {
@@ -19,6 +23,7 @@ short getBoundPort(const struct kevent *_currentEvent) {
   if (getsockname(_currentEvent->ident, (struct sockaddr *)&addr, &addr_len) ==
       -1)
     throw std::runtime_error("getsockname() error\n");
+  std::cout << "getsockname: " << ntohs(addr.sin_port) << std::endl;
   return (ntohs(addr.sin_port));
 }
 
@@ -39,4 +44,13 @@ std::string itos(int num) {
   std::stringstream ss;
   ss << num;
   return (ss.str());
+}
+
+void mainValidator(int ac, char **av) {
+  if (ac > 2)
+    throwWithPerror("Usage: ./webserv [config_file]");
+  else if (ac == 2)
+    Config::getInstance(av[1]);
+  else
+    Config::getInstance("config/default.conf");
 }
