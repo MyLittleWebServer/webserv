@@ -13,9 +13,11 @@ class Server {
   sAddr_t _addr;
   int _socket;
   int _waitListSize;
+  int _port;
 
  public:
   Server(void);
+  Server(int port);
   virtual ~Server(void);
 
  public:

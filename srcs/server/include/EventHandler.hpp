@@ -11,34 +11,34 @@
 
 #include <iostream>
 #include <map>
+#include <queue>
 #include <vector>
 
 #include "Client.hpp"
 #include "ExceptionThrower.hpp"
 #include "Kqueue.hpp"
+#include "Server.hpp"
 #include "Utils.hpp"
 
 class Client;
 
 class EventHandler : public Kqueue {
  private:
-  std::map<int, Client> _clients;
-  const uintptr_t _serverSocket;
+  std::map<int, Client*> _clients;
+  std::vector<Server*> _serverVector;
   struct kevent* _currentEvent;
 
-  void acceptClient();
   void registClient(const uintptr_t clientSocket);
+  void acceptClient(uintptr_t serverSocket);
+  void branchCondition(uintptr_t serverSocket);
 
  public:
-  EventHandler(uintptr_t serverSocket);
-  EventHandler(const EventHandler& src);
+  EventHandler(std::vector<Server*> serverQueue);
   virtual ~EventHandler();
-  EventHandler& operator=(EventHandler const& rhs);
 
-  void checkStatus();
-  void checkErrorOnSocket();
   void setCurrentEvent(int i);
-  void branchCondition();
+  void checkStatus();
+  void checkErrorOnSocketVector(uintptr_t serverSocket);
 };
 
 #endif
