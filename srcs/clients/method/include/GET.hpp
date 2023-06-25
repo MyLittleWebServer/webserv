@@ -6,6 +6,7 @@
 class GET : public AMethod {
  private:
   std::string _body;
+  bool _autoIndex;
 
   void prepareFileList(const std::string& path);
   void prepareBody(const std::string& pathIndex);

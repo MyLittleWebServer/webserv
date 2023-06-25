@@ -7,9 +7,7 @@
 #include <string>
 
 #include "Config.hpp"
-#include "GET.hpp"
 #include "Status.hpp"
-#include "Utils.hpp"
 
 class AMethod {
  protected:
@@ -39,10 +37,11 @@ class AMethod {
       std::list<ILocationConfig *>::const_iterator defaultLocation);
 
   void assembleResponseLine(void);
-  virtual void assembleResponseHeader(void) = 0;
+  // virtual void assembleResponseHeader(void) = 0;
 
  public:
   AMethod();
+  AMethod(Status statusCode);
   AMethod(std::string &request);
   virtual ~AMethod();
 

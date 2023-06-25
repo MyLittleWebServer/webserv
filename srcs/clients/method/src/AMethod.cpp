@@ -1,8 +1,11 @@
 #include "AMethod.hpp"
 
+#include "Status.hpp"
+#include "Utils.hpp"
 #include "errorMessage.hpp"
 
 AMethod::AMethod() {}
+AMethod::AMethod(Status statusCode) : _statusCode(statusCode) {}
 AMethod::AMethod(std::string &request)
     : _request(request), _responseFlag(false) {
   /* major-field */
@@ -84,9 +87,9 @@ void AMethod::parseRequestLine(void) {
   this->_linesBuffer.pop_front();
   iss >> this->_method >> this->_path >> this->_protocol;
 
-  // std::cout << "method: " << this->_method << std::endl;
-  // std::cout << "path: " << this->_path << std::endl;
-  // std::cout << "protocol: " << this->_protocol << std::endl;
+  std::cout << "method: " << this->_method << std::endl;
+  std::cout << "path: " << this->_path << std::endl;
+  std::cout << "protocol: " << this->_protocol << std::endl;
   if (this->_method == "" || this->_path == "" || this->_protocol == "")
     throw(this->_statusCode = BAD_REQUEST);
 }
@@ -146,20 +149,22 @@ bool AMethod::getResponseFlag(void) const { return (this->_responseFlag); }
 void AMethod::matchServerConf(short port) {
   this->_matchedServer = NULL;
   Config &config = Config::getInstance();
-  std::list<IServerConfig *> &serverInfo = config.getServerConfigs();
+  std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
+  if (serverInfo.empty()) throw(42.42);
   while (it != serverInfo.end()) {
-    if ((*it)->getListen() != port) {
+    if ((*it)->getListen() != (size_t)port) {
       ++it;
       continue;
     }
     if ((*it)->getServerName() == this->_headerFields["host"]) {
       this->_matchedServer = *it;
       return;
-    } else if (this->_matchedServer == NULL)
+    } else
       this->_matchedServer = *it;
     ++it;
   }
+  if (this->_matchedServer == NULL) throw(this->_statusCode = NOT_FOUND);
 }
 
 // /root//dir/test.txt
@@ -172,13 +177,14 @@ void AMethod::validatePath(void) {
   else
     end = pos;
   std::string firstToken = this->_path.substr(0, end);
+  std::cout << "firstToken: " << firstToken << std::endl;
   std::list<ILocationConfig *>::const_iterator it =
       this->_matchedServer->getLocationConfigs().begin();
   std::list<ILocationConfig *>::const_iterator endIt =
       this->_matchedServer->getLocationConfigs().end();
   std::list<ILocationConfig *>::const_iterator defaultLocation;
   while (it != endIt) {
-    std::string &currRoute = (*it)->getRoute();
+    const std::string &currRoute = (*it)->getRoute();
     if (currRoute == firstToken) {
       this->_matchedLocation = *it;
       if (end == pos) end++;
@@ -201,16 +207,16 @@ void AMethod::parseRequest(void) {
 
 void AMethod::assembleResponseLine(void) {
   this->_response = "HTTP/1.1 ";
-  this->_response += statusCodes[this->_statusCode].code;
+  this->_response += statusInfo[this->_statusCode].code;
   this->_response += " ";
-  this->_response += statusCodes[this->_statusCode].message;
+  this->_response += statusInfo[this->_statusCode].message;
   this->_response += "\r\n";
 }
 
 void AMethod::createErrorResponse(void) {
   this->assembleResponseLine();
   // redirection response (300). need to replace the url with actual url
-  if (statusCodes[this->_statusCode].body == NULL) {
+  if (statusInfo[this->_statusCode].body == NULL) {
     this->_response += "Location: ";
     this->_response += "http://example.com/redirect_url\r\n";
     this->_responseFlag = true;
@@ -219,9 +225,9 @@ void AMethod::createErrorResponse(void) {
   // response for status code 400 ~ 500
   this->_response += "Content-Type: text/plain\r\n";
   this->_response += "Content-Length: ";
-  this->_response += itos(statusCodes[this->_statusCode].contentLength);
+  this->_response += itos(statusInfo[this->_statusCode].contentLength);
   this->_response += "\r\n\r\n";
-  this->_response += statusCodes[this->_statusCode].body;
+  this->_response += statusInfo[this->_statusCode].body;
   this->_response += "\r\n";
   this->_responseFlag = true;
 }

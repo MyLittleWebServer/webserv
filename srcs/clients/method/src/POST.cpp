@@ -4,6 +4,8 @@
 
 #include <fstream>
 
+#include "Utils.hpp"
+
 POST::POST(void) {}
 
 POST::POST(std::string& request) : AMethod(request) {}
@@ -11,7 +13,7 @@ POST::POST(std::string& request) : AMethod(request) {}
 POST::~POST(void) {}
 
 void POST::doRequest() {
-  int bodySize = 0;
+  size_t bodySize = 0;
   std::istringstream ss(this->_headerFields["content-length"]);
   ss >> bodySize;
 

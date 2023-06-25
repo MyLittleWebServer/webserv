@@ -26,6 +26,7 @@ class Client {
   static char _buf[RECEIVE_LEN + 1];
 
   bool checkIfReceiveFinished(ssize_t n) const;
+  // std::map<uintptr_t, char *> _clientBuf;
 
  public:
   Client();
@@ -33,10 +34,11 @@ class Client {
   virtual ~Client();
 
  public:
+  uintptr_t getSD() const;
   AMethod *getMethod() const;
   void receiveRequest();
   void newHTTPMethod();
-  void sendResponse(std::map<int, Client> &_clients);
+  void sendResponse(std::map<int, Client *> &_clients);
 
   class RecvFailException : public std::exception {
    public:
@@ -47,5 +49,7 @@ class Client {
     const char *what() const throw();
   };
 };
+
+std::ostream &operator<<(std::ostream &os, const Client &client);
 
 #endif

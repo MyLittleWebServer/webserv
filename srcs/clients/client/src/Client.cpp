@@ -9,6 +9,7 @@ Client::Client() : _sd(0), _method(NULL) {}
 Client::Client(const uintptr_t sd) : _sd(sd), _method(NULL) {}
 
 Client::~Client(void) {
+  std ::cout << "Client destructor called" << *this << "!!!!" << std::endl;
   if (this->_method != NULL) delete this->_method;
 }
 
@@ -19,9 +20,11 @@ bool Client::checkIfReceiveFinished(ssize_t n) const {
 
 void Client::receiveRequest(void) {
   while (1) {
+    signal(SIGPIPE, SIG_IGN);
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
-      if (n < 0) throw Client::RecvFailException();
+      signal(SIGPIPE, SIG_DFL);
+      if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
     Client::_buf[n] = '\0';
@@ -30,25 +33,24 @@ void Client::receiveRequest(void) {
     if (checkIfReceiveFinished(n) == true) {
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
+      signal(SIGPIPE, SIG_DFL);
       return;
     }
+    signal(SIGPIPE, SIG_DFL);
   }
 }
 
-void Client::sendResponse(std::map<int, Client> &clients) {
-  std::map<int, Client>::iterator it = clients.find(this->_sd);
+void Client::sendResponse(std::map<int, Client *> &clients) {
+  if (clients.empty()) return;
+  std::map<int, Client *>::iterator it = clients.find(this->_sd);
   if (it != clients.end() && this->_method != NULL &&
       this->_method->getResponseFlag() == true) {
     const std::string &response = this->_method->getResponse();
     ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
     if (n == -1) {
-      disconnectClient(this->_sd, clients);
       throw std::runtime_error("Client send error!");
     }
     this->_request.clear();
-    delete this->_method;
-    this->_method = NULL;
-    disconnectClient(this->_sd, clients);
     return;
   }
 }
@@ -78,4 +80,11 @@ const char *Client::RecvFailException::what() const throw() {
 
 const char *Client::DisconnectedDuringRecvException::what() const throw() {
   return ("client disconnected while recv()");
+}
+
+uintptr_t Client::getSD() const { return this->_sd; }
+
+std::ostream &operator<<(std::ostream &os, const Client &client) {
+  os << "Client: " << client.getSD() << std::endl;
+  return os;
 }

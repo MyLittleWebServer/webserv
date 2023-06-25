@@ -7,14 +7,21 @@
 #include <fstream>
 #include <sstream>
 
+#include "Utils.hpp"
+
 GET::GET() {}
-GET::GET(std::string& request) : AMethod(request) {}
+GET::GET(std::string& request) : AMethod(request), _autoIndex(false) {}
 GET::~GET() {}
 
 void GET::doRequest(void) {
   std::string pathIndex;
 
   pathIndex = this->_path;
+  std::cout << " -------------- pathIndex: " << pathIndex << std::endl;
+  std::cout << " -------------- this : " << this->_path << std::endl;
+  // if (pathIndex[pathIndex.size() - 1] == '/') {
+  //   pathIndex += "index.html";
+  // }
   if (_matchedLocation->getIndex() != "") {
     this->_path += _matchedLocation->getIndex();
   }
@@ -29,6 +36,7 @@ void GET::doRequest(void) {
              access(pathIndex.c_str(), R_OK) < 0) {
     this->_statusCode = OK;
     prepareFileList(this->_path);
+    _autoIndex = true;
   } else {
     throw(this->_statusCode = NOT_FOUND);
   }
@@ -59,7 +67,6 @@ void GET::prepareBody(const std::string& pathIndex) {
   std::ifstream file(pathIndex.c_str(), std::ios::in);
   std::string buff;
   while (std::getline(file, buff)) this->_body += buff + "\r\n";
-  this->_responseFlag = true;
   file.close();
 }
 
@@ -72,6 +79,7 @@ void GET::createSuccessResponse(void) {
   this->_response += itos(this->_body.size());
   this->_response += "\r\n";
   this->appendBody();
+  this->_responseFlag = true;
 }
 
 /* GET 요청

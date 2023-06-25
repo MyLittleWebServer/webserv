@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "AMethod.hpp"
-#include "Status.hpp"
 
 class DELETE : public AMethod {
  public:
