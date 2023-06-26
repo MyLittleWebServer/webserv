@@ -52,7 +52,12 @@ LocationConfig& LocationConfig::operator=(const LocationConfig& src) {
 
 void LocationConfig::setVariable(const std::string& key,
                                  const std::string& value) {
-  _data.insert(std::pair<std::string, std::string>(key, value));
+  std::map<std::string, std::string>::iterator it = _data.find(key);
+  if (it != _data.end()) {
+    it->second = value;
+  } else {
+    _data.insert(std::pair<std::string, std::string>(key, value));
+  }
 }
 
 const std::string& LocationConfig::getVariable(const std::string& key) {
