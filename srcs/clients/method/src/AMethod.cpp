@@ -190,6 +190,9 @@ void AMethod::validatePath(void) {
       if (end == pos) end++;
       this->_path =
           currRoute + this->_path.substr(end, this->_path.size() - end);
+#ifdef DEBUG_MSG
+      std::cout << "actual path: " << this->_path << '\n';
+#endif
       if (this->checkPathForm() == false) this->_statusCode = NOT_FOUND;
       return;
     }
