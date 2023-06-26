@@ -16,7 +16,7 @@ NAME		=	webserv
 
 CC			=	c++
 STD			=	-std=c++98
-CFLAGS		=	-Wall -Wextra -Werror $(STD) $(DBGS) $(INCLUDE)
+CFLAGS		=	-Wall -Wextra -Werror $(STD) $(INCLUDE)
 DBGS		=	-fsanitize=address -g3
 
 RM			=	rm -rf
@@ -62,7 +62,8 @@ sources1 += FileChecker.cpp \
 
 sources1 +=	Client.cpp
 
-sources1 +=	Server.cpp \
+sources1 +=	ServerManager.cpp \
+						Server.cpp \
 						Kqueue.cpp \
 						EventHandler.cpp
 
