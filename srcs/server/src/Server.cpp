@@ -8,9 +8,8 @@
 #include <cstdint>
 #include <string>
 
+#include "Config.hpp"
 #include "Utils.hpp"
-
-Server::Server(void) : _waitListSize(WAITLISTSIZE) {}
 
 Server::Server(int port) : _port(port) {}
 
@@ -22,7 +21,7 @@ void Server::socketInit(void) {
 }
 
 void Server::addrInit(void) {
-  memset(&_addr, 0, sizeof(_addr));
+  std::memset(&_addr, 0, sizeof(_addr));
   _addr.sin_family = AF_INET;
   _addr.sin_addr.s_addr = htonl(INADDR_ANY);
   _addr.sin_port = htons(_port);
@@ -34,8 +33,7 @@ void Server::bindSocketWithAddr(void) {
 }
 
 void Server::listenSocket(void) const {
-  if (listen(this->_socket, this->_waitListSize) == -1)
-    throwWithPerror("listen() error");
+  if (listen(this->_socket, BACKLOG) == -1) throwWithPerror("listen() error");
 }
 
 void Server::asyncSocket(void) const {
@@ -44,7 +42,9 @@ void Server::asyncSocket(void) const {
 
 uintptr_t Server::getSocket(void) const { return (this->_socket); }
 
-void Server::startServer(void) {
+short Server::getPort(void) const { return (this->_port); }
+
+void Server::initServerSocket(void) {
   this->socketInit();
   this->addrInit();
   this->bindSocketWithAddr();
