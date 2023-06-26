@@ -28,8 +28,12 @@ ProxyConfig& ProxyConfig::operator=(const ProxyConfig& src) {
 
 void ProxyConfig::setVariable(const std::string& key,
                               const std::string& value) {
-  _data.insert(
-      std::pair<std::string, unsigned int>(key, std::atoi(value.c_str())));
+  std::map<std::string, size_t>::iterator it = _data.find(key);
+  if (it != _data.end()) {
+    it->second = std::atoi(value.c_str());
+  } else {
+    _data.insert(std::pair<std::string, size_t>(key, std::atoi(value.c_str())));
+  }
   if (key == "CLIENT_MAX_BODY_SIZE")
     _client_max_body_size = _data[key];
   else if (key == "REQUEST_URI_LIMIT_SIZE")

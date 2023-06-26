@@ -42,7 +42,12 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& src) {
 
 void ServerConfig::setVariable(const std::string& key,
                                const std::string& value) {
-  _data.insert(std::pair<std::string, std::string>(key, value));
+  std::map<std::string, std::string>::iterator it = _data.find(key);
+  if (it != _data.end()) {
+    it->second = value;
+  } else {
+    _data.insert(std::pair<std::string, std::string>(key, value));
+  }
 }
 
 void ServerConfig::addLocationConfig(ILocationConfig* location_config) {
@@ -61,22 +66,22 @@ std::list<ILocationConfig*> ServerConfig::getLocationConfigs() {
   return _location_configs;
 }
 
-size_t ServerConfig::getListen() {
-  return std::atoi(getVariable("LISTEN").c_str());
+short ServerConfig::getListen() {
+  return std::atoi(getVariable("listen").c_str());
 }
 
 const std::string& ServerConfig::getServerName() {
-  return getVariable("SERVER_NAME");
+  return getVariable("server_name");
 }
 
 const std::string& ServerConfig::getErrorPage() {
-  return getVariable("ERROR_PAGE");
+  return getVariable("error_page");
 }
 
 const std::string& ServerConfig::getAccessLog() {
-  return getVariable("ACCESS_LOG");
+  return getVariable("access_log");
 }
 
-const std::string& ServerConfig::getRoot() { return getVariable("ROOT"); }
+const std::string& ServerConfig::getRoot() { return getVariable("root"); }
 
-const std::string& ServerConfig::getCgi() { return getVariable("CGI"); }
+const std::string& ServerConfig::getCgi() { return getVariable("cgi"); }
