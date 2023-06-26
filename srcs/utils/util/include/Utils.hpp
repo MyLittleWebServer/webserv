@@ -14,4 +14,3 @@ void disconnectClient(int client_fd, std::map<int, Client *> &clients);
 short getBoundPort(const struct kevent *_currentEvent);
 std::string getCurrentTime();
 std::string itos(int num);
-void mainValidator(int ac, char **av);

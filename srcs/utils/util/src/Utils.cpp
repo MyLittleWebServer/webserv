@@ -3,8 +3,11 @@
 #include <netinet/in.h>
 #include <sys/event.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <ctime>
+
+#include "Kqueue.hpp"
 
 void throwWithPerror(const std::string &msg) {
   std::cerr << msg << std::endl;
@@ -12,7 +15,19 @@ void throwWithPerror(const std::string &msg) {
 }
 
 void disconnectClient(int client_fd, std::map<int, Client *> &clients) {
+  std::map<int, Client *>::iterator it = clients.find(client_fd);
+  if (it == clients.end()) {
+    std::cerr << "Client " << client_fd << " not found!" << std::endl;
+    return;
+  }
+  Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_WRITE);
+  Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_READ);
   close(client_fd);
+  if (clients[client_fd]->_method != NULL) {
+    delete clients[client_fd]->getMethod();
+    clients[client_fd]->_method = NULL;
+  }
+  delete clients[client_fd];
   clients.erase(client_fd);
   std::cout << "Client " << client_fd << "disconnected!" << std::endl;
 }
@@ -28,14 +43,14 @@ short getBoundPort(const struct kevent *_currentEvent) {
 }
 
 std::string getCurrentTime() {
-  std::time_t t = std::time(NULL);  // 현재 시간을 얻습니다.
-  std::tm *timePtr = std::gmtime(&t);  // 현재 시간을 UTC/GMT로 변환합니다.
+  std::time_t t = std::time(NULL);
+  std::tm *timePtr = std::gmtime(&t);
 
   char buffer[1000];
-  strftime(buffer, sizeof(buffer), "Date: %a, %d %b %Y %H:%M:%S GMT",
-           timePtr);  // 시간을 원하는 형식으로 포맷팅합니다.
+  std::strftime(buffer, sizeof(buffer), "Date: %a, %d %b %Y %H:%M:%S GMT",
+                timePtr);
 
-  std::string date(buffer);  // 변환된 문자열을 std::string에 저장합니다.
+  std::string date(buffer);
 
   return (date);
 }
@@ -44,13 +59,4 @@ std::string itos(int num) {
   std::stringstream ss;
   ss << num;
   return (ss.str());
-}
-
-void mainValidator(int ac, char **av) {
-  if (ac > 2)
-    throwWithPerror("Usage: ./webserv [config_file]");
-  else if (ac == 2)
-    Config::getInstance(av[1]);
-  else
-    Config::getInstance("config/default.conf");
 }
