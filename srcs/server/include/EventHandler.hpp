@@ -12,6 +12,7 @@
 #include <iostream>
 #include <map>
 #include <queue>
+#include <set>
 #include <vector>
 
 #include "Client.hpp"
@@ -25,20 +26,20 @@ class Client;
 class EventHandler : public Kqueue {
  private:
   std::map<int, Client*> _clients;
-  std::vector<Server*> _serverVector;
+  std::set<uintptr_t> _serverSocketSet;
   struct kevent* _currentEvent;
 
   void registClient(const uintptr_t clientSocket);
-  void acceptClient(uintptr_t serverSocket);
-  void branchCondition(uintptr_t serverSocket);
+  void acceptClient(void);
+  void branchCondition(void);
 
  public:
-  EventHandler(std::vector<Server*> serverQueue);
+  EventHandler(const std::vector<Server*>& serverVector);
   virtual ~EventHandler();
 
   void setCurrentEvent(int i);
-  void checkStatus();
-  void checkErrorOnSocketVector(uintptr_t serverSocket);
+  void checkStatus(void);
+  void checkErrorOnSocketVector(void);
 };
 
 #endif
