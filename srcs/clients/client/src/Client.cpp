@@ -18,7 +18,7 @@ Client &Client::operator=(const Client &client) {
 
 Client::~Client(void) {
 #ifdef DEBUG_MSG
-  std ::cout << ">>>>>>>>>>>>>> Client destructor called" << *this << "!!!!"
+  std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
   if (this->_method != NULL) delete this->_method;
