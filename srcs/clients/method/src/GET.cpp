@@ -94,13 +94,28 @@ void GET::createSuccessResponse(void) {
   assembleResponseLine();
   this->_response += getCurrentTime();
   this->_response += "\r\n";
-  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
+  this->_response += "Content-Type: ";
+  this->_response += this->getContentType(this->_path);
+  this->_response += "charset=UTF-8\r\n";
   this->_response += "Content-Length: ";
   this->_response += itos(this->_body.size());
   this->_response += "\r\n";
   this->appendBody();
   std::cout << this->_response << "\n";
   this->_responseFlag = true;
+}
+
+std::string GET::getContentType(const std::string& path) {
+  std::string extension = path.substr(path.find_last_of(".") + 1);
+  Config& config = Config::getInstance();
+  std::string ret;
+
+  try {
+    ret = config.getMimeTypesConfig().getVariable(extension);
+  } catch (std::exception& e) {
+    return "text/plain; ";
+  }
+  return ret;
 }
 
 /* GET 요청

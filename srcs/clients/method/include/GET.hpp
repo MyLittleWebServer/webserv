@@ -13,6 +13,8 @@ class GET : public AMethod {
   void prepareFileList(const std::string& path);
   void prepareBody(const std::string& pathIndex);
 
+  std::string getContentType(const std::string& path);
+
  public:
   GET();
   GET(std::string& request);
