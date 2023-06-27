@@ -25,7 +25,7 @@ class Client;
 
 class EventHandler : public Kqueue {
  private:
-  std::map<int, Client*> _clients;
+  std::map<int, Client> _clients;
   std::set<uintptr_t> _serverSocketSet;
   struct kevent* _currentEvent;
 

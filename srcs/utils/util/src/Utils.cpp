@@ -14,8 +14,8 @@ void throwWithPerror(const std::string &msg) {
   throw(EXIT_FAILURE);
 }
 
-void disconnectClient(int client_fd, std::map<int, Client *> &clients) {
-  std::map<int, Client *>::iterator it = clients.find(client_fd);
+void disconnectClient(int client_fd, std::map<int, Client> &clients) {
+  std::map<int, Client>::iterator it = clients.find(client_fd);
   if (it == clients.end()) {
     std::cerr << "Client " << client_fd << " not found!" << std::endl;
     return;
@@ -23,11 +23,10 @@ void disconnectClient(int client_fd, std::map<int, Client *> &clients) {
   Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_WRITE);
   Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_READ);
   close(client_fd);
-  if (clients[client_fd]->_method != NULL) {
-    delete clients[client_fd]->getMethod();
-    clients[client_fd]->_method = NULL;
+  if (clients[client_fd]._method != NULL) {
+    delete clients[client_fd].getMethod();
+    clients[client_fd]._method = NULL;
   }
-  delete clients[client_fd];
   clients.erase(client_fd);
   std::cout << "Client " << client_fd << "disconnected!" << std::endl;
 }

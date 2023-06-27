@@ -37,18 +37,18 @@ void EventHandler::branchCondition(void) {
       acceptClient();
     else if (this->_clients.find(this->_currentEvent->ident) !=
              this->_clients.end()) {
-      Client *currClient = this->_clients[this->_currentEvent->ident];
+      Client &currClient = this->_clients[this->_currentEvent->ident];
       try {
-        std::cout << "socket descriptor : " << currClient->getSD() << std::endl;
-        currClient->receiveRequest();
-        currClient->newHTTPMethod();
-        currClient->getMethod()->parseRequest();
-        currClient->getMethod()->matchServerConf(getBoundPort(_currentEvent));
-        currClient->getMethod()->validatePath();
-        currClient->getMethod()->doRequest();
-        currClient->getMethod()->createSuccessResponse();
+        std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
+        currClient.receiveRequest();
+        currClient.newHTTPMethod();
+        currClient.getMethod()->parseRequest();
+        currClient.getMethod()->matchServerConf(getBoundPort(_currentEvent));
+        currClient.getMethod()->validatePath();
+        currClient.getMethod()->doRequest();
+        currClient.getMethod()->createSuccessResponse();
       } catch (enum Status &code) {
-        currClient->getMethod()->createErrorResponse();
+        currClient.getMethod()->createErrorResponse();
       } catch (std::exception &e) {
         disconnectClient(this->_currentEvent->ident, this->_clients);
         std::cerr << e.what() << '\n';
@@ -56,11 +56,11 @@ void EventHandler::branchCondition(void) {
     }
   } else if (this->_currentEvent->filter == EVFILT_WRITE) {
     try {
-      this->_clients[this->_currentEvent->ident]->sendResponse(this->_clients);
+      this->_clients[this->_currentEvent->ident].sendResponse(this->_clients);
     } catch (std::exception &e) {
       std::cerr << e.what() << '\n';
     };
-    if (this->_clients[this->_currentEvent->ident]->getFlag() == END) {
+    if (this->_clients[this->_currentEvent->ident].getFlag() == END) {
       disconnectClient(this->_currentEvent->ident, this->_clients);
     }
   }
@@ -79,6 +79,5 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
   addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
   addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 
-  _clients.insert(
-      std::pair<int, Client *>(clientSocket, new Client(clientSocket)));
+  _clients.insert(std::pair<int, Client>(clientSocket, Client(clientSocket)));
 }
