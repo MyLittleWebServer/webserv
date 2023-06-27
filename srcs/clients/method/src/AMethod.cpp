@@ -137,10 +137,9 @@ bool AMethod::checkPathForm() {
 void AMethod::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation) {
   this->_matchedLocation = *defaultLocation;
-  this->_path = (*defaultLocation)
-                    ->getRoot()
-                    .substr(1, (*defaultLocation)->getRoot().size() - 1) +
-                this->_path.substr(1, this->_path.size() - 1);
+  this->_path.erase(0, 1);  // remove the first '/'
+  this->_path = (*defaultLocation)->getRoot() + this->_path;
+  this->_path.erase(0, 1);
 }
 
 const std::string &AMethod::getResponse(void) const {
@@ -156,7 +155,7 @@ void AMethod::matchServerConf(short port) {
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
   if (serverInfo.empty()) throw(42.42);
   while (it != serverInfo.end()) {
-    if ((*it)->getListen() != (size_t)port) {
+    if ((*it)->getListen() != port) {
       ++it;
       continue;
     }
@@ -175,16 +174,20 @@ void AMethod::matchServerConf(short port) {
   }
 }
 
-// /root//dir/test.txt
-// GET /dir/test.txt/ hTML/1.1
-void AMethod::validatePath(void) {
+std::string AMethod::getFirstTokenOfPath(void) const {
   size_t pos = this->_path.find("/", 1);
   size_t end;
   if (pos == std::string::npos)
-    end = 1;
+    end = this->_path.size();
   else
     end = pos;
-  std::string firstToken = this->_path.substr(0, end);
+  return (this->_path.substr(0, end));
+}
+
+// /root//dir/test.txt
+// GET /dir/test.txt/ hTML/1.1
+void AMethod::validatePath(void) {
+  std::string firstToken = getFirstTokenOfPath();
 #ifdef DEBUG_MSG
   std::cout << "firstToken: " << firstToken << std::endl;
 #endif
@@ -200,13 +203,16 @@ void AMethod::validatePath(void) {
 #endif
     if (currRoute == firstToken) {
       this->_matchedLocation = *it;
-      if (end == pos) end++;
-      this->_path = (*it)->getRoot().substr(1, (*it)->getRoot().size() - 1) +
-                    this->_path.substr(end, this->_path.size() - end);
+      this->_path.erase(0, firstToken.size());
+      if (this->_path.size() != 0 && this->_path[0] == '/')
+        this->_path.erase(0, 1);  // remove this because there is already a
+                                  // slash at the end of root path
+      this->_path = (*it)->getRoot() + this->_path;
+      this->_path.erase(0, 1);  // remove the first '/'
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << this->_path << '\n';
 #endif
-      if (this->checkPathForm() == false) this->_statusCode = NOT_FOUND;
+      if (this->checkPathForm() == false) throw(this->_statusCode = NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
