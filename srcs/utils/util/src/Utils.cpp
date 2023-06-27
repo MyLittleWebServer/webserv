@@ -23,10 +23,8 @@ void disconnectClient(int client_fd, std::map<int, Client> &clients) {
   Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_WRITE);
   Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_READ);
   close(client_fd);
-  if (clients[client_fd]._method != NULL) {
+  if (clients[client_fd].getMethod() != NULL)
     delete clients[client_fd].getMethod();
-    clients[client_fd]._method = NULL;
-  }
   clients.erase(client_fd);
   std::cout << "Client " << client_fd << "disconnected!" << std::endl;
 }
@@ -58,4 +56,15 @@ std::string itos(int num) {
   std::stringstream ss;
   ss << num;
   return (ss.str());
+}
+
+std::string toLowerString(std::string str) {
+  std::string::iterator it = str.begin();
+  std::string::iterator end = str.end();
+
+  while (it != end) {
+    *it = std::tolower(*it);
+    ++it;
+  }
+  return str;
 }
