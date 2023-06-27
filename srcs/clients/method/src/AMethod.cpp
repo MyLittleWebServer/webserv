@@ -104,8 +104,9 @@ void AMethod::parseHeaderFields(void) {
   size_t pos = 0;
   while (lineIt != lineEnd) {
     pos = (*lineIt).find(": ");
-    key = (*lineIt).substr(0, pos);
-    value = (*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2);
+    key = toLowerString((*lineIt).substr(0, pos));
+    value =
+        toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
     // value 검증 필요
     this->_headerFields[key] = value;
     ++lineIt;
@@ -166,7 +167,12 @@ void AMethod::matchServerConf(short port) {
       this->_matchedServer = *it;
     ++it;
   }
-  if (this->_matchedServer == NULL) throw(this->_statusCode = NOT_FOUND);
+  if (this->_matchedServer == NULL) {
+#ifdef DEBUG_MSG
+    std::cout << "no matched server" << std::endl;
+#endif
+    throw(this->_statusCode = NOT_FOUND);
+  }
 }
 
 // /root//dir/test.txt
