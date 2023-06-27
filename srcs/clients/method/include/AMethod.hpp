@@ -3,11 +3,13 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 
 #include "Config.hpp"
 #include "Status.hpp"
+
 
 class AMethod {
  protected:
@@ -21,6 +23,7 @@ class AMethod {
   std::string _CGI;
   Status _statusCode;
 
+  static std::set<std::string> _candidateFields;
   std::list<std::string> _linesBuffer;
   std::map<std::string, std::string> _headerFields;
   std::map<std::string, std::string> _serverConf;
@@ -55,5 +58,6 @@ class AMethod {
   bool getResponseFlag(void) const;
   const std::string &getResponse(void) const;
 };
+
 
 #endif
