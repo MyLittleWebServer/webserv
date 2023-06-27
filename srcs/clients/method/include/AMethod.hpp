@@ -31,6 +31,7 @@ class AMethod {
   void parseRequestLine(void);
   void parseHeaderFields(void);
 
+  std::string getFirstTokenOfPath(void) const;
   bool checkBodyExistance(std::list<std::string>::const_iterator it) const;
   bool checkPathForm();
   void setDefaultLocation(

@@ -60,7 +60,7 @@ void Server::hostInit(void) {
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
   while (it != serverInfo.end()) {
-    if ((*it)->getListen() == (size_t)this->_port) {
+    if ((*it)->getListen() == this->_port) {
       this->_host = (*it)->getServerName();
       return;
     } else {

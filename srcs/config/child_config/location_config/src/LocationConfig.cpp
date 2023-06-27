@@ -1,6 +1,6 @@
 #include "../include/LocationConfig.hpp"
 
-const std::string LocationConfig::DEFAULT_ROUTE = "";
+const std::string LocationConfig::DEFAULT_ROUTE = "/";
 const std::string LocationConfig::DEFAULT_ROOT = "/YoupiBanane/";
 const std::string LocationConfig::DEFAULT_ALLOW_METHOD = "";
 const std::string LocationConfig::DEFAULT_INDEX = "";
