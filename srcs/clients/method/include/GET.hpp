@@ -5,15 +5,20 @@
 
 class GET : public AMethod {
  private:
-  void getFilePath(void);
+  std::string _body;
+  bool _autoIndex;
+
+  void prepareFileList(const std::string& path);
+  void prepareBody(const std::string& pathIndex);
 
  public:
   GET();
-  GET(std::string &request);
+  GET(std::string& request);
   ~GET();
 
-  void parseRequestMessage();
-  void createResponseMessage();
+  void doRequest();
+  void appendBody();
+  void createSuccessResponse();
 };
 
 #endif

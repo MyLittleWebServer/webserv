@@ -62,7 +62,7 @@ const std::string& ServerConfig::getVariable(const std::string& key) {
   throw ExceptionThrower::InvalidConfigException(NOT_SUPPORT_CONFIG);
 }
 
-std::list<ILocationConfig*> ServerConfig::getLocationConfigs() {
+std::list<ILocationConfig*>& ServerConfig::getLocationConfigs() {
   return _location_configs;
 }
 

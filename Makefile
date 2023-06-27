@@ -16,7 +16,7 @@ NAME		=	webserv
 
 CC			=	c++
 STD			=	-std=c++98
-CFLAGS		=	-Wall -Wextra -Werror $(STD) $(DBGS) $(INCLUDE)
+CFLAGS		=	-Wall -Wextra -Werror $(STD) $(INCLUDE)
 DBGS		=	-fsanitize=address -g3
 
 RM			=	rm -rf
@@ -51,11 +51,29 @@ RED = \033[31m
 
 sources1 :=	main.cpp
 
+# ---- Utils ---- #
+
+sources1 += FileChecker.cpp \
+						Reader.cpp \
+						Utils.cpp \
+						Status.cpp
+
+# ---- Network ---- #
+
 sources1 +=	Client.cpp
 
-sources1 +=	Server.cpp \
+sources1 +=	ServerManager.cpp \
+						Server.cpp \
 						Kqueue.cpp \
 						EventHandler.cpp
+
+# ---- Method ---- #
+sources1 +=	AMethod.cpp \
+						GET.cpp \
+						POST.cpp \
+						DELETE.cpp \
+						PUT.cpp \
+						DummyMethod.cpp
 
 # ---- Config ---- #
 
@@ -71,13 +89,6 @@ sources1 += Config.cpp \
 
 sources1 +=	ExceptionThrower.cpp
 
-# ---- Utils ---- #
-
-sources1 += FileChecker.cpp \
-						Reader.cpp \
-						Utils.cpp
-
-sources2 = test.cpp
 
 # ---- SRC ---- #
 
@@ -140,10 +151,18 @@ leaks: fclean all
 	./$(EXEC)
 leaks: export MallocStackLogging=0
 
-dbg: CFLAGS += -fsanitize=address -g3 -D PORT=8080
+dbg: CFLAGS += -fsanitize=address -g3
 dbg: fclean all
 	./$(EXEC)
 
-test: CFLAGS += -D PORT=3000
+# test: CFLAGS += -D PORT=8080
 test: all
+	./$(EXEC)
+
+# test1: CFLAGS += -D PORT=8081
+test1: fclean all
+	./$(EXEC)
+	
+# test2: CFLAGS += -D PORT=8082
+test2: fclean all
 	./$(EXEC)

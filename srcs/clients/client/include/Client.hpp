@@ -9,34 +9,53 @@
 #include <map>
 #include <string>
 
-#include "./Clients/AMethod.hpp"
-#include "./Clients/DELETE.hpp"
-#include "./Clients/GET.hpp"
-#include "./Clients/POST.hpp"
+#include "AMethod.hpp"
+#include "DELETE.hpp"
+#include "DummyMethod.hpp"
+#include "GET.hpp"
+#include "POST.hpp"
 
 #define RECEIVE_LEN 1000
 
+enum ClientFlag {
+  START,
+  REQUEST_HEAD,
+  REQUEST_ENTITY,
+  REQUEST_DONE,
+  FILE_READ,
+  FILE_CGI,
+  FILE_WRITE,
+  FILE_DONE,
+  RESPONSE_DONE,
+  END
+};
+
 class Client {
  private:
-  const uintptr_t _sd;
+  ClientFlag _flag;
+  uintptr_t _sd;
   std::string _request;
-  AMethod *_method;
 
   static char _buf[RECEIVE_LEN + 1];
 
-  bool checkIfReceiveFinished(ssize_t n) const;
+  bool checkIfReceiveFinished(ssize_t n);
+  // std::map<uintptr_t, char *> _clientBuf;
 
  public:
+  AMethod *_method;
   Client();
   Client(const uintptr_t sd);
+  Client &operator=(const Client &src);
   virtual ~Client();
 
  public:
+  uintptr_t getSD() const;
+  AMethod *getMethod() const;
   void receiveRequest();
-  void makeResponse();
-  void sendResponse(std::map<int, Client> &_clients);
   void newHTTPMethod();
-
+  void sendResponse(std::map<int, Client> &_clients);
+  void setFlag(ClientFlag flag);
+  ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:
     const char *what() const throw();
@@ -45,6 +64,17 @@ class Client {
    public:
     const char *what() const throw();
   };
+
+  class SendFailException : public std::exception {
+   public:
+    const char *what() const throw();
+  };
+  class DisconnectedDuringSendException : public std::exception {
+   public:
+    const char *what() const throw();
+  };
 };
+
+std::ostream &operator<<(std::ostream &os, const Client &client);
 
 #endif

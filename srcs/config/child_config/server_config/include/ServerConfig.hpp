@@ -33,7 +33,7 @@ class ServerConfig : public IServerConfig {
 
   virtual const std::string& getVariable(const std::string& key);
 
-  std::list<ILocationConfig*> getLocationConfigs();
+  std::list<ILocationConfig*>& getLocationConfigs();
   short getListen();
   const std::string& getServerName();
   const std::string& getErrorPage();

@@ -11,7 +11,7 @@
 class IServerConfig : public IChildConfig {
  public:
   virtual void addLocationConfig(ILocationConfig* location_config) = 0;
-  virtual std::list<ILocationConfig*> getLocationConfigs() = 0;
+  virtual std::list<ILocationConfig*>& getLocationConfigs() = 0;
   virtual short getListen() = 0;
   const virtual std::string& getServerName() = 0;
   const virtual std::string& getErrorPage() = 0;
