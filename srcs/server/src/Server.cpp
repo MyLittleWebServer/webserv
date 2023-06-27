@@ -44,10 +44,28 @@ uintptr_t Server::getSocket(void) const { return (this->_socket); }
 
 short Server::getPort(void) const { return (this->_port); }
 
+std::string Server::getHost(void) const { return (this->_host); }
+
 void Server::initServerSocket(void) {
+  this->hostInit();
   this->socketInit();
   this->addrInit();
   this->bindSocketWithAddr();
   this->listenSocket();
   this->asyncSocket();
+}
+
+void Server::hostInit(void) {
+  Config &config = Config::getInstance();
+  std::list<IServerConfig *> serverInfo = config.getServerConfigs();
+  std::list<IServerConfig *>::iterator it = serverInfo.begin();
+  while (it != serverInfo.end()) {
+    if ((*it)->getListen() == (size_t)this->_port) {
+      this->_host = (*it)->getServerName();
+      return;
+    } else {
+      this->_host = "";
+    }
+    ++it;
+  }
 }

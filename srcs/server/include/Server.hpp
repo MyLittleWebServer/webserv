@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 
 #include <set>
+#include <string>
 #include <vector>
 
 #define BACKLOG 128
@@ -15,7 +16,9 @@ class Server {
   sAddr_t _addr;
   int _socket;
   int _port;
+  std::string _host;
 
+  void hostInit(void);
   void socketInit(void);
   void addrInit(void);
   void bindSocketWithAddr(void);
@@ -29,6 +32,7 @@ class Server {
  public:
   uintptr_t getSocket(void) const;
   short getPort(void) const;
+  std::string getHost(void) const;
 
  public:
   void initServerSocket(void);
