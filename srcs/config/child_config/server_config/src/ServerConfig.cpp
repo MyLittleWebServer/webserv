@@ -42,7 +42,12 @@ ServerConfig& ServerConfig::operator=(const ServerConfig& src) {
 
 void ServerConfig::setVariable(const std::string& key,
                                const std::string& value) {
-  _data.insert(std::pair<std::string, std::string>(key, value));
+  std::map<std::string, std::string>::iterator it = _data.find(key);
+  if (it != _data.end()) {
+    it->second = value;
+  } else {
+    _data.insert(std::pair<std::string, std::string>(key, value));
+  }
 }
 
 void ServerConfig::addLocationConfig(ILocationConfig* location_config) {
@@ -61,7 +66,7 @@ std::list<ILocationConfig*>& ServerConfig::getLocationConfigs() {
   return _location_configs;
 }
 
-size_t ServerConfig::getListen() {
+short ServerConfig::getListen() {
   return std::atoi(getVariable("listen").c_str());
 }
 
