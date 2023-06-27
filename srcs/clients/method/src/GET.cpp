@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 #include "Utils.hpp"
 
@@ -16,19 +17,17 @@ GET::~GET() {}
 void GET::doRequest(void) {
   std::string pathIndex;
 
-  pathIndex = this->_path;
-  std::cout << " -------------- pathIndex: " << pathIndex << std::endl;
-  std::cout << " -------------- this : " << this->_path << std::endl;
-  // if (pathIndex[pathIndex.size() - 1] == '/') {
-  //   pathIndex += "index.html";
-  // }
-  if (_matchedLocation->getIndex() != "") {
-    this->_path += _matchedLocation->getIndex();
+  if (this->_matchedLocation->getIndex() != "") {
+    pathIndex = this->_path + this->_matchedLocation->getIndex();
   }
+#ifdef DEBUG_MSG
+  std::cout << " -- this : " << this->_path << std::endl;
+  std::cout << " -- this : " << pathIndex << std::endl;
+#endif
   if (access(pathIndex.c_str(), R_OK) == 0) {
     this->_statusCode = OK;
     prepareBody(pathIndex);
-    if (this->_body == "") {  // 반환할 content가 없음
+    if (this->_body == "") {
       this->_statusCode = NO_CONTENT;
     }
   } else if (this->_path[this->_path.size() - 1] == '/' &&
@@ -44,23 +43,44 @@ void GET::doRequest(void) {
 
 void GET::appendBody(void) { this->_response += "\r\n" + this->_body; }
 
-void GET::prepareFileList(const std::string& path) {
+std::vector<std::string> GET::getFileList(const std::string& path) {
   DIR* dir;
   struct dirent* ent;
+  std::vector<std::string> files;
 
-  this->_body = "<html><body>";
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
-      this->_body += "<p>";
-      this->_body += ent->d_name;
-      this->_body += "</p>";
+      if (ent->d_name[0] == '.') continue;
+      if (ent->d_type == DT_DIR)
+        files.push_back(ent->d_name + std::string("/"));
+      else
+        files.push_back(ent->d_name);
     }
     closedir(dir);
   } else {
-    this->_body = "Could not open directory";
     throw(this->_statusCode = FORBIDDEN);
   }
-  this->_body += "</body></html>";
+  return files;
+}
+
+std::string GET::generateHTML(const std::vector<std::string>& files) {
+  std::string html = "<html><body>";
+  for (std::vector<std::string>::const_iterator it = files.begin();
+       it != files.end(); ++it) {
+    html += "<a href=\"" + *it + "\">" + *it + "</a><br>";
+  }
+  html += "</body></html>";
+  return html;
+}
+
+void GET::prepareFileList(const std::string& path) {
+  try {
+    std::vector<std::string> files = getFileList(path);
+    this->_body = generateHTML(files);
+  } catch (int statusCode) {
+    this->_body = "Could not open directory";
+    throw(statusCode);
+  }
 }
 
 void GET::prepareBody(const std::string& pathIndex) {
