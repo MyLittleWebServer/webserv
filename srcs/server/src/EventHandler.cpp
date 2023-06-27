@@ -4,6 +4,7 @@ EventHandler::EventHandler(const std::vector<Server *> &serverVector) {
   for (std::vector<Server *>::const_iterator it = serverVector.begin();
        it != serverVector.end(); ++it) {
     this->_serverSocketSet.insert((*it)->getSocket());
+    delete (*it);
   }
 }
 
