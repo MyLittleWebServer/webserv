@@ -21,7 +21,6 @@ Client::~Client(void) {
   std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
-  if (this->_method != NULL) delete this->_method;
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
