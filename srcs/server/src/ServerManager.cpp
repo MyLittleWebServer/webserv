@@ -68,7 +68,7 @@ void ServerManager::promptServer(void) {
   std::vector<Server *>::const_iterator it = this->_serverVector.begin();
   for (; it != this->_serverVector.end(); ++it) {
     std::cout << "socket: " << BOLDGREEN << (*it)->getSocket() << RESET;
-    std::cout << "   | host: " << BOLDGREEN << (*it)->getSocket() << RESET;
+    std::cout << "   | host: " << BOLDGREEN << (*it)->getHost() << RESET;
     std::cout << "   | port: " << BOLDGREEN << (*it)->getPort() << RESET
               << std::endl
               << std::endl;
