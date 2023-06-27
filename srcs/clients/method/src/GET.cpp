@@ -73,12 +73,13 @@ void GET::prepareBody(const std::string& pathIndex) {
 void GET::createSuccessResponse(void) {
   assembleResponseLine();
   this->_response += getCurrentTime();
-
+  this->_response += "\r\n";
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
   this->_response += "Content-Length: ";
   this->_response += itos(this->_body.size());
   this->_response += "\r\n";
   this->appendBody();
+  std::cout << this->_response << "\n";
   this->_responseFlag = true;
 }
 
