@@ -106,6 +106,8 @@ void GET::createSuccessResponse(void) {
 }
 
 std::string GET::getContentType(const std::string& path) {
+  if (_autoIndex == true) return "text/html; ";
+
   std::string extension = path.substr(path.find_last_of(".") + 1);
   Config& config = Config::getInstance();
   std::string ret;
