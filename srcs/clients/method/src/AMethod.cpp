@@ -136,7 +136,9 @@ bool AMethod::checkPathForm() {
 void AMethod::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation) {
   this->_matchedLocation = *defaultLocation;
-  this->_path = (*defaultLocation)->getRoot() +
+  this->_path = (*defaultLocation)
+                    ->getRoot()
+                    .substr(1, (*defaultLocation)->getRoot().size() - 1) +
                 this->_path.substr(1, this->_path.size() - 1);
 }
 
@@ -177,7 +179,9 @@ void AMethod::validatePath(void) {
   else
     end = pos;
   std::string firstToken = this->_path.substr(0, end);
+#ifdef DEBUG_MSG
   std::cout << "firstToken: " << firstToken << std::endl;
+#endif
   std::list<ILocationConfig *>::const_iterator it =
       this->_matchedServer->getLocationConfigs().begin();
   std::list<ILocationConfig *>::const_iterator endIt =
@@ -185,11 +189,14 @@ void AMethod::validatePath(void) {
   std::list<ILocationConfig *>::const_iterator defaultLocation;
   while (it != endIt) {
     const std::string &currRoute = (*it)->getRoute();
+#ifdef DEBUG_MSG
+    std::cout << "currRoute: " << currRoute << std::endl;
+#endif
     if (currRoute == firstToken) {
       this->_matchedLocation = *it;
       if (end == pos) end++;
-      this->_path =
-          currRoute + this->_path.substr(end, this->_path.size() - end);
+      this->_path = (*it)->getRoot().substr(1, (*it)->getRoot().size() - 1) +
+                    this->_path.substr(end, this->_path.size() - end);
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << this->_path << '\n';
 #endif
