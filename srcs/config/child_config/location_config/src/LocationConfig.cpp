@@ -35,7 +35,7 @@ LocationConfig::LocationConfig() { init(); }
 
 LocationConfig::LocationConfig(const std::string& route) {
   init();
-  _data.insert(std::pair<std::string, std::string>("route", route));
+  setVariable("route", route);
 }
 
 LocationConfig::~LocationConfig() {}
@@ -96,5 +96,5 @@ const std::string& LocationConfig::getAutoindex() {
 }
 
 size_t LocationConfig::getLimitClientBodySize() {
-  return std::stoi(getVariable("limit_client_body_size"));
+  return std::atoi(getVariable("limit_client_body_size").c_str());
 }
