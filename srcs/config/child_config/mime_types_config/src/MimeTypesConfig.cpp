@@ -8,7 +8,7 @@ MimeTypesConfig::MimeTypesConfig(const MimeTypesConfig& src) { *this = src; }
 
 MimeTypesConfig& MimeTypesConfig::operator=(const MimeTypesConfig& src) {
   if (this != &src) {
-    // do something
+    _data = src._data;
   }
   return *this;
 }
@@ -20,6 +20,12 @@ void MimeTypesConfig::setVariable(const std::string& key,
     it->second = value;
   } else {
     _data.insert(std::pair<std::string, std::string>(key, value));
+  }
+  std::map<std::string, std::string>::iterator it = _data.find(value);
+  if (it != _data.end()) {
+    it->second = key;
+  } else {
+    _data.insert(std::pair<std::string, std::string>(value, key));
   }
 }
 
