@@ -4,61 +4,64 @@
 #include "Utils.hpp"
 #include "errorMessage.hpp"
 
+
+std::set<std::string> AMethod::_candidateFields
+  /* major-field */
+  = {"host"
+  ,"accept"
+  ,"accept-language"
+  ,"accept-encoding"
+  ,"accept-charset"
+  ,"authorization"
+  ,"content-type"
+  ,"connection"
+  ,"user-agent"
+  /* sub-field */
+  ,"content-length"
+  ,"content-language"
+  ,"content-encoding"
+  ,"content-range"
+  ,"content-length"
+  ,"content-base"
+  ,"content-location"
+  ,"content-range"
+  ,"keep-alive"
+  ,"referer"
+  ,"cookie"
+  ,"last-modified"
+  ,"if-modified-since"
+  ,"date"
+  ,"server"
+  ,"www-authenticate"
+  ,"retry-after"
+  ,"location"
+  ,"content-md5"
+  ,"cache-control"
+  ,"pragma"
+  ,"expires"
+  ,"age"
+  ,"allow"
+  ,"etag"
+  ,"accept-ranges"
+  ,"set-cookie"
+  ,"vary"
+  ,"x-frame-options"
+  ,"x-xss-protection"
+  ,"x-content-type-options"
+  ,"x-forwarded-for"
+  ,"x-forwarded-host"
+  ,"x-forwarded-server"
+  ,"x-forwarded-proto"
+  ,"x-real-ip"
+  ,"x-request-id"
+  ,"x-correlation-id"
+  ,"x-csrf-token"
+  ,"x-device-user-agent"};
+
 AMethod::AMethod() {}
 AMethod::AMethod(Status statusCode) : _statusCode(statusCode) {}
 AMethod::AMethod(std::string &request)
     : _request(request), _responseFlag(false) {
-  /* major-field */
-  this->_headerFields["host"] = "";
-  this->_headerFields["accept"] = "";
-  this->_headerFields["accept-language"] = "";
-  this->_headerFields["accept-encoding"] = "";
-  this->_headerFields["accept-charset"] = "";
-  this->_headerFields["authorization"] = "";
-  this->_headerFields["content-type"] = "";
-  this->_headerFields["connection"] = "";
-  this->_headerFields["user-agent"] = "";
-  /* sub-field */
-  this->_headerFields["content-length"] = "";
-  this->_headerFields["content-language"] = "";
-  this->_headerFields["content-encoding"] = "";
-  this->_headerFields["content-range"] = "";
-  this->_headerFields["content-length"] = "";
-  this->_headerFields["content-base"] = "";
-  this->_headerFields["content-location"] = "";
-  this->_headerFields["content-range"] = "";
-  this->_headerFields["keep-alive"] = "";
-  this->_headerFields["referer"] = "";
-  this->_headerFields["cookie"] = "";
-  this->_headerFields["last-modified"] = "";
-  this->_headerFields["if-modified-since"] = "";
-  this->_headerFields["date"] = "";
-  this->_headerFields["server"] = "";
-  this->_headerFields["www-authenticate"] = "";
-  this->_headerFields["retry-after"] = "";
-  this->_headerFields["location"] = "";
-  this->_headerFields["content-md5"] = "";
-  this->_headerFields["cache-control"] = "";
-  this->_headerFields["pragma"] = "";
-  this->_headerFields["expires"] = "";
-  this->_headerFields["age"] = "";
-  this->_headerFields["allow"] = "";
-  this->_headerFields["etag"] = "";
-  this->_headerFields["accept-ranges"] = "";
-  this->_headerFields["set-cookie"] = "";
-  this->_headerFields["vary"] = "";
-  this->_headerFields["x-frame-options"] = "";
-  this->_headerFields["x-xss-protection"] = "";
-  this->_headerFields["x-content-type-options"] = "";
-  this->_headerFields["x-forwarded-for"] = "";
-  this->_headerFields["x-forwarded-host"] = "";
-  this->_headerFields["x-forwarded-server"] = "";
-  this->_headerFields["x-forwarded-proto"] = "";
-  this->_headerFields["x-real-ip"] = "";
-  this->_headerFields["x-request-id"] = "";
-  this->_headerFields["x-correlation-id"] = "";
-  this->_headerFields["x-csrf-token"] = "";
-  this->_headerFields["x-device-user-agent"] = "";
 }
 AMethod::~AMethod() {}
 
@@ -105,6 +108,8 @@ void AMethod::parseHeaderFields(void) {
   while (lineIt != lineEnd) {
     pos = (*lineIt).find(": ");
     key = toLowerString((*lineIt).substr(0, pos));
+    if (_candidateFields.find(key) == _candidateFields.end())
+      throw(this->_statusCode = BAD_REQUEST);
     value =
         toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
     // value 검증 필요
