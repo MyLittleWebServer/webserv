@@ -58,6 +58,8 @@ class AMethod {
 
   bool getResponseFlag(void) const;
   const std::string &getResponse(void) const;
+
+  static void initCandidateFields(void);
 };
 
 
