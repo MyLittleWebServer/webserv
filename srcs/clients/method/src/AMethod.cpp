@@ -4,65 +4,62 @@
 #include "Utils.hpp"
 #include "errorMessage.hpp"
 
+std::set<std::string> AMethod::_candidateFields;
 
-std::set<std::string> AMethod::_candidateFields
-  /* major-field */
-  = {"host"
-  ,"accept"
-  ,"accept-language"
-  ,"accept-encoding"
-  ,"accept-charset"
-  ,"authorization"
-  ,"content-type"
-  ,"connection"
-  ,"user-agent"
-  /* sub-field */
-  ,"content-length"
-  ,"content-language"
-  ,"content-encoding"
-  ,"content-range"
-  ,"content-length"
-  ,"content-base"
-  ,"content-location"
-  ,"content-range"
-  ,"keep-alive"
-  ,"referer"
-  ,"cookie"
-  ,"last-modified"
-  ,"if-modified-since"
-  ,"date"
-  ,"server"
-  ,"www-authenticate"
-  ,"retry-after"
-  ,"location"
-  ,"content-md5"
-  ,"cache-control"
-  ,"pragma"
-  ,"expires"
-  ,"age"
-  ,"allow"
-  ,"etag"
-  ,"accept-ranges"
-  ,"set-cookie"
-  ,"vary"
-  ,"x-frame-options"
-  ,"x-xss-protection"
-  ,"x-content-type-options"
-  ,"x-forwarded-for"
-  ,"x-forwarded-host"
-  ,"x-forwarded-server"
-  ,"x-forwarded-proto"
-  ,"x-real-ip"
-  ,"x-request-id"
-  ,"x-correlation-id"
-  ,"x-csrf-token"
-  ,"x-device-user-agent"};
+void AMethod::initCandidateFields(void) {
+  AMethod::_candidateFields.insert("host");
+  AMethod::_candidateFields.insert("accept");
+  AMethod::_candidateFields.insert("accept-language");
+  AMethod::_candidateFields.insert("accept-encoding");
+  AMethod::_candidateFields.insert("accept-charset");
+  AMethod::_candidateFields.insert("authorization");
+  AMethod::_candidateFields.insert("content-type");
+  AMethod::_candidateFields.insert("connection");
+  AMethod::_candidateFields.insert("user-agent");
+  AMethod::_candidateFields.insert("content-length");
+  AMethod::_candidateFields.insert("content-language");
+  AMethod::_candidateFields.insert("content-encoding");
+  AMethod::_candidateFields.insert("content-range");
+  AMethod::_candidateFields.insert("content-length");
+  AMethod::_candidateFields.insert("content-base");
+  AMethod::_candidateFields.insert("content-location");
+  AMethod::_candidateFields.insert("content-range");
+  AMethod::_candidateFields.insert("keep-alive");
+  AMethod::_candidateFields.insert("referer");
+  AMethod::_candidateFields.insert("cookie");
+  AMethod::_candidateFields.insert("last-modified");
+  AMethod::_candidateFields.insert("if-modified-since");
+  AMethod::_candidateFields.insert("date");
+  AMethod::_candidateFields.insert("server");
+  AMethod::_candidateFields.insert("www-authenticate");
+  AMethod::_candidateFields.insert("retry-after");
+  AMethod::_candidateFields.insert("location");
+  AMethod::_candidateFields.insert("content-md5");
+  AMethod::_candidateFields.insert("cache-control");
+  AMethod::_candidateFields.insert("pragma");
+  AMethod::_candidateFields.insert("expires");
+  AMethod::_candidateFields.insert("age");
+  AMethod::_candidateFields.insert("allow");
+  AMethod::_candidateFields.insert("etag");
+  AMethod::_candidateFields.insert("accept-ranges");
+  AMethod::_candidateFields.insert("set-cookie");
+  AMethod::_candidateFields.insert("vary");
+  AMethod::_candidateFields.insert("x-frame-options");
+  AMethod::_candidateFields.insert("x-xss-protection");
+  AMethod::_candidateFields.insert("x-content-type-options");
+  AMethod::_candidateFields.insert("x-forwarded-server");
+  AMethod::_candidateFields.insert("x-forwarded-proto");
+  AMethod::_candidateFields.insert("x-real-ip");
+  AMethod::_candidateFields.insert("x-request-id");
+  AMethod::_candidateFields.insert("x-correlation-id");
+  AMethod::_candidateFields.insert("x-csrf-token");
+  AMethod::_candidateFields.insert("x-device-user-agent");
+}
 
 AMethod::AMethod() {}
 AMethod::AMethod(Status statusCode) : _statusCode(statusCode) {}
 AMethod::AMethod(std::string &request)
-    : _request(request), _responseFlag(false) {
-}
+    : _request(request), _responseFlag(false) {}
 AMethod::~AMethod() {}
 
 void AMethod::splitLinesByCRLF(void) {
@@ -108,12 +105,12 @@ void AMethod::parseHeaderFields(void) {
   while (lineIt != lineEnd) {
     pos = (*lineIt).find(": ");
     key = toLowerString((*lineIt).substr(0, pos));
-    if (_candidateFields.find(key) == _candidateFields.end())
-      throw(this->_statusCode = BAD_REQUEST);
-    value =
-        toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
-    // value 검증 필요
-    this->_headerFields[key] = value;
+    if (_candidateFields.find(key) != _candidateFields.end()) {
+      value =
+          toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
+      // value 검증 필요
+      this->_headerFields[key] = value;
+    }
     ++lineIt;
     this->_linesBuffer.pop_front();
     if (checkBodyExistance(lineIt)) {
