@@ -53,7 +53,8 @@ void ServerManager::startServer(void) {
       int eventCount = _eventQueue.newEvents();
       for (int i = 0; i < eventCount; ++i) {
         eventHandler.setCurrentEvent(i);
-        eventHandler.checkStatus();
+        eventHandler.checkFlags();
+        eventHandler.branchCondition();
       }
     }
   } catch (std::exception &e) {
