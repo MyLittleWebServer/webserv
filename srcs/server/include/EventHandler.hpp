@@ -25,21 +25,23 @@ class Client;
 
 class EventHandler : public Kqueue {
  private:
-  std::map<int, Client> _clients;
   std::set<uintptr_t> _serverSocketSet;
   struct kevent* _currentEvent;
+  bool _errorFlag;
 
-  void registClient(const uintptr_t clientSocket);
+  void checkErrorOnSocket(void);
   void acceptClient(void);
-  void branchCondition(void);
+  void registClient(const uintptr_t clientSocket);
+  void processRequest(Client& client);
+  void processResponse(Client& client);
 
  public:
   EventHandler(const std::vector<Server*>& serverVector);
   virtual ~EventHandler();
 
   void setCurrentEvent(int i);
-  void checkStatus(void);
-  void checkErrorOnSocketVector(void);
+  void checkFlags(void);
+  void branchCondition(void);
 };
 
 #endif

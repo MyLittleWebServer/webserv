@@ -53,13 +53,10 @@ void Client::receiveRequest(void) {
   }
 }
 
-void Client::sendResponse(std::map<int, Client> &clients) {
+void Client::sendResponse() {
   if (this->_flag != REQUEST_DONE) return;
-  if (clients.empty()) return;
   signal(SIGPIPE, SIG_DFL);
-  std::map<int, Client>::iterator it = clients.find(this->_sd);
-  if (it != clients.end() && this->_method != NULL &&
-      this->_method->getResponseFlag() == true) {
+  if (this->_method != NULL && this->_method->getResponseFlag() == true) {
     const std::string &response = this->_method->getResponse();
     ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
     if (n <= 0) {

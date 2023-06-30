@@ -14,19 +14,13 @@ void throwWithPerror(const std::string &msg) {
   throw(EXIT_FAILURE);
 }
 
-void disconnectClient(int client_fd, std::map<int, Client> &clients) {
-  std::map<int, Client>::iterator it = clients.find(client_fd);
-  if (it == clients.end()) {
-    std::cerr << "Client " << client_fd << " not found!" << std::endl;
-    return;
-  }
-  Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_WRITE);
-  Kqueue::deleteEvent((uintptr_t)client_fd, EVFILT_READ);
-  close(client_fd);
-  if (clients[client_fd].getMethod() != NULL)
-    delete clients[client_fd].getMethod();
-  clients.erase(client_fd);
-  std::cout << "Client " << client_fd << "disconnected!" << std::endl;
+void disconnectClient(const Client *client) {
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
+  close(client->getSD());
+  if (client->getMethod() != NULL) delete client->getMethod();
+  std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
+  delete client;
 }
 
 short getBoundPort(const struct kevent *_currentEvent) {
