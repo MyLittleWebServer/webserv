@@ -151,8 +151,12 @@ leaks: fclean all
 	./$(EXEC)
 leaks: export MallocStackLogging=0
 
-dbg: CFLAGS += -fsanitize=address -g3
+dbg: CFLAGS += -fsanitize=address -g3 -D DEBUG_MSG
 dbg: fclean all
+	./$(EXEC)
+
+dbg!: CFLAGS += -fsanitize=address -g3 -D DEBUG_MSG
+dbg!: all
 	./$(EXEC)
 
 # test: CFLAGS += -D PORT=8080
