@@ -53,7 +53,7 @@ class Client {
   AMethod *getMethod() const;
   void receiveRequest();
   void newHTTPMethod();
-  void sendResponse(std::map<int, Client> &_clients);
+  void sendResponse();
   void setFlag(ClientFlag flag);
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
