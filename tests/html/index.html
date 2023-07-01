@@ -26,8 +26,8 @@
   <title>Hello, World!</title>
 
   <style>
-    .img {
-      animation: rotate_image 6s linear infinite;
+    .rotate-image {
+      animation: rotate_image 13s ease infinite;
       transform-origin: 50% 50%;
     }
 
@@ -36,16 +36,62 @@
         transform: rotate(360deg);
       }
     }
+
+    .wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 40vh;
+    }
+
+    .text-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .inner-image {
+      margin: 0 10px;
+    }
+
+    .image1,
+    .image2 {
+      position: absolute;
+      object-fit: contain;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .image1 {
+      z-index: 2;
+    }
+
+    .image2 {
+      z-index: 1;
+      height: 25vh;
+    }
+
+    .h1 {
+      position: absolute;
+      z-index: 2;
+    }
   </style>
 
 </head>
+<div class="wrapper">
+  <img class="image1 inner-image rotate-image" src="./asset/teamlogo.png" alt="Rotating Image" />
+  <img class="image2 inner-image" src="./asset/marin03.jpg" alt="marin03" />
+</div>
+<div class="text-wrapper">
+  <h1>:3000/html/index.html</h1>
+  <img class="image2 inner-image" src="./asset/marin03.png" alt="marin03_p" />
+  <img class="image2 inner-image" src="./asset/index.ico/favicon-96x96.png" alt="marin-favi" />
+</div>
+
 
 <body>
-  <h1>here is rootdir/index.html</h1>
-  <img src="./asset/index.ico/favicon-96x96.png" />
-
-  <img class="img" src="./asset/teamlogo.png" alt="Rotating Image" />
-
 </body>
 
 </html>
