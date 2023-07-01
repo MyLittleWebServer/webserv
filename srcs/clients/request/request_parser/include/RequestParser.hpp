@@ -10,13 +10,14 @@ class RequestParser : public IRequestParser {
   RequestParser& operator=(const RequestParser& src);
 
   void splitLinesByCRLF(RequestDts& dts);
-
   void parseRequestLine(RequestDts& dts);
+  void parseAnchor(RequestDts& dts, size_t pos);
+  void parseQueryString(RequestDts& dts, size_t pos);
+  void parseQueryKeyValue(RequestDts& dts, std::string str);
   void parseHeaderFields(RequestDts& dts);
+  void checkContentLength(RequestDts& dts);
 
   std::string getFirstTokenOfPath(RequestDts& dts) const;
-  bool checkBodyExistance(std::list<std::string>::const_iterator it,
-                          RequestDts& dts) const;
   bool checkPathForm(RequestDts& dts);
   void setDefaultLocation(
       std::list<ILocationConfig*>::const_iterator defaultLocation,

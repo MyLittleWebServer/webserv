@@ -24,7 +24,12 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
     dts.linesBuffer->push_back(chunk);
     pos = delimeter + 2;
     delimeter = dts.request->find("\r\n", pos);
+    if (delimeter == pos) {
+      *dts.body = &(*dts.request)[pos + 2];
+      break;
+    }
   }
+  dts.request->clear();
 }
 
 void RequestParser::parseRequestLine(RequestDts &dts) {
@@ -41,11 +46,47 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   dts.linesBuffer->pop_front();
   iss >> *dts.method >> *dts.path >> *dts.protocol;
 
+  size_t anchorPos = dts.path->find("#");
+  if (anchorPos != std::string::npos) parseAnchor(dts, anchorPos);
+  size_t qMarkPos = dts.path->find("?");
+  if (qMarkPos != std::string::npos) parseQueryString(dts, qMarkPos);
+
   std::cout << "method: " << dts.method << std::endl;
   std::cout << "path: " << dts.path << std::endl;
   std::cout << "protocol: " << dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(_statusCode = BAD_REQUEST);
+}
+
+void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
+  *dts.anchor = &(*dts.path)[anchorPos + 1];
+  *dts.path = dts.path->substr(0, anchorPos);
+}
+
+void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
+  std::string tempQuery(
+      dts.path->substr(qMarkPos + 1, dts.path->size() - qMarkPos - 1));
+  *dts.path = dts.path->substr(0, qMarkPos);
+  size_t andPos = tempQuery.find("&", 0);
+  if (andPos == std::string::npos) {
+    parseQueryKeyValue(dts, tempQuery);
+    return;
+  }
+  size_t start = 0;
+  while (andPos != std::string::npos) {
+    std::string tempPair = tempQuery.substr(start, andPos);
+    parseQueryKeyValue(dts, tempPair);
+    start = andPos + 1;
+    andPos = tempQuery.find("&", start);
+  }
+}
+
+void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
+  size_t pos = str.find("=");
+  if (pos == std::string::npos) throw(_statusCode = BAD_REQUEST);
+  std::string key = str.substr(0, pos);
+  std::string value = str.substr(pos + 1, str.size() - pos - 1);
+  (*dts.queryString)[key] = value;
 }
 
 void RequestParser::parseHeaderFields(RequestDts &dts) {
@@ -66,17 +107,18 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
       (*dts.headerFields)[key] = value;
     }
     ++lineIt;
-    dts.linesBuffer->pop_front();
-    if (checkBodyExistance(lineIt, dts)) {
-      dts.linesBuffer->pop_front();
-      return;
-    }
   }
+  dts.linesBuffer->clear();
 }
 
-bool RequestParser::checkBodyExistance(
-    std::list<std::string>::const_iterator it, RequestDts &dts) const {
-  return (!dts.linesBuffer->empty() && *it == "");
+void RequestParser::checkContentLength(RequestDts &dts) {
+  if (dts.body->empty() ||
+      (*dts.headerFields)["transfer-encoding"] == "chunked")
+    return;
+  ssize_t contentLength =
+      std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
+  if (dts.body->size() > contentLength)
+    *dts.body = dts.body->substr(0, contentLength);
 }
 
 bool RequestParser::checkPathForm(RequestDts &dts) {
@@ -176,6 +218,7 @@ void RequestParser::parseRequest(RequestDts &requestDts) {
   this->splitLinesByCRLF(requestDts);
   this->parseRequestLine(requestDts);
   this->parseHeaderFields(requestDts);
+  this->checkContentLength(requestDts);
 }
 
 RequestParser &RequestParser::getInstance() {

@@ -14,13 +14,17 @@
 #include "Utils.hpp"
 
 typedef struct RequestDts {
+  Status* statusCode;
   std::string* request;
   std::string* method;
   std::string* path;
+  std::string* anchor;
   std::string* protocol;
   std::string* CGI;
+  std::string* body;
   std::list<std::string>* linesBuffer;
   std::map<std::string, std::string>* headerFields;
+  std::map<std::string, std::string>* queryString;
   std::map<std::string, std::string>* serverConf;
   IServerConfig* matchedServer;
   ILocationConfig* matchedLocation;

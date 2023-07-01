@@ -34,13 +34,17 @@ Request &Request::operator=(const Request &src) {
 }
 
 void Request::initDts() {
+  _request_parser_dts.statusCode = &_statusCode;
   _request_parser_dts.request = &_request;
   _request_parser_dts.method = &_method;
   _request_parser_dts.path = &_path;
+  _request_parser_dts.anchor = &_anchor;
   _request_parser_dts.protocol = &_protocol;
   _request_parser_dts.CGI = &_CGI;
+  _request_parser_dts.body = &_body;
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
+  _request_parser_dts.queryString = &_queryString;
   _request_parser_dts.serverConf = &_serverConf;
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
@@ -53,3 +57,19 @@ void Request::matchServerConf(short port) {
 }
 
 void Request::validatePath(void) { _parser.validatePath(_request_parser_dts); }
+
+void Request::appendRequest(const std::string &str) { this->_request += str; }
+void Request::appendRequest(const char *str) { this->_request += str; }
+
+const std::string &Request::getRequest(void) const { return (this->_request); }
+const std::string &Request::getMethod(void) const { return (this->_method); }
+const std::string &Request::getPath(void) const { return (this->_path); }
+const std::string &Request::getProtocol(void) const {
+  return (this->_protocol);
+}
+const std::string &Request::getCGI(void) const { return (this->_CGI); }
+const std::string &Request::getBody(void) const { return (this->_body); }
+Status Request::getStatusCode(void) const { return (this->_statusCode); }
+std::map<std::string, std::string> &Request::getHeaderFields(void) {
+  return (this->_headerFields);
+}
