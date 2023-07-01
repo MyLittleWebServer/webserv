@@ -28,6 +28,11 @@ void Server::addrInit(void) {
 }
 
 void Server::bindSocketWithAddr(void) {
+  int enable = 1;
+  if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+      throwWithPerror("setsockopt(SO_REUSEADDR) failed");
+  }
+
   if (bind(this->_socket, (struct sockaddr *)&_addr, sizeof(_addr)) == -1)
     throwWithPerror("bind() error");
 }
