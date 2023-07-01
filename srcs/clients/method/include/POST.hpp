@@ -6,7 +6,9 @@
 class POST : public AMethod {
  private:
   std::string _body;
-  void generateFile();
+  std::string _path;
+  std::string _contentType;
+  void generateResource();
 
  public:
   POST();
@@ -16,6 +18,7 @@ class POST : public AMethod {
   void appendBody();
   void doRequest();
   void createSuccessResponse();
+  std::string validateContentType();
 };
 
 #endif
