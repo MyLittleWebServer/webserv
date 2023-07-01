@@ -16,8 +16,9 @@ void POST::doRequest() {
   size_t bodySize = 0;
   std::istringstream ss(this->_headerFields["content-length"]);
   ss >> bodySize;
-
-  if (bodySize > _matchedLocation->getLimitClientBodySize())
+  if (bodySize == 0)
+    throw(this->_statusCode = BAD_REQUEST);
+  else if (bodySize > _matchedLocation->getLimitClientBodySize())
     throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
   this->_statusCode = CREATED;
   this->generateFile();
@@ -39,14 +40,35 @@ void POST::generateFile() {
 }
 
 void POST::createSuccessResponse(void) {
-  this->assembleResponseLine();
+  assembleResponseLine();
   this->_response += getCurrentTime();
-
+  this->_response += "\r\n";
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
+  this->_response += "Content-Length: ";
+  this->_response += "\r\n";
+  // this->appendBody();
+  std::cout << this->_response << "\n";
   this->_responseFlag = true;
 }
 
+/* POST 요청
+POST /api/users HTTP/1.1
+Host: example.com
+Content-Type: application/json
+Content-Length: 43
+
+{"username": "john_doe", "password": "secret123"}*/
 /*
+
+/* POST 응답
+HTTP/1.1 201 Created
+Content-Type: application/json
+Content-Length: 27
+
+{"message": "User created"}
+
+/*
+
 HTTP POST 요청의 본문(body)
 은 서버에 데이터를 전송하는 데
         사용됩니다.이 데이터는 서버에서 여러 가지 방법으로 처리될 수 있습니다.
