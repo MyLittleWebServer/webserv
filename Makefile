@@ -22,10 +22,11 @@ DBGS		=	-fsanitize=address -g3
 RM			=	rm -rf
 
 OBJ_DIR	=	./objects
+SRCS_DIR = ./srcs
 
 # ---- INCLUDE ---- #
 
-INCLUDE_DIRS = $(shell find . -type d -name "include")
+INCLUDE_DIRS = $(shell find $(SRCS_DIR) -type d -name "include")
 INCLUDE = $(patsubst %, -I %, $(INCLUDE_DIRS))
 
 # ---- TEST ---- #
@@ -92,10 +93,10 @@ sources1 +=	ExceptionThrower.cpp
 
 # ---- SRC ---- #
 
-SRCS = $(shell for name in $(sources1); do find . -name $$name; done)
+SRCS = $(shell for name in $(sources1); do find $(SRCS_DIR) -name $$name; done)
 SRCSS = $(patsubst ./%,%,$(SRCS))
 
-SRCS_BONUS = $(shell for name in $(sources2); do find . -name $$name; done)
+SRCS_BONUS = $(shell for name in $(sources2); do find $(SRCS_DIR) -name $$name; done)
 SRCS_BONUS := $(patsubst ./%,%,$(SRCS_BONUS))
 
 # ---- Elements ---- #
