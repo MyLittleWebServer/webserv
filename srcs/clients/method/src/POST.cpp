@@ -13,12 +13,11 @@ POST::POST(std::string& request) : AMethod(request) {}
 POST::~POST(void) {}
 
 void POST::doRequest() {
-  size_t bodySize = 0;
   std::istringstream ss(this->_headerFields["content-length"]);
-  ss >> bodySize;
-  if (bodySize == 0)
+  ss >> this->_body;
+  if (this->_body.size() == 0)
     throw(this->_statusCode = BAD_REQUEST);
-  else if (bodySize > _matchedLocation->getLimitClientBodySize())
+  else if (this->_body.size() > _matchedLocation->getLimitClientBodySize())
     throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
   this->_statusCode = CREATED;
   this->generateFile();
@@ -39,14 +38,17 @@ void POST::generateFile() {
   if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
 }
 
+void POST::appendBody(void) { this->_response += "\r\n" + this->_body; }
+
 void POST::createSuccessResponse(void) {
   assembleResponseLine();
   this->_response += getCurrentTime();
   this->_response += "\r\n";
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
   this->_response += "Content-Length: ";
+  this->_response += itos(this->_body.size());
   this->_response += "\r\n";
-  // this->appendBody();
+  this->appendBody();
   std::cout << this->_response << "\n";
   this->_responseFlag = true;
 }
