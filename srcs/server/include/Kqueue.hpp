@@ -25,6 +25,8 @@ class Kqueue {
   void addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                 uint32_t fflags, intptr_t data, void* udata);
   void addEvent(uintptr_t ident);
+  void enableEvent(uintptr_t ident, int16_t filter, void* udata);
+  void disableEvent(uintptr_t ident, int16_t filter, void* udata);
   static void deleteEvent(uintptr_t ident, int16_t filter);
   int newEvents(void);
 
