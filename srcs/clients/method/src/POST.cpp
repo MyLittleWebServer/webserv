@@ -14,6 +14,8 @@ POST::POST(std::string& request)
 POST::~POST(void) {}
 
 void POST::doRequest() {
+  // TODO: split into smaller functions
+  // pathFinder();
   std::string pathIndex;
 
   pathIndex = this->_path;
@@ -24,33 +26,62 @@ void POST::doRequest() {
   }
   std::istringstream ss(this->_headerFields["content-length"]);
   ss >> this->_body;
-  if (this->_body.size() == 0)
-    throw(this->_statusCode = BAD_REQUEST);
+  if (this->_body.size() == 0) throw(this->_statusCode = BAD_REQUEST);
+  /*
   else if (this->_body.size() > _matchedLocation->getLimitClientBodySize())
+    // body size error 의 경우  메서드를  GET으로 변경해야 브라우저에 501error
+    // 해당코드는 POST메서드 바깥에서 작업해야함.
     throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
+  */
   this->generateResource();
 }
 
 void POST::generateResource() {
+  if (_contentType == "application/x-www-form-urlencoded")
+    this->generateUrlEncoded();  // username=john_doe&password=secret123
+  else if (_contentType == "multipart/form-data")
+    this->generateMultipart();
+  // else
+  //   this->generateTextPlain();
+}
+
+void POST::generateUrlEncoded(void) {
+  std::string title;
+  std::string content;
+  std::string decodedBody = decodeURL(this->_body);
+
+  if (decodedBody.find("title") == std::string::npos ||
+      decodedBody.find("content") == std::string::npos)
+    throw(this->_statusCode = BAD_REQUEST);
+
+  size_t andPos = decodedBody.find('&');
+  size_t equalPos1 = decodedBody.find('=');
+  if (andPos == std::string::npos || equalPos1 == std::string::npos) {
+    throw(this->_statusCode = BAD_REQUEST);
+  }
+  title = decodedBody.substr(equalPos1, andPos - equalPos1);
+  decodedBody = decodedBody.substr(andPos);
+  size_t equalPos2 = decodedBody.find('=');
+  content = decodedBody.substr(equalPos2);
+
   if (access(this->_path.c_str(), F_OK) < 0)
     throw(this->_statusCode = FORBIDDEN);
   std::ofstream file(this->_path.c_str(), std::ios::out);
+  // TODO: kevent 등록하기
   if (!file.is_open()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
-  std::list<std::string>::const_iterator it = this->_linesBuffer.begin();
-  std::list<std::string>::const_iterator end = this->_linesBuffer.end();
-  while (it != end) {
-    file << *it++;
-    if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
-  }
+  file << content;
+  if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
   file.close();
-
   this->_statusCode = CREATED;
 }
+
+void POST::generateMultipart(void) {}
 
 void POST::appendBody(void) { this->_response += "\r\n" + this->_body; }
 
 void POST::createSuccessResponse(void) {
   assembleResponseLine();
+
   this->_response += getCurrentTime();
   this->_response += "\r\n";
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
@@ -62,13 +93,50 @@ void POST::createSuccessResponse(void) {
   this->_responseFlag = true;
 }
 
-std::string POST::validateContentType(void) {
-  if (_contentType == "text/plain" || _contentType == "multipart/form-data" ||
-      _contentType == "application/x-www-form-urlencoded") {
-    return _contentType + "; charset=UTF-8";
+// std::string POST::generateHTML(const std::vector<std::string>& files) {
+//   std::string html = "<html><body>";
+//   for (std::vector<std::string>::const_iterator it = files.begin();
+//        it != files.end(); ++it) {
+//     html += "<a href=\"" + *it + "\">" + *it + "</a><br>";
+//   }
+//   html += "</body></html>";
+//   return html;
+// }
+
+std::string POST::decodeURL(std::string const& encoded_string) {
+  int buf_len = 0;
+  std::replace(encoded_string.begin(), encoded_string.end(), '+', ' ');
+  size_t len = encoded_string.length();
+  std::string decoded_string;
+
+  for (size_t i = 0; i < len; ++i) {
+    if (encoded_string.at(i) == '%') i += 2;
+    ++buf_len;
   }
-  return _contentType;
+  char* buf = new char[buf_len];
+  std::memset(buf, 0, buf_len);
+  char c = 0;
+  size_t j = 0;
+  for (size_t i = 0; i < len; ++i, ++j) {
+    if (encoded_string.at(i) == '%') {
+      c = 0;
+      c += encoded_string.at(i + 1) >= 'A'
+               ? 16 * (encoded_string.at(i + 1) - 55)
+               : 16 * (encoded_string.at(i + 1) - 48);
+      c += encoded_string.at(i + 2) >= 'A' ? (encoded_string.at(i + 2) - 55)
+                                           : (encoded_string.at(i + 2) - 48);
+      i += 2;
+    } else {
+      c = encoded_string.at(i);
+    }
+    buf[j] = c;
+  }
+  for (int i = 0; i < buf_len; ++i) decoded_string.push_back(buf[i]);
+  delete[] buf;
+  return decoded_string;
 }
+
+/* ---------------------------------------------------------------------- */
 
 // GET::GET() {}
 // GET::GET(std::string& request) : AMethod(request), _contentType("text/plain")
@@ -189,15 +257,15 @@ std::string POST::validateContentType(void) {
 //   this->_response += itos(this->_body.size());
 //   this->_response += "\r\n";
 //   this->appendBody();
-//   #ifdef DEBUG_MSG_BODY
+// #ifdef DEBUG_MSG_BODY
 //   std::cout << this->_response << "\n";
-//   #endif
+// #endif
 //   this->_responseFlag = true;
 // }
 
 // std::string GET::validateContentType() {
 //   if (_contentType == "text/html" || _contentType == "text/css" ||
-//   _contentType == "application/json") {
+//       _contentType == "application/json") {
 //     return _contentType + "; charset=UTF-8";
 //   }
 //   return _contentType;
@@ -224,15 +292,26 @@ std::string POST::validateContentType(void) {
 //   }
 // }
 
-/* POST 요청
+/* POST 요청 (Content-Type: application/x-www-form-urlencoded)
+
+POST /api/users HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+
+username=john_doe&password=secret123
+*/
+
+/* POST 요청2 (Content-Type: application/json)
 POST /api/users HTTP/1.1
 Host: example.com
 Content-Type: application/json
 Content-Length: 43
 
-{"username": "john_doe", "password": "secret123"}*/
+{"username": "john_doe", "password": "secret123"}
+*/
 
-/* POST 응답
+/* POST 응답2 (Content-Type: application/json)
 HTTP/1.1 201 Created
 Content-Type: application/json
 Content-Length: 27

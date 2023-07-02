@@ -18,6 +18,13 @@ class POST : public AMethod {
   void appendBody();
   void doRequest();
   void createSuccessResponse();
+  void generateUrlEncoded();
+  void generateMultipart();
+  void generateHTML(const std::vector<std::string>& files);
+
+  std::string decodeURL(std::string const& encoded_string);
+  // void generateTextPlain();
+
   std::string validateContentType();
 };
 
