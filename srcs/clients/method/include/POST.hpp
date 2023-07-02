@@ -5,6 +5,9 @@
 
 class POST : public AMethod {
  private:
+  std::string _title;
+  std::string _content;
+
   std::string _body;
   std::string _path;
   std::string _contentType;
@@ -20,7 +23,7 @@ class POST : public AMethod {
   void createSuccessResponse();
   void generateUrlEncoded();
   void generateMultipart();
-  void generateHTML(const std::vector<std::string>& files);
+  std::string createHTML(std::string const& title);
 
   std::string decodeURL(std::string const& encoded_string);
   // void generateTextPlain();

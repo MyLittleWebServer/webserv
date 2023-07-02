@@ -26,13 +26,11 @@ void POST::doRequest() {
   }
   std::istringstream ss(this->_headerFields["content-length"]);
   ss >> this->_body;
-  if (this->_body.size() == 0) throw(this->_statusCode = BAD_REQUEST);
-  /*
+  if (this->_body.size() == 0)
+    throw(this->_statusCode = BAD_REQUEST);
+
   else if (this->_body.size() > _matchedLocation->getLimitClientBodySize())
-    // body size error 의 경우  메서드를  GET으로 변경해야 브라우저에 501error
-    // 해당코드는 POST메서드 바깥에서 작업해야함.
     throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
-  */
   this->generateResource();
 }
 
@@ -40,14 +38,12 @@ void POST::generateResource() {
   if (_contentType == "application/x-www-form-urlencoded")
     this->generateUrlEncoded();  // username=john_doe&password=secret123
   else if (_contentType == "multipart/form-data")
-    this->generateMultipart();
+    this->generateMultipart();  //
   // else
   //   this->generateTextPlain();
 }
 
 void POST::generateUrlEncoded(void) {
-  std::string title;
-  std::string content;
   std::string decodedBody = decodeURL(this->_body);
 
   if (decodedBody.find("title") == std::string::npos ||
@@ -59,17 +55,17 @@ void POST::generateUrlEncoded(void) {
   if (andPos == std::string::npos || equalPos1 == std::string::npos) {
     throw(this->_statusCode = BAD_REQUEST);
   }
-  title = decodedBody.substr(equalPos1, andPos - equalPos1);
+  this->_title = decodedBody.substr(equalPos1, andPos - equalPos1);
   decodedBody = decodedBody.substr(andPos);
   size_t equalPos2 = decodedBody.find('=');
-  content = decodedBody.substr(equalPos2);
+  this->_content = decodedBody.substr(equalPos2);
 
   if (access(this->_path.c_str(), F_OK) < 0)
     throw(this->_statusCode = FORBIDDEN);
   std::ofstream file(this->_path.c_str(), std::ios::out);
   // TODO: kevent 등록하기
   if (!file.is_open()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
-  file << content;
+  file << this->_content;
   if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
   file.close();
   this->_statusCode = CREATED;
@@ -77,31 +73,25 @@ void POST::generateUrlEncoded(void) {
 
 void POST::generateMultipart(void) {}
 
-void POST::appendBody(void) { this->_response += "\r\n" + this->_body; }
-
 void POST::createSuccessResponse(void) {
   assembleResponseLine();
-
   this->_response += getCurrentTime();
   this->_response += "\r\n";
   this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
   this->_response += "Content-Length: ";
   this->_response += itos(this->_body.size());
   this->_response += "\r\n";
-  this->appendBody();
+  this->createHTML(this->_title);
   std::cout << this->_response << "\n";
   this->_responseFlag = true;
 }
 
-// std::string POST::generateHTML(const std::vector<std::string>& files) {
-//   std::string html = "<html><body>";
-//   for (std::vector<std::string>::const_iterator it = files.begin();
-//        it != files.end(); ++it) {
-//     html += "<a href=\"" + *it + "\">" + *it + "</a><br>";
-//   }
-//   html += "</body></html>";
-//   return html;
-// }
+std::string POST::createHTML(std::string const& title) {
+  std::string html = "<html><body>";
+  html += "<a href=\"" + title + "\">" + title + "</a><br>";
+  html += "</body></html>";
+  return html;
+}
 
 std::string POST::decodeURL(std::string const& encoded_string) {
   int buf_len = 0;
