@@ -54,21 +54,18 @@ void Client::receiveRequest(void) {
 }
 
 void Client::sendResponse() {
-  if (this->_flag != REQUEST_DONE) return;
   signal(SIGPIPE, SIG_DFL);
-  if (this->_method != NULL && this->_method->getResponseFlag() == true) {
-    const std::string &response = this->_method->getResponse();
-    ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-    if (n <= 0) {
-      if (n == -1) throw Client::SendFailException();
-      signal(SIGPIPE, SIG_DFL);
-      throw Client::DisconnectedDuringSendException();
-    }
-    this->_request.clear();
-    this->_flag = END;
+  const std::string &response = this->_method->getResponse();
+  ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
+  if (n <= 0) {
+    if (n == -1) throw Client::SendFailException();
     signal(SIGPIPE, SIG_DFL);
-    return;
+    throw Client::DisconnectedDuringSendException();
   }
+  this->_request.clear();
+  this->_flag = END;
+  signal(SIGPIPE, SIG_DFL);
+  return;
 }
 
 void Client::newHTTPMethod(void) {
