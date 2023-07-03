@@ -235,7 +235,11 @@ RequestParser &RequestParser::getInstance() {
 
 void RequestParser::requestChecker(RequestDts &dts) {
   checkContentLenghWithTransferEncoding(dts);
-  checkBodyLength(dts);
+  checkRequestUriLimitLength(dts);
+  checkHeaderLimitSize(dts);
+  checkBodyLimitLength(dts);
+  checkAllowedMethods(dts);
+  if (dts.isParsed == false) return;
 }
 
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
@@ -244,7 +248,37 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
     throw(_statusCode = BAD_REQUEST);
 }
 
-void RequestParser::checkBodyLength(RequestDts &dts) {
+void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
+  // body uri header별로 따로따로 정의할건지 정하기
+  if (dts.path->size() >
+      Config::getInstance().getProxyConfig().getRequestUriLimitSize())
+    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+}
+
+void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
+  std::map<std::string, std::string>::const_iterator lineIt =
+      dts.headerFields->begin();
+  std::map<std::string, std::string>::const_iterator lineEnd =
+      dts.headerFields->end();
+
+  while (lineIt != lineEnd) {
+    if (lineIt->first.size() >
+        Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
+      throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+    ++lineIt;
+  }
+}
+
+void RequestParser::checkBodyLimitLength(RequestDts &dts) {
   if (*dts.contentLength > dts.matchedLocation->getLimitClientBodySize())
     throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+}
+
+void RequestParser::checkAllowedMethods(RequestDts &dts) {
+  std::map<std::string, bool> method_info =
+      dts.matchedLocation->getAllowMethod();
+  if (method_info.find(*dts.method) != method_info.end() &&
+      method_info[*dts.method] == true)
+    return;
+  throw(_statusCode = METHOD_NOT_ALLOWED);
 }

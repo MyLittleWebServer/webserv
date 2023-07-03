@@ -67,8 +67,6 @@ void Request::parseRequest(short port) {
   _parser.parseRequest(_request_parser_dts, port);
 }
 
-void Request::validatePath(void) { _parser.validatePath(_request_parser_dts); }
-
 void Request::appendRequest(const std::string &str) { this->_request += str; }
 void Request::appendRequest(const char *str) { this->_request += str; }
 
