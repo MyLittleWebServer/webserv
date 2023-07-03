@@ -113,15 +113,48 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   dts.linesBuffer->clear();
 }
 
-void RequestParser::checkContentLength(RequestDts &dts) {
-  if (dts.body->empty() ||
-      (*dts.headerFields)["transfer-encoding"] == "chunked")
+void RequestParser::parseContent(RequestDts &dts) {
+  if (dts.body->empty())
     return;
+  else if ((*dts.headerFields)["transfer-encoding"] != "")
+    return parseTransferEncoding(dts);
+  else
+    return parseContentLength(dts);
+}
+
+void RequestParser::parseContentLength(RequestDts &dts) {
   *dts.contentLength =
       std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
   if (dts.body->size() >= *dts.contentLength) {
     *dts.body = dts.body->substr(0, *dts.contentLength);
     *dts.isParsed = true;
+  }
+}
+
+void RequestParser::parseTransferEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["transfer-encoding"] == "chunked")
+    return parseChunkedEncoding(dts);
+}
+
+void RequestParser::parseChunkedEncoding(RequestDts &dts) {
+  std::string body = *dts.body;
+  *dts.contentLength = 0;
+  size_t pos = 0;
+  size_t end = 0;
+  size_t chunkSize = 0;
+  std::string chunk;
+
+  while (pos != std::string::npos) {
+    end = body.find("\r\n", pos);
+    chunkSize = std::strtol(body.substr(pos, end - pos).c_str(), NULL, 16);
+    if (chunkSize == 0) {
+      *dts.isParsed = true;
+      return;
+    }
+    chunk = body.substr(end + 2, chunkSize);
+    *dts.body += chunk;
+    *dts.contentLength += chunkSize;
+    pos = end + 2 + chunkSize + 2;
   }
 }
 
@@ -222,7 +255,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
-  checkContentLength(dts);
+  parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
   requestChecker(dts);

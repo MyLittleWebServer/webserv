@@ -15,7 +15,10 @@ class RequestParser : public IRequestParser {
   void parseQueryString(RequestDts& dts, size_t pos);
   void parseQueryKeyValue(RequestDts& dts, std::string str);
   void parseHeaderFields(RequestDts& dts);
-  void checkContentLength(RequestDts& dts);
+  void parseContent(RequestDts& dts);
+  void parseContentLength(RequestDts& dts);
+  void parseTransferEncoding(RequestDts& dts);
+  void parseChunkedEncoding(RequestDts& dts);
 
   std::string getFirstTokenOfPath(RequestDts& dts) const;
   bool checkPathForm(RequestDts& dts);
