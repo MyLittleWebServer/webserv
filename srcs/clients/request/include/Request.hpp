@@ -22,6 +22,8 @@ class Request : public IRequest {
   Request &operator=(const Request &src);
 
  private:
+  bool _isParsed;
+
   std::string _request;
   std::string _method;
   std::string _path;
@@ -41,6 +43,7 @@ class Request : public IRequest {
   ILocationConfig *_matchedLocation;
 
   void initDts();
+  void initMember();
 
  public:
   void parseRequest(void);
@@ -56,6 +59,7 @@ class Request : public IRequest {
   const std::string &getProtocol(void) const;
   const std::string &getCGI(void) const;
   const std::string &getBody(void) const;
+  const std::map<std::string, std::string> &getQueryString(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
 };

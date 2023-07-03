@@ -28,6 +28,7 @@ typedef struct RequestDts {
   std::map<std::string, std::string>* serverConf;
   IServerConfig* matchedServer;
   ILocationConfig* matchedLocation;
+  bool* isParsed;
 } RequestDts;
 
 class IRequestParser {

@@ -117,8 +117,10 @@ void RequestParser::checkContentLength(RequestDts &dts) {
     return;
   ssize_t contentLength =
       std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
-  if (dts.body->size() > contentLength)
+  if (dts.body->size() >= contentLength) {
     *dts.body = dts.body->substr(0, contentLength);
+    *dts.isParsed = true;
+  }
 }
 
 bool RequestParser::checkPathForm(RequestDts &dts) {

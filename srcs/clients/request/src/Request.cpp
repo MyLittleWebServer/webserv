@@ -28,10 +28,16 @@ Request &Request::operator=(const Request &src) {
     this->_method = src._method;
     this->_request = src._request;
     this->_statusCode = src._statusCode;
+    this->_queryString = src._queryString;
+    this->_body = src._body;
+    this->_anchor = src._anchor;
+    this->_isParsed = src._isParsed;
   }
   initDts();
   return *this;
 }
+
+void Request::initMember() { _isParsed = false; }
 
 void Request::initDts() {
   _request_parser_dts.statusCode = &_statusCode;
@@ -48,6 +54,7 @@ void Request::initDts() {
   _request_parser_dts.serverConf = &_serverConf;
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
+  _request_parser_dts.isParsed = &_isParsed;
 }
 
 void Request::parseRequest(void) { _parser.parseRequest(_request_parser_dts); }
@@ -72,4 +79,7 @@ const std::string &Request::getBody(void) const { return (this->_body); }
 Status Request::getStatusCode(void) const { return (this->_statusCode); }
 std::map<std::string, std::string> &Request::getHeaderFields(void) {
   return (this->_headerFields);
+}
+const std::map<std::string, std::string> &Request::getQueryString(void) const {
+  return (this->_queryString);
 }
