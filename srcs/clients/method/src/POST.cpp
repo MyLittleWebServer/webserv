@@ -16,14 +16,14 @@ POST::~POST(void) {}
 void POST::doRequest() {
   // TODO: split into smaller functions
   // pathFinder();
-  std::string pathIndex;
+  // std::string pathIndex;
 
-  pathIndex = this->_path;
-  if (this->_matchedLocation->getIndex() != "") {
-    pathIndex += this->_path[this->_path.size() - 1] == '/'
-                     ? this->_matchedLocation->getIndex()
-                     : "/" + this->_matchedLocation->getIndex();
-  }
+  // pathIndex = this->_path;
+  // if (this->_matchedLocation->getIndex() != "") {
+  //   pathIndex += this->_path[this->_path.size() - 1] == '/'
+  //                    ? this->_matchedLocation->getIndex()
+  //                    : "/" + this->_matchedLocation->getIndex();
+  // }
   std::istringstream ss(this->_headerFields["content-length"]);
   ss >> this->_body;
   if (this->_body.size() == 0)
@@ -37,8 +37,9 @@ void POST::doRequest() {
 void POST::generateResource() {
   if (_contentType == "application/x-www-form-urlencoded")
     this->generateUrlEncoded();  // username=john_doe&password=secret123
-  else if (_contentType == "multipart/form-data")
-    this->generateMultipart();  //
+  else if (_contentType.substr(0, 20) == "multipart/form-data" &&
+           _contentType.find(";") != std::string::npos)
+    this->generateMultipart();
   // else
   //   this->generateTextPlain();
 }
@@ -71,7 +72,18 @@ void POST::generateUrlEncoded(void) {
   this->_statusCode = CREATED;
 }
 
-void POST::generateMultipart(void) {}
+void POST::generateMultipart(void) {
+  size_t boundaryPos = this->_contentType.find("boundary");
+  if (boundaryPos == std::string::npos) throw(this->_statusCode = BAD_REQUEST);
+  std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
+  if (boundaryValue == "") throw(this->_statusCode = BAD_REQUEST);
+
+  size_t dispositionPos = _body.find("content-disposition");
+  if (dispositionPos == std::string::npos)
+    throw(this->_statusCode = BAD_REQUEST);
+  size_t typePos = _body.find("content-type");
+  if (typePos == std::string::npos) throw(this->_statusCode = BAD_REQUEST);
+}
 
 void POST::createSuccessResponse(void) {
   assembleResponseLine();
