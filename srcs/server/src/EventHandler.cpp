@@ -56,17 +56,21 @@ void EventHandler::processRequest(Client &currClient) {
     currClient.getMethod()->validatePath();
     currClient.getMethod()->doRequest();
     currClient.getMethod()->createSuccessResponse();
+	enableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
   } catch (enum Status &code) {
     currClient.getMethod()->createErrorResponse();
+	enableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
   } catch (std::exception &e) {
     disconnectClient(&currClient);
     std::cerr << e.what() << '\n';
+	return ;
   };
 }
 
 void EventHandler::processResponse(Client &currClient) {
   try {
     currClient.sendResponse();
+  	disableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
   };
@@ -88,6 +92,6 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
   Client *newClient = new Client(clientSocket);
   addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
            static_cast<void *>(newClient));
-  addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+  addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
            static_cast<void *>(newClient));
 }
