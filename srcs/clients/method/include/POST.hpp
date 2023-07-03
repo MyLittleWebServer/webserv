@@ -5,12 +5,16 @@
 
 class POST : public AMethod {
  private:
+  std::string _body;
+  std::string _contentType;
+  std::string _path;
+  /* urlEncoded */
   std::string _title;
   std::string _content;
-
-  std::string _body;
-  std::string _path;
-  std::string _contentType;
+  /* multipart/form-data */
+  std::string _disposName;
+  std::string _disposFilename;
+  std::string _type;
   void generateResource();
 
  public:

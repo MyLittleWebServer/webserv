@@ -79,10 +79,26 @@ void POST::generateMultipart(void) {
   if (boundaryValue == "") throw(this->_statusCode = BAD_REQUEST);
 
   size_t dispositionPos = _body.find("content-disposition");
-  if (dispositionPos == std::string::npos)
-    throw(this->_statusCode = BAD_REQUEST);
   size_t typePos = _body.find("content-type");
-  if (typePos == std::string::npos) throw(this->_statusCode = BAD_REQUEST);
+  if (dispositionPos == std::string::npos || typePos == std::string::npos)
+    throw(this->_statusCode = BAD_REQUEST);
+  
+  std::string disposition = _body.substr(dispositionPos + 32, typePos - dispositionPos);
+  if (disposition == "")
+    throw(this->_statusCode = BAD_REQUEST);
+
+  size_t equalPos = disposition.find('=');
+  size_t semicolonPos = disposition.find(';');
+  if (equalPos == std::string::npos || semicolonPos == std::string::npos)
+    throw(this->_statusCode = BAD_REQUEST);
+
+  this->_disposName = disposition.substr(equalPos + 2, semicolonPos - 2);
+  this->_disposFilename = disposition.substr(semicolonPos + 13);
+  if (this->_disposName == "" || this->_disposFilename == "")
+    throw(this->_statusCode = BAD_REQUEST);
+  
+  this->_type = _body.substr(typePos + 14);
+  if (this->_type == "") throw(this->_statusCode = BAD_REQUEST);
 }
 
 void POST::createSuccessResponse(void) {
