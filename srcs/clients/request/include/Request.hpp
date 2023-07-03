@@ -23,6 +23,7 @@ class Request : public IRequest {
 
  private:
   bool _isParsed;
+  size_t _contentLength;
 
   std::string _request;
   std::string _method;
@@ -46,9 +47,7 @@ class Request : public IRequest {
   void initMember();
 
  public:
-  void parseRequest(void);
-  void matchServerConf(short port);
-  void validatePath(void);
+  void parseRequest(short port);
 
   void appendRequest(const std::string &str);
   void appendRequest(const char *str);

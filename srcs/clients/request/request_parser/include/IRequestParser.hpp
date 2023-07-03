@@ -29,13 +29,12 @@ typedef struct RequestDts {
   IServerConfig* matchedServer;
   ILocationConfig* matchedLocation;
   bool* isParsed;
+  unsigned long* contentLength;
 } RequestDts;
 
 class IRequestParser {
  public:
   virtual ~IRequestParser(){};
 
-  virtual void parseRequest(RequestDts& dts) = 0;
-  virtual void matchServerConf(short port, RequestDts& dts) = 0;
-  virtual void validatePath(RequestDts& dts) = 0;
+  virtual void parseRequest(RequestDts& dts, short port) = 0;
 };

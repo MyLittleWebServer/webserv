@@ -103,7 +103,6 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     pos = (*lineIt).find(": ");
     end = (*lineIt).find("\r\n");
     key = toLowerString((*lineIt).substr(0, pos));
-    std::cout << key << std::endl;
     if (_candidateFields.find(key) != _candidateFields.end()) {
       value = toLowerString((*lineIt).substr(pos + 2, end - pos - 2));
       // value 검증 필요
@@ -118,10 +117,10 @@ void RequestParser::checkContentLength(RequestDts &dts) {
   if (dts.body->empty() ||
       (*dts.headerFields)["transfer-encoding"] == "chunked")
     return;
-  size_t contentLength =
+  *dts.contentLength =
       std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
-  if (dts.body->size() >= contentLength) {
-    *dts.body = dts.body->substr(0, contentLength);
+  if (dts.body->size() >= *dts.contentLength) {
+    *dts.body = dts.body->substr(0, *dts.contentLength);
     *dts.isParsed = true;
   }
 }
@@ -219,14 +218,33 @@ void RequestParser::validatePath(RequestDts &dts) {
   this->setDefaultLocation(defaultLocation, dts);
 }
 
-void RequestParser::parseRequest(RequestDts &requestDts) {
-  this->splitLinesByCRLF(requestDts);
-  this->parseRequestLine(requestDts);
-  this->parseHeaderFields(requestDts);
-  this->checkContentLength(requestDts);
+void RequestParser::parseRequest(RequestDts &dts, short port) {
+  splitLinesByCRLF(dts);
+  parseRequestLine(dts);
+  parseHeaderFields(dts);
+  checkContentLength(dts);
+  matchServerConf(port, dts);
+  validatePath(dts);
+  requestChecker(dts);
 }
 
 RequestParser &RequestParser::getInstance() {
   static RequestParser instance;
   return instance;
+}
+
+void RequestParser::requestChecker(RequestDts &dts) {
+  checkContentLenghWithTransferEncoding(dts);
+  checkBodyLength(dts);
+}
+
+void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["content-length"] != "" &&
+      (*dts.headerFields)["transfer-encoding"] != "")
+    throw(_statusCode = BAD_REQUEST);
+}
+
+void RequestParser::checkBodyLength(RequestDts &dts) {
+  if (*dts.contentLength > dts.matchedLocation->getLimitClientBodySize())
+    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
 }

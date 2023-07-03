@@ -1,10 +1,14 @@
 #include "Request.hpp"
 
-Request::Request() : _parser(RequestParser::getInstance()) { initDts(); }
+Request::Request() : _parser(RequestParser::getInstance()) {
+  initDts();
+  _contentLength = 0;
+}
 
 Request::Request(const std::string &request)
     : _request(request), _parser(RequestParser::getInstance()) {
   initDts();
+  _contentLength = 0;
 }
 
 Request::~Request() {}
@@ -32,6 +36,7 @@ Request &Request::operator=(const Request &src) {
     this->_body = src._body;
     this->_anchor = src._anchor;
     this->_isParsed = src._isParsed;
+    this->_contentLength = src._contentLength;
   }
   initDts();
   return *this;
@@ -55,12 +60,11 @@ void Request::initDts() {
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
   _request_parser_dts.isParsed = &_isParsed;
+  _request_parser_dts.contentLength = &_contentLength;
 }
 
-void Request::parseRequest(void) { _parser.parseRequest(_request_parser_dts); }
-
-void Request::matchServerConf(short port) {
-  _parser.matchServerConf(port, _request_parser_dts);
+void Request::parseRequest(short port) {
+  _parser.parseRequest(_request_parser_dts, port);
 }
 
 void Request::validatePath(void) { _parser.validatePath(_request_parser_dts); }

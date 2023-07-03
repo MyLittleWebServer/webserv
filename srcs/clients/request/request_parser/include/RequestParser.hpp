@@ -22,15 +22,20 @@ class RequestParser : public IRequestParser {
   void setDefaultLocation(
       std::list<ILocationConfig*>::const_iterator defaultLocation,
       RequestDts& dts);
+  void matchServerConf(short port, RequestDts& dts);
+  void validatePath(RequestDts& dts);
+
+ private:
+  void requestChecker(RequestDts& dts);
+  void checkContentLenghWithTransferEncoding(RequestDts& dts);
+  void checkBodyLength(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;
   Status _statusCode;
 
  public:
-  void parseRequest(RequestDts& dts);
-  void matchServerConf(short port, RequestDts& dts);
-  void validatePath(RequestDts& dts);
+  void parseRequest(RequestDts& dts, short port);
 
   static RequestParser& getInstance();
 };
