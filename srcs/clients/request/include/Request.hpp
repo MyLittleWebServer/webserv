@@ -16,7 +16,7 @@
 class Request : public IRequest {
  public:
   Request();
-  Request(std::string &request);
+  Request(const std::string &request);
   virtual ~Request();
   Request(const Request &src);
   Request &operator=(const Request &src);

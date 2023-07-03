@@ -2,15 +2,15 @@
 
 Request::Request() : _parser(RequestParser::getInstance()) { initDts(); }
 
-Request::Request(std::string &request)
-    : _parser(RequestParser::getInstance()), _request(request) {
+Request::Request(const std::string &request)
+    : _request(request), _parser(RequestParser::getInstance()) {
   initDts();
 }
 
 Request::~Request() {}
 
 Request::Request(const Request &src)
-    : _parser(RequestParser::getInstance()), _request(src._request) {
+    : _request(src._request), _parser(RequestParser::getInstance()) {
   *this = src;
 }
 

@@ -29,7 +29,8 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
       break;
     }
   }
-  dts.request->clear();
+  // 할지 안할지 고려
+  // dts.request->clear();
 }
 
 void RequestParser::parseRequestLine(RequestDts &dts) {
@@ -51,9 +52,9 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   size_t qMarkPos = dts.path->find("?");
   if (qMarkPos != std::string::npos) parseQueryString(dts, qMarkPos);
 
-  std::cout << "method: " << dts.method << std::endl;
-  std::cout << "path: " << dts.path << std::endl;
-  std::cout << "protocol: " << dts.protocol << std::endl;
+  std::cout << "method: " << *dts.method << std::endl;
+  std::cout << "path: " << *dts.path << std::endl;
+  std::cout << "protocol: " << *dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(_statusCode = BAD_REQUEST);
 }
@@ -95,14 +96,16 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
 
   std::string key;
   std::string value;
-
   size_t pos = 0;
+  size_t end = 0;
+
   while (lineIt != lineEnd) {
     pos = (*lineIt).find(": ");
+    end = (*lineIt).find("\r\n");
     key = toLowerString((*lineIt).substr(0, pos));
+    std::cout << key << std::endl;
     if (_candidateFields.find(key) != _candidateFields.end()) {
-      value =
-          toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
+      value = toLowerString((*lineIt).substr(pos + 2, end - pos - 2));
       // value 검증 필요
       (*dts.headerFields)[key] = value;
     }
@@ -115,7 +118,7 @@ void RequestParser::checkContentLength(RequestDts &dts) {
   if (dts.body->empty() ||
       (*dts.headerFields)["transfer-encoding"] == "chunked")
     return;
-  ssize_t contentLength =
+  size_t contentLength =
       std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
   if (dts.body->size() >= contentLength) {
     *dts.body = dts.body->substr(0, contentLength);
