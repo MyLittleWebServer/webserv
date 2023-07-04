@@ -39,7 +39,6 @@ void ServerManager::initServer(void) {
       ++it;
     }
     std::cout << "Server initialized" << std::endl;
-    AMethod::initCandidateFields();
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }

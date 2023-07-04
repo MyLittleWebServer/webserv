@@ -1,4 +1,12 @@
+
 #include "EventHandler.hpp"
+
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 EventHandler::EventHandler(const std::vector<Server *> &serverVector)
     : _errorFlag(false) {
@@ -50,27 +58,33 @@ void EventHandler::processRequest(Client &currClient) {
   try {
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
+    currClient.parseRequest(getBoundPort(_currentEvent));
+    if (currClient.getFlag() == RECEIVING) return;
     currClient.newHTTPMethod();
-    currClient.getMethod()->parseRequest();
-    currClient.getMethod()->matchServerConf(getBoundPort(_currentEvent));
-    currClient.getMethod()->validatePath();
-    currClient.getMethod()->doRequest();
-    currClient.getMethod()->createSuccessResponse();
-	enableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
+    if (currClient.isCgi())
+      (void)NULL;  // cgi 처리 로직
+    else {
+      currClient.doRequest();
+    }
+    // currClient.createSuccessResponse();
+    // enableEvent(currClient.getSD(), EVFILT_WRITE,
+    //             static_cast<void *>(&currClient));
   } catch (enum Status &code) {
-    currClient.getMethod()->createErrorResponse();
-	enableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
+    currClient.createErrorResponse();
+    enableEvent(currClient.getSD(), EVFILT_WRITE,
+                static_cast<void *>(&currClient));
   } catch (std::exception &e) {
     disconnectClient(&currClient);
     std::cerr << e.what() << '\n';
-	return ;
+    return;
   };
 }
 
 void EventHandler::processResponse(Client &currClient) {
   try {
     currClient.sendResponse();
-  	disableEvent(currClient.getSD(), EVFILT_WRITE, static_cast<void *>(&currClient));
+    disableEvent(currClient.getSD(), EVFILT_WRITE,
+                 static_cast<void *>(&currClient));
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
   };
@@ -94,4 +108,13 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
            static_cast<void *>(newClient));
   addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
            static_cast<void *>(newClient));
+}
+
+void EventHandler::disconnectClient(const Client *client) {
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
+  close(client->getSD());
+  if (client->getMethod() != NULL) delete client->getMethod();
+  std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
+  delete client;
 }

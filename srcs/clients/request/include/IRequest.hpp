@@ -1,9 +1,10 @@
 #pragma once
 
+#include <string>
+
 class IRequest {
  public:
   virtual ~IRequest() {}
-  void parseRequest(void);
-  void matchServerConf(short port);
-  void validatePath(void);
+  virtual void parseRequest(short port) = 0;
+  virtual void parseRequest(const std::string &request, short port) = 0;
 };

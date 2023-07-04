@@ -1,7 +1,26 @@
 #include "Response.hpp"
 
+#include "Status.hpp"
+
 Response::Response()
-    : _responseFlag(false), _assembleFlag(false), _statusCode(Status::OK) {}
+    : _responseFlag(false),
+      _assembleFlag(false),
+      _statusCode(this->_statusCode = OK) {}
+
+Response::~Response() {}
+
+Response::Response(const Response &src) { *this = src; }
+
+Response &Response::operator=(const Response &src) {
+  if (this != &src) {
+    this->_response = src._response;
+    this->_responseFlag = src._responseFlag;
+    this->_assembleFlag = src._assembleFlag;
+    this->_statusCode = src._statusCode;
+    this->_body = src._body;
+  }
+  return (*this);
+}
 
 const std::string &Response::getResponse(void) const {
   return (this->_response);
@@ -43,3 +62,10 @@ void Response::resetResponse(void) {
   this->_response.clear();
   this->_responseFlag = false;
 }
+
+void Response::addResponse(std::string msg) { _response += msg; }
+void Response::setResponseParsed() {
+  this->_assembleFlag = true;
+  this->_responseFlag = true;
+}
+bool Response::isParsed() { return _responseFlag; }

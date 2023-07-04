@@ -82,6 +82,10 @@ void Request::parseRequest(const std::string &request, short port) {
 void Request::appendRequest(const std::string &str) { this->_request += str; }
 void Request::appendRequest(const char *str) { this->_request += str; }
 
+RequestDts &Request::getRequestParserDts(void) {
+  return this->_request_parser_dts;
+}
+
 const std::string &Request::getRequest(void) const { return (this->_request); }
 const std::string &Request::getMethod(void) const { return (this->_method); }
 const std::string &Request::getPath(void) const { return (this->_path); }

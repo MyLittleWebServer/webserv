@@ -1,5 +1,9 @@
 #include "Client.hpp"
 
+#include "DELETE.hpp"
+#include "DummyMethod.hpp"
+#include "GET.hpp"
+#include "POST.hpp"
 #include "Utils.hpp"
 
 char Client::_buf[RECEIVE_LEN + 1] = {0};
@@ -24,13 +28,12 @@ Client::~Client(void) {
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
-  this->_flag = REQUEST_DONE;
   return (n < RECEIVE_LEN ||
           recv(this->_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
 }
 
 void Client::receiveRequest(void) {
-  while (this->_flag == START) {
+  while (this->_flag == RECEIVING) {
     signal(SIGPIPE, SIG_IGN);
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
@@ -39,13 +42,15 @@ void Client::receiveRequest(void) {
       throw Client::DisconnectedDuringRecvException();
     }
     Client::_buf[n] = '\0';
-    this->_request += Client::_buf;
+    this->_recvBuff += Client::_buf;
     std::memset(Client::_buf, 0, RECEIVE_LEN + 1);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
 #endif
+      this->_flag = RECEIVE_DONE;
+      this->_recvBuff.clear();
       signal(SIGPIPE, SIG_DFL);
       return;
     }
@@ -53,39 +58,55 @@ void Client::receiveRequest(void) {
   }
 }
 
+void Client::createErrorResponse() { _response.createErrorResponse(); }
+
+void Client::parseRequest(short port) {
+  if (_request.isParsed()) return;
+  _request.parseRequest(_recvBuff, port);
+  if (_request.isParsed()) _flag = REQUEST_DONE;
+}
+
+bool Client::isCgi() { return _request.isCgi(); }
+
+void Client::doRequest() {
+  this->_method->doRequest(_request.getRequestParserDts());
+}
+
 void Client::sendResponse() {
   signal(SIGPIPE, SIG_DFL);
-  const std::string &response = this->_method->getResponse();
+  // const std::string &response = this->_method->getResponse();
+  const std::string &response = _response.getResponse();
+
   ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     signal(SIGPIPE, SIG_DFL);
     throw Client::DisconnectedDuringSendException();
   }
-  this->_request.clear();
+  // need to make _request.clear(), _response.clear() logic
   this->_flag = END;
   signal(SIGPIPE, SIG_DFL);
   return;
 }
 
 void Client::newHTTPMethod(void) {
-  if (this->_request.compare(0, 4, "GET ") == 0) {
-    this->_method = new GET(this->_request);
+  if (this->_request.getMethod().compare(0, 4, "GET ") == 0) {
+    this->_method = new GET();
     return;
   }
-  if (this->_request.compare(0, 5, "POST ") == 0) {
-    this->_method = new POST(this->_request);
+  if (this->_request.getMethod().compare(0, 5, "POST ") == 0) {
+    this->_method = new POST();
     return;
   }
-  if (this->_request.compare(0, 7, "DELETE ") == 0) {
-    this->_method = new DELETE(this->_request);
+  if (this->_request.getMethod().compare(0, 7, "DELETE ") == 0) {
+    this->_method = new DELETE();
     return;
   }
   this->_method = new DummyMethod(NOT_IMPLEMENTED);
   throw(NOT_IMPLEMENTED);
 }
 
-AMethod *Client::getMethod() const { return this->_method; }
+IMethod *Client::getMethod() const { return this->_method; }
 
 ClientFlag Client::getFlag() const { return this->_flag; }
 

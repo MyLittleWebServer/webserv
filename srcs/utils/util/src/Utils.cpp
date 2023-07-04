@@ -1,26 +1,19 @@
-#include "Utils.hpp"
-
 #include <netinet/in.h>
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
+#include <cstdarg>
 #include <ctime>
+#include <iostream>
+#include <sstream>
 
 #include "Kqueue.hpp"
 
 void throwWithPerror(const std::string &msg) {
   std::cerr << msg << std::endl;
   throw(EXIT_FAILURE);
-}
-
-void disconnectClient(const Client *client) {
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
-  close(client->getSD());
-  if (client->getMethod() != NULL) delete client->getMethod();
-  std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
-  delete client;
 }
 
 short getBoundPort(const struct kevent *_currentEvent) {

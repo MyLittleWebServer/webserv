@@ -1,17 +1,16 @@
 #include "DELETE.hpp"
 
 DELETE::DELETE() {}
-DELETE::DELETE(std::string &request) : AMethod(request) {}
 DELETE::~DELETE() {}
 
-void DELETE::doRequest(void) {
-  if (std::remove(this->_path.c_str()) == false) {
-    throw(this->_statusCode = NOT_FOUND);
+void DELETE::doRequest(RequestDts& dts) {
+  if (std::remove(dts.path->c_str()) == false) {
+    throw(*dts.statusCode = NOT_FOUND);
   }
-  this->_statusCode = OK;
+  *dts.statusCode = OK;
 }
 
-void DELETE::createSuccessResponse(void) {
-  this->assembleResponseLine();
-  this->_responseFlag = true;
+void DELETE::createSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.setResponseParsed();
 }

@@ -8,101 +8,179 @@
 
 POST::POST(void) {}
 
-POST::POST(std::string& request) : AMethod(request) {}
-
 POST::~POST(void) {}
 
-void POST::doRequest() {
+void POST::doRequest(RequestDts& dts) {
   size_t bodySize = 0;
-  std::istringstream ss(this->_headerFields["content-length"]);
+  std::istringstream ss((*dts.headerFields)["content-length"]);
   ss >> bodySize;
 
-  if (bodySize > _matchedLocation->getLimitClientBodySize())
-    throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
-  this->_statusCode = CREATED;
-  this->generateFile();
+  if (bodySize > dts.matchedLocation->getLimitClientBodySize())
+    throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
+  *dts.statusCode = CREATED;
+  this->generateFile(dts);
 }
 
-void POST::generateFile() {
-  if (access(this->_path.c_str(), F_OK) < 0)
-    throw(this->_statusCode = FORBIDDEN);
-  std::ofstream file(this->_path.c_str(), std::ios::out);
-  if (!file.is_open()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
-  std::list<std::string>::const_iterator it = this->_linesBuffer.begin();
-  std::list<std::string>::const_iterator end = this->_linesBuffer.end();
+void POST::generateFile(RequestDts& dts) {
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
+  std::ofstream file(dts.path->c_str(), std::ios::out);
+  if (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  std::list<std::string>::const_iterator it = dts.linesBuffer->begin();
+  std::list<std::string>::const_iterator end = dts.linesBuffer->end();
   while (it != end) {
     file << *it++;
-    if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
+    if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
   }
   file.close();
-  if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
+  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
 }
 
-void POST::createSuccessResponse(void) {
-  this->assembleResponseLine();
-  this->_response += getCurrentTime();
-
-  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-  this->_responseFlag = true;
+void POST::generateResource(RequestDts& dts, IResponse& response) {
+  if (_contentType == "application/x-www-form-urlencoded")
+    this->generateUrlEncoded(dts, response);
+  else if (_contentType.substr(0, 20) == "multipart/form-data" &&
+           _contentType.find(";") != std::string::npos)
+    this->generateMultipart(dts, response);
 }
 
-/*
-HTTP POST 요청의 본문(body)
-은 서버에 데이터를 전송하는 데
-        사용됩니다.이 데이터는 서버에서 여러 가지 방법으로 처리될 수 있습니다.
+void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
+  std::string decodedBody = decodeURL(this->_body);
 
-- 클라이언트에서 전송한 데이터가 데이터베이스에 저장되는 경우
-- 클라이언트에서 업로드한 파일이 서버의 파일 시스템에 저장되는 경우
-- 클라이언트에서 전송한 명령이 서버에서 실행되는 경우
+  if (decodedBody.find("title") == std::string::npos ||
+      decodedBody.find("content") == std::string::npos)
+    throw(*dts.statusCode = BAD_REQUEST);
 
-        따라서 POST 요청의 본문이 그대로 파일에 저장되는지는 서버의 로직에
-따라 다릅니다.예를 들어, 클라이언트가 파일을 업로드하는 경우 서버는 그 파일을
-디스크에 저장할 수 있습니다.그러나 POST 요청의 본문이 JSON과 같은 데이터를
-포함하고 있다면, 이 데이터는 일반적으로 데이터베이스에 저장되거나 서버의
-로직에 따라 처리됩니다.
+  size_t andPos = decodedBody.find('&');
+  size_t equalPos1 = decodedBody.find('=');
+  if (andPos == std::string::npos || equalPos1 == std::string::npos) {
+    throw(*dts.statusCode = BAD_REQUEST);
+  }
+  this->_title = decodedBody.substr(equalPos1, andPos - equalPos1);
+  decodedBody = decodedBody.substr(andPos);
+  size_t equalPos2 = decodedBody.find('=');
+  this->_content = decodedBody.substr(equalPos2);
 
-    그러므로 일반적으로 HTTP POST 요청의 본문이 그대로 파일에 저장되지는
-않지만, 서버의 구현에 따라 그렇게 처리될 수도 있습니다 .이는 서버가
-클라이언트에서 보내온 데이터를 어떻게 처리하느냐에 따라 달라집니다.
-*/
+  if (access(this->_path.c_str(), F_OK) < 0) throw(*dts.statusCode = FORBIDDEN);
 
-/*
-POST 요청에 대한 응답으로 서버가 반환할 수 있는 상태 코드는 다음과 같습니다:
+  prepareTextBody(this->_path);
 
-1. `200 OK`: 요청이 성공적으로 처리되었으며, 서버가 응답 본문에 추가 정보를
-제공하고 있다는 것을 나타냅니다.
+  *dts.statusCode = CREATED;
+  createSuccessResponse(response);
+}
 
-2. `201 Created`: 요청이 성공적으로 처리되었고, 새 리소스가 생성되었다는 것을
-나타냅니다. 주로 POST 요청으로 새 리소스를 생성했을 때 사용됩니다.
+void POST::generateMultipart(RequestDts& dts, IResponse& response) {
+  size_t boundaryPos = this->_contentType.find("boundary");
+  if (boundaryPos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
+  std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
+  if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
-3. `202 Accepted`: 요청은 수락되었지만, 아직 처리되지 않았다는 것을
-나타냅니다. 나중에 처리될 것이며, 응답은 처리가 완료되면 가능한 빠르게 반환될
-것입니다.
+  size_t dispositionPos = _body.find("content-disposition");
+  size_t typePos = _body.find("content-type");
+  if (dispositionPos == std::string::npos || typePos == std::string::npos)
+    throw(*dts.statusCode = BAD_REQUEST);
 
-4. `204 No Content`: 요청이 성공적으로 처리되었지만, 서버가 반환할 추가 내용이
-없다는 것을 나타냅니다. 일반적으로 POST 요청에 대한 응답으로 사용되며, 이 경우
-클라이언트는 현재 보고 있는 페이지를 새로고침하지 않아도 됩니다.
+  std::string disposition =
+      _body.substr(dispositionPos + 20, typePos - (dispositionPos + 20));
+  if (disposition == "") throw(*dts.statusCode = BAD_REQUEST);
 
-5. `400 Bad Request`: 클라이언트의 요청이 유효하지 않아 처리할 수 없다는 것을
-나타냅니다. 이는 클라이언트 측에서 잘못된 데이터를 제출했을 때 발생합니다.
+  size_t equalPos = disposition.find('=');
+  size_t semicolonPos = disposition.find(';');
+  if (equalPos == std::string::npos || semicolonPos == std::string::npos)
+    throw(*dts.statusCode = BAD_REQUEST);
 
-6. `401 Unauthorized`: 클라이언트가 인증되지 않아 요청을 수행할 권한이 없다는
-것을 나타냅니다.
+  this->_disposName =
+      disposition.substr(equalPos + 1, semicolonPos - (equalPos + 1));
+  this->_disposFilename = disposition.substr(semicolonPos + 11);
+  if (this->_disposName == "" || this->_disposFilename == "")
+    throw(*dts.statusCode = BAD_REQUEST);
 
-7. `403 Forbidden`: 클라이언트가 요청한 리소스에 대한 접근 권한이 없다는 것을
-나타냅니다.
+  this->_type = _body.substr(typePos + 14);
+  if (this->_type == "") throw(*dts.statusCode = BAD_REQUEST);
+  if (this->_type != "image/png" && this->_type != "image/jpeg")
+    throw(*dts.statusCode = UNSUPPORTED_MEDIA_TYPE);
 
-8. `404 Not Found`: 요청한 리소스를 찾을 수 없다는 것을 나타냅니다.
+  prepareBinaryBody(this->_disposFilename);
 
-9. `413 Request Entity Too Large`: 요청 본문의 크기가 서버가 처리할 수 있는
-크기를 초과했다는 것을 나타냅니다.
+  *dts.statusCode = CREATED;
+  createSuccessResponse(response);
+}
 
-10. `500 Internal Server Error`: 서버 내부에서 처리 중에 오류가 발생했다는
-것을 나타냅니다.
+void POST::prepareTextBody(const std::string& path) {
+  std::ofstream file(path.c_str(), std::ios::out);
+  std::string buff;
+  file.close();
+}
 
-11. `501 Not Implemented`: 서버가 요청 메소드를 지원하지 않아 처리할 수 없다는
-것을 나타냅니다.
+void POST::prepareBinaryBody(const std::string& filename) {
+  std::ofstream file(filename.c_str(), std::ios::binary);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  this->_body = buffer.str();
+  file.close();
+}
 
-이상과 같은 상태 코드 외에도 다양한 HTTP 상태 코드가 있으며, 각 코드는
-클라이언트에게 서버가 요청을 어떻게 처리했는지에 대한 정보를 제공합니다.
-*/
+void POST::createSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.addResponse(getCurrentTime());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  response.addResponse("Content-Length: ");
+  response.addResponse(itos(this->_body.size()));
+  response.addResponse("\r\n");
+  this->createHTML(this->_title);
+  // std::cout << this->_response << "\n";
+  response.setResponseParsed();
+}
+
+void POST::createDisposSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.addResponse(getCurrentTime());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  response.addResponse("Content-Length: ");
+  response.addResponse(itos(this->_body.size()));
+  response.addResponse("\r\n");
+  this->createHTML(this->_disposFilename);
+  // std::cout << this->_response << "\n";
+  response.setResponseParsed();
+}
+
+std::string POST::createHTML(std::string const& head) {
+  std::string html = "<html><body>";
+  html += "<a href=\"" + head + "\">" + head + "</a><br>";
+  html += "</body></html>";
+  return html;
+}
+
+std::string POST::decodeURL(std::string const& encoded_string) {
+  int buf_len = 0;
+  std::string decoded_string = encoded_string;
+  std::replace(decoded_string.begin(), decoded_string.end(), '+', ' ');
+  size_t len = decoded_string.length();
+
+  for (size_t i = 0; i < len; ++i) {
+    if (encoded_string.at(i) == '%') i += 2;
+    ++buf_len;
+  }
+  char* buf = new char[buf_len];
+  std::memset(buf, 0, buf_len);
+  char c = 0;
+  size_t j = 0;
+  for (size_t i = 0; i < len; ++i, ++j) {
+    if (encoded_string.at(i) == '%') {
+      c = 0;
+      c += encoded_string.at(i + 1) >= 'A'
+               ? 16 * (encoded_string.at(i + 1) - 55)
+               : 16 * (encoded_string.at(i + 1) - 48);
+      c += encoded_string.at(i + 2) >= 'A' ? (encoded_string.at(i + 2) - 55)
+                                           : (encoded_string.at(i + 2) - 48);
+      i += 2;
+    } else {
+      c = encoded_string.at(i);
+    }
+    buf[j] = c;
+  }
+  for (int i = 0; i < buf_len; ++i) decoded_string.push_back(buf[i]);
+  delete[] buf;
+  return decoded_string;
+}
