@@ -9,16 +9,16 @@
 #include <map>
 #include <string>
 
-#include "AMethod.hpp"
-#include "DELETE.hpp"
-#include "DummyMethod.hpp"
-#include "GET.hpp"
-#include "POST.hpp"
+#include "IMethod.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
 
 #define RECEIVE_LEN 1000
 
 enum ClientFlag {
   START,
+  RECEIVING,
+  RECEIVE_DONE,
   REQUEST_HEAD,
   REQUEST_ENTITY,
   REQUEST_DONE,
@@ -30,11 +30,16 @@ enum ClientFlag {
   END
 };
 
+class Utils;
+
 class Client {
  private:
   ClientFlag _flag;
   uintptr_t _sd;
-  std::string _request;
+  std::string _recvBuff;
+  Request _request;
+  Response _response;
+  IMethod *_method;
 
   static char _buf[RECEIVE_LEN + 1];
 
@@ -42,7 +47,6 @@ class Client {
   // std::map<uintptr_t, char *> _clientBuf;
 
  public:
-  AMethod *_method;
   Client();
   Client(const uintptr_t sd);
   Client &operator=(const Client &src);
@@ -50,11 +54,15 @@ class Client {
 
  public:
   uintptr_t getSD() const;
-  AMethod *getMethod() const;
+  IMethod *getMethod() const;
   void receiveRequest();
   void newHTTPMethod();
   void sendResponse();
   void setFlag(ClientFlag flag);
+  void parseRequest(short port);
+  bool isCgi();
+  void doRequest();
+  void createErrorResponse();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:
