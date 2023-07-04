@@ -70,6 +70,7 @@ void POST::generateUrlEncoded(void) {
   if (file.fail()) throw(this->_statusCode = INTERNAL_SERVER_ERROR);
   file.close();
   this->_statusCode = CREATED;
+  createSuccessResponse(this->_title);
 }
 
 void POST::generateMultipart(void) {
@@ -82,26 +83,40 @@ void POST::generateMultipart(void) {
   size_t typePos = _body.find("content-type");
   if (dispositionPos == std::string::npos || typePos == std::string::npos)
     throw(this->_statusCode = BAD_REQUEST);
-  
-  std::string disposition = _body.substr(dispositionPos + 32, typePos - dispositionPos);
-  if (disposition == "")
-    throw(this->_statusCode = BAD_REQUEST);
+
+  std::string disposition =
+      _body.substr(dispositionPos + 20, typePos - (dispositionPos + 20));
+  if (disposition == "") throw(this->_statusCode = BAD_REQUEST);
 
   size_t equalPos = disposition.find('=');
   size_t semicolonPos = disposition.find(';');
   if (equalPos == std::string::npos || semicolonPos == std::string::npos)
     throw(this->_statusCode = BAD_REQUEST);
 
-  this->_disposName = disposition.substr(equalPos + 2, semicolonPos - 2);
-  this->_disposFilename = disposition.substr(semicolonPos + 13);
+  this->_disposName =
+      disposition.substr(equalPos + 1, semicolonPos - (equalPos + 1));
+  this->_disposFilename = disposition.substr(semicolonPos + 11);
   if (this->_disposName == "" || this->_disposFilename == "")
     throw(this->_statusCode = BAD_REQUEST);
-  
+
   this->_type = _body.substr(typePos + 14);
   if (this->_type == "") throw(this->_statusCode = BAD_REQUEST);
+
+  prepareBinaryBody(this->_disposFilename);
+
+  this->_statusCode = CREATED;
+  createSuccessResponse(this->_disposFilename);
 }
 
-void POST::createSuccessResponse(void) {
+void POST::prepareBinaryBody(const std::string& filename) {
+  std::ifstream file(filename.c_str(), std::ios::binary);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  this->_body = buffer.str();
+  file.close();
+}
+
+void POST::createSuccessResponse(std::string const& head) {
   assembleResponseLine();
   this->_response += getCurrentTime();
   this->_response += "\r\n";
@@ -109,14 +124,14 @@ void POST::createSuccessResponse(void) {
   this->_response += "Content-Length: ";
   this->_response += itos(this->_body.size());
   this->_response += "\r\n";
-  this->createHTML(this->_title);
+  this->createHTML(head);
   std::cout << this->_response << "\n";
   this->_responseFlag = true;
 }
 
-std::string POST::createHTML(std::string const& title) {
+std::string POST::createHTML(std::string const& head) {
   std::string html = "<html><body>";
-  html += "<a href=\"" + title + "\">" + title + "</a><br>";
+  html += "<a href=\"" + head + "\">" + head + "</a><br>";
   html += "</body></html>";
   return html;
 }
