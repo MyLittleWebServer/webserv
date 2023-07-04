@@ -23,6 +23,7 @@ class Request : public IRequest {
 
  private:
   bool _isParsed;
+  bool _is_cgi;
   size_t _contentLength;
 
   std::string _request;
@@ -30,7 +31,7 @@ class Request : public IRequest {
   std::string _path;
   std::string _anchor;
   std::string _protocol;
-  std::string _CGI;
+  std::string _cgi_path;
   std::string _body;
   Status _statusCode;
   IRequestParser &_parser;
@@ -57,10 +58,11 @@ class Request : public IRequest {
   const std::string &getMethod(void) const;
   const std::string &getPath(void) const;
   const std::string &getProtocol(void) const;
-  const std::string &getCGI(void) const;
+  const std::string &getCgiPath(void) const;
   const std::string &getBody(void) const;
   const std::map<std::string, std::string> &getQueryString(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
   const bool &isParsed(void) const;
+  const bool &isCgi(void) const;
 };

@@ -15,6 +15,7 @@ class RequestParser : public IRequestParser {
   void parseQueryString(RequestDts& dts, size_t pos);
   void parseQueryKeyValue(RequestDts& dts, std::string str);
   void parseHeaderFields(RequestDts& dts);
+  void parseCgi(RequestDts& dts);
   void parseContent(RequestDts& dts);
   void parseContentLength(RequestDts& dts);
   void parseTransferEncoding(RequestDts& dts);
@@ -35,6 +36,7 @@ class RequestParser : public IRequestParser {
   void checkHeaderLimitSize(RequestDts& dts);
   void checkBodyLimitLength(RequestDts& dts);
   void checkAllowedMethods(RequestDts& dts);
+  void checkCgiMethod(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;

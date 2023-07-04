@@ -251,6 +251,17 @@ void RequestParser::validatePath(RequestDts &dts) {
   this->setDefaultLocation(defaultLocation, dts);
 }
 
+void RequestParser::parseCgi(RequestDts &dts) {
+  *dts.is_cgi = false;
+  const std::string &extension = dts.matchedServer->getCgi();
+  if (dts.path->size() < extension.size()) return;
+  std::string cgiPath =
+      dts.path->substr(dts.path->size() - extension.size(), extension.size());
+  if (cgiPath != extension) return;
+  *dts.is_cgi = true;
+  *dts.cgi_path = cgiPath;
+}
+
 void RequestParser::parseRequest(RequestDts &dts, short port) {
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
@@ -258,6 +269,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
+  parseCgi(dts);
   requestChecker(dts);
 }
 
@@ -272,6 +284,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkHeaderLimitSize(dts);
   checkBodyLimitLength(dts);
   checkAllowedMethods(dts);
+  checkCgiMethod(dts);
   if (dts.isParsed == false) return;
 }
 
@@ -314,4 +327,9 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
       method_info[*dts.method] == true)
     return;
   throw(_statusCode = METHOD_NOT_ALLOWED);
+}
+
+void RequestParser::checkCgiMethod(RequestDts &dts) {
+  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
+    throw(_statusCode = BAD_REQUEST);
 }

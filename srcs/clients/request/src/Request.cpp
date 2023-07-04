@@ -2,13 +2,13 @@
 
 Request::Request() : _parser(RequestParser::getInstance()) {
   initDts();
-  _contentLength = 0;
+  initMember();
 }
 
 Request::Request(const std::string &request)
     : _request(request), _parser(RequestParser::getInstance()) {
   initDts();
-  _contentLength = 0;
+  initMember();
 }
 
 Request::~Request() {}
@@ -28,7 +28,7 @@ Request &Request::operator=(const Request &src) {
     this->_serverConf = src._serverConf;
     this->_matchedServer = src._matchedServer;
     this->_matchedLocation = src._matchedLocation;
-    this->_CGI = src._CGI;
+    this->_cgi_path = src._cgi_path;
     this->_method = src._method;
     this->_request = src._request;
     this->_statusCode = src._statusCode;
@@ -37,12 +37,17 @@ Request &Request::operator=(const Request &src) {
     this->_anchor = src._anchor;
     this->_isParsed = src._isParsed;
     this->_contentLength = src._contentLength;
+    this->_is_cgi = src._is_cgi;
   }
   initDts();
   return *this;
 }
 
-void Request::initMember() { _isParsed = false; }
+void Request::initMember() {
+  _isParsed = false;
+  _contentLength = 0;
+  _is_cgi = false;
+}
 
 void Request::initDts() {
   _request_parser_dts.statusCode = &_statusCode;
@@ -51,7 +56,7 @@ void Request::initDts() {
   _request_parser_dts.path = &_path;
   _request_parser_dts.anchor = &_anchor;
   _request_parser_dts.protocol = &_protocol;
-  _request_parser_dts.CGI = &_CGI;
+  _request_parser_dts.cgi_path = &_cgi_path;
   _request_parser_dts.body = &_body;
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
@@ -60,6 +65,7 @@ void Request::initDts() {
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
   _request_parser_dts.isParsed = &_isParsed;
+  _request_parser_dts.is_cgi = &_is_cgi;
   _request_parser_dts.contentLength = &_contentLength;
 }
 
@@ -82,7 +88,7 @@ const std::string &Request::getPath(void) const { return (this->_path); }
 const std::string &Request::getProtocol(void) const {
   return (this->_protocol);
 }
-const std::string &Request::getCGI(void) const { return (this->_CGI); }
+const std::string &Request::getCgiPath(void) const { return (this->_cgi_path); }
 const std::string &Request::getBody(void) const { return (this->_body); }
 Status Request::getStatusCode(void) const { return (this->_statusCode); }
 std::map<std::string, std::string> &Request::getHeaderFields(void) {
@@ -93,3 +99,5 @@ const std::map<std::string, std::string> &Request::getQueryString(void) const {
 }
 
 const bool &Request::isParsed() const { return _isParsed; }
+
+const bool &Request::isCgi() const { return _is_cgi; }

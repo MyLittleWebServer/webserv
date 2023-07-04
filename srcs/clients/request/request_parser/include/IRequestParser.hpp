@@ -20,7 +20,7 @@ typedef struct RequestDts {
   std::string* path;
   std::string* anchor;
   std::string* protocol;
-  std::string* CGI;
+  std::string* cgi_path;
   std::string* body;
   std::list<std::string>* linesBuffer;
   std::map<std::string, std::string>* headerFields;
@@ -29,6 +29,7 @@ typedef struct RequestDts {
   IServerConfig* matchedServer;
   ILocationConfig* matchedLocation;
   bool* isParsed;
+  bool* is_cgi;
   unsigned long* contentLength;
 } RequestDts;
 
