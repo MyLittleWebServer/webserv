@@ -8,132 +8,141 @@
 
 POST::POST(void) {}
 
-POST::POST(std::string& request)
-    : AMethod(request), _contentType("text/plain") {}
-
 POST::~POST(void) {}
 
-void POST::doRequest() {
-  std::istringstream ss(this->_headerFields["content-length"]);
-  ss >> this->_body;
-  if (this->_body.size() == 0)
-    throw(this->_statusCode = BAD_REQUEST);
+void POST::doRequest(RequestDts& dts) {
+  size_t bodySize = 0;
+  std::istringstream ss((*dts.headerFields)["content-length"]);
+  ss >> bodySize;
 
-  else if (this->_body.size() > _matchedLocation->getLimitClientBodySize())
-    throw(this->_statusCode = REQUEST_ENTITY_TOO_LARGE);
-  this->generateResource();
+  if (bodySize > dts.matchedLocation->getLimitClientBodySize())
+    throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
+  *dts.statusCode = CREATED;
+  this->generateFile(dts);
 }
 
-void POST::generateResource() {
+void POST::generateFile(RequestDts& dts) {
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
+  std::ofstream file(dts.path->c_str(), std::ios::out);
+  if (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  std::list<std::string>::const_iterator it = dts.linesBuffer->begin();
+  std::list<std::string>::const_iterator end = dts.linesBuffer->end();
+  while (it != end) {
+    file << *it++;
+    if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  }
+  file.close();
+  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+}
+
+void POST::generateResource(RequestDts& dts, IResponse& response) {
   if (_contentType == "application/x-www-form-urlencoded")
-    this->generateUrlEncoded();  // username=john_doe&password=secret123
+    this->generateUrlEncoded(dts, response);
   else if (_contentType.substr(0, 20) == "multipart/form-data" &&
            _contentType.find(";") != std::string::npos)
-    this->generateMultipart();
+    this->generateMultipart(dts, response);
 }
 
-void POST::generateUrlEncoded(void) {
+void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
   std::string decodedBody = decodeURL(this->_body);
 
   if (decodedBody.find("title") == std::string::npos ||
       decodedBody.find("content") == std::string::npos)
-    throw(this->_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 
   size_t andPos = decodedBody.find('&');
   size_t equalPos1 = decodedBody.find('=');
   if (andPos == std::string::npos || equalPos1 == std::string::npos) {
-    throw(this->_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
   }
   this->_title = decodedBody.substr(equalPos1, andPos - equalPos1);
   decodedBody = decodedBody.substr(andPos);
   size_t equalPos2 = decodedBody.find('=');
   this->_content = decodedBody.substr(equalPos2);
 
-  if (access(this->_path.c_str(), F_OK) < 0)
-    throw(this->_statusCode = FORBIDDEN);
+  if (access(this->_path.c_str(), F_OK) < 0) throw(*dts.statusCode = FORBIDDEN);
 
   prepareTextBody(this->_path);
 
-  this->_statusCode = CREATED;
-  createSuccessResponse();
+  *dts.statusCode = CREATED;
+  createSuccessResponse(response);
 }
 
-void POST::generateMultipart(void) {
+void POST::generateMultipart(RequestDts& dts, IResponse& response) {
   size_t boundaryPos = this->_contentType.find("boundary");
-  if (boundaryPos == std::string::npos) throw(this->_statusCode = BAD_REQUEST);
+  if (boundaryPos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
-  if (boundaryValue == "") throw(this->_statusCode = BAD_REQUEST);
+  if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
   size_t dispositionPos = _body.find("content-disposition");
   size_t typePos = _body.find("content-type");
   if (dispositionPos == std::string::npos || typePos == std::string::npos)
-    throw(this->_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 
   std::string disposition =
       _body.substr(dispositionPos + 20, typePos - (dispositionPos + 20));
-  if (disposition == "") throw(this->_statusCode = BAD_REQUEST);
+  if (disposition == "") throw(*dts.statusCode = BAD_REQUEST);
 
   size_t equalPos = disposition.find('=');
   size_t semicolonPos = disposition.find(';');
   if (equalPos == std::string::npos || semicolonPos == std::string::npos)
-    throw(this->_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 
   this->_disposName =
       disposition.substr(equalPos + 1, semicolonPos - (equalPos + 1));
   this->_disposFilename = disposition.substr(semicolonPos + 11);
   if (this->_disposName == "" || this->_disposFilename == "")
-    throw(this->_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 
   this->_type = _body.substr(typePos + 14);
-  if (this->_type == "") throw(this->_statusCode = BAD_REQUEST);
+  if (this->_type == "") throw(*dts.statusCode = BAD_REQUEST);
   if (this->_type != "image/png" && this->_type != "image/jpeg")
-    throw(this->_statusCode = UNSUPPORTED_MEDIA_TYPE);
+    throw(*dts.statusCode = UNSUPPORTED_MEDIA_TYPE);
 
   prepareBinaryBody(this->_disposFilename);
 
-  this->_statusCode = CREATED;
-  createSuccessResponse();
+  *dts.statusCode = CREATED;
+  createSuccessResponse(response);
 }
 
 void POST::prepareTextBody(const std::string& path) {
-  std::ifstream file(path.c_str(), std::ios::in);
+  std::ofstream file(path.c_str(), std::ios::out);
   std::string buff;
-  while (std::getline(file, buff)) this->_body += buff + "\r\n";
   file.close();
 }
 
 void POST::prepareBinaryBody(const std::string& filename) {
-  std::ifstream file(filename.c_str(), std::ios::binary);
+  std::ofstream file(filename.c_str(), std::ios::binary);
   std::stringstream buffer;
   buffer << file.rdbuf();
   this->_body = buffer.str();
   file.close();
 }
 
-void POST::createSuccessResponse(void) {
-  assembleResponseLine();
-  this->_response += getCurrentTime();
-  this->_response += "\r\n";
-  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-  this->_response += "Content-Length: ";
-  this->_response += itos(this->_body.size());
-  this->_response += "\r\n";
+void POST::createSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.addResponse(getCurrentTime());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  response.addResponse("Content-Length: ");
+  response.addResponse(itos(this->_body.size()));
+  response.addResponse("\r\n");
   this->createHTML(this->_title);
-  std::cout << this->_response << "\n";
-  this->_responseFlag = true;
+  // std::cout << this->_response << "\n";
+  response.setResponseParsed();
 }
 
-void POST::createDisposSuccessResponse(void) {
-  assembleResponseLine();
-  this->_response += getCurrentTime();
-  this->_response += "\r\n";
-  this->_response += "Content-Type: text/html; charset=UTF-8\r\n";
-  this->_response += "Content-Length: ";
-  this->_response += itos(this->_body.size());
-  this->_response += "\r\n";
+void POST::createDisposSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.addResponse(getCurrentTime());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  response.addResponse("Content-Length: ");
+  response.addResponse(itos(this->_body.size()));
+  response.addResponse("\r\n");
   this->createHTML(this->_disposFilename);
-  std::cout << this->_response << "\n";
-  this->_responseFlag = true;
+  // std::cout << this->_response << "\n";
+  response.setResponseParsed();
 }
 
 std::string POST::createHTML(std::string const& head) {

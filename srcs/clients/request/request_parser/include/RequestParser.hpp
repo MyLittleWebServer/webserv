@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IRequestParser.hpp"
+#include "Utils.hpp"
 
 class RequestParser : public IRequestParser {
  private:

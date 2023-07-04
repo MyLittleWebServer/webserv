@@ -1,41 +1,38 @@
 #ifndef POST_HPP
 #define POST_HPP
 
-#include "AMethod.hpp"
+#include "IMethod.hpp"
 
-class POST : public AMethod {
+class POST : public IMethod {
  private:
+  void generateFile(RequestDts& dts);
   std::string _body;
   std::string _contentType;
   std::string _path;
-  /* urlEncoded */
   std::string _title;
   std::string _content;
-  /* multipart/form-data */
   std::string _disposName;
   std::string _disposFilename;
   std::string _type;
-  void generateResource();
+  void generateResource(RequestDts& dts, IResponse& response);
 
  public:
   POST();
-  POST(std::string& request);
   ~POST();
 
+  void doRequest(RequestDts& dts);
+  void createSuccessResponse(IResponse& response);
   void appendBody();
-  void doRequest();
-  void generateUrlEncoded();
-  void generateMultipart();
+  void generateUrlEncoded(RequestDts& dts, IResponse& response);
+  void generateMultipart(RequestDts& dts, IResponse& response);
   void prepareTextBody(const std::string& body);
   void prepareBinaryBody(const std::string& filename);
-  void createSuccessResponse(void);
-  void createDisposSuccessResponse(void);
+  void createDisposSuccessResponse(IResponse& response);
   std::string createHTML(std::string const& head);
 
   std::string decodeURL(std::string const& encoded_string);
-  // void generateTextPlain();
 
-  std::string validateContentType();
+  // std::string validateContentType();
 };
 
 #endif

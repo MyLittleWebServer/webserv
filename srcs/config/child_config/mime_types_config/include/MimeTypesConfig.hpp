@@ -11,9 +11,8 @@
  */
 class MimeTypesConfig : public IMimeTypesConfig {
  private:
-  std::map<std::string, std::string> _data;
-
  public:
+  std::map<std::string, std::string> _data;
   MimeTypesConfig();
   virtual ~MimeTypesConfig();
   MimeTypesConfig(const MimeTypesConfig& src);

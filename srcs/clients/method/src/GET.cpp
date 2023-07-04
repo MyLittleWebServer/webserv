@@ -4,53 +4,58 @@
 #include <dirent.h>
 #include <unistd.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 #include <vector>
 
+#include "Kqueue.hpp"
 #include "Utils.hpp"
 
-GET::GET() {}
-GET::GET(std::string& request) : AMethod(request), _contentType("text/plain") {}
+GET::GET() : IMethod(), _contentType("text/plain") {}
 GET::~GET() {}
 
-void GET::doRequest(void) {
+void GET::doRequest(RequestDts& dts) {
   std::string pathIndex;
 
-  pathIndex = this->_path;
-  if (this->_matchedLocation->getIndex() != "") {
-    pathIndex += this->_path[this->_path.size() - 1] == '/'
-                     ? this->_matchedLocation->getIndex()
-                     : "/" + this->_matchedLocation->getIndex();
+  pathIndex = *dts.path;
+  if (dts.matchedLocation->getIndex() != "") {
+    pathIndex += (*dts.path)[dts.path->size() - 1] == '/'
+                     ? dts.matchedLocation->getIndex()
+                     : "/" + dts.matchedLocation->getIndex();
   }
 #ifdef DEBUG_MSG
   std::cout << " -- this : " << this->_path << std::endl;
   std::cout << " -- this : " << pathIndex << std::endl;
 #endif
-  if (access(this->_path.c_str(), R_OK) == 0 &&
-      this->_path[this->_path.size() - 1] != '/') {
-    this->_statusCode = OK;
-    prepareBody(this->_path);
+  if (access(dts.path->c_str(), R_OK) == 0 &&
+      (*dts.path)[dts.path->size() - 1] != '/') {
+    *dts.statusCode = OK;
+    return fileHandler(*dts.path);
   } else if (access(pathIndex.c_str(), R_OK) == 0 &&
              pathIndex[pathIndex.size() - 1] != '/') {
-    this->_statusCode = OK;
-    prepareBody(pathIndex);
+    *dts.statusCode = OK;
+    return fileHandler(pathIndex);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
-             this->_path[this->_path.size() - 1] == '/' &&
-             _matchedLocation->getAutoindex() == "on") {
-    this->_statusCode = OK;
-    prepareFileList(this->_path);
+             (*dts.path)[dts.path->size() - 1] == '/' &&
+             dts.matchedLocation->getAutoindex() == "on") {
+    *dts.statusCode = OK;
+    prepareFileList(*dts.path, dts);
+    // return 0;
   } else {
-    throw(this->_statusCode = NOT_FOUND);
+    throw(*dts.statusCode = NOT_FOUND);
   }
   if (this->_body == "") {
-    this->_statusCode = NO_CONTENT;
+    *dts.statusCode = NO_CONTENT;
   }
 }
 
-void GET::appendBody(void) { this->_response += "\r\n" + this->_body; }
+void GET::appendBody(IResponse& response) {
+  response.addResponse("\r\n" + this->_body);
+}
 
-std::vector<std::string> GET::getFileList(const std::string& path) {
+std::vector<std::string> GET::getFileList(const std::string& path,
+                                          RequestDts& dts) {
   DIR* dir;
   struct dirent* ent;
   std::vector<std::string> files;
@@ -65,7 +70,7 @@ std::vector<std::string> GET::getFileList(const std::string& path) {
     }
     closedir(dir);
   } else {
-    throw(this->_statusCode = FORBIDDEN);
+    throw(*dts.statusCode = FORBIDDEN);
   }
   return files;
 }
@@ -80,9 +85,15 @@ std::string GET::generateHTML(const std::vector<std::string>& files) {
   return html;
 }
 
-void GET::prepareFileList(const std::string& path) {
+void GET::fileHandler(const std::string& path) {
+  size_t fd = size_t(std::fopen(path.c_str(), "r"));
+  (void)fd;
+  // error handling code
+}
+
+void GET::prepareFileList(const std::string& path, RequestDts& dts) {
   try {
-    std::vector<std::string> files = getFileList(path);
+    std::vector<std::string> files = getFileList(path, dts);
     this->_body = generateHTML(files);
     this->_contentType = "text/html";
   } catch (int statusCode) {
@@ -116,26 +127,26 @@ void GET::prepareBinaryBody(const std::string& path) {
   file.close();
 }
 
-void GET::createSuccessResponse(void) {
-  assembleResponseLine();
-  
-  this->_response += getCurrentTime();
-  this->_response += "\r\n";
-  this->_response += "Content-Type: ";
-  this->_response += validateContentType();
-  this->_response += "\r\n";
-  this->_response += "Content-Length: ";
-  this->_response += itos(this->_body.size());
-  this->_response += "\r\n";
-  this->appendBody();
-  #ifdef DEBUG_MSG_BODY
+void GET::createSuccessResponse(IResponse& response) {
+  response.assembleResponseLine();
+  response.addResponse(getCurrentTime());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Type: ");
+  response.addResponse(validateContentType());
+  response.addResponse("\r\n");
+  response.addResponse("Content-Length: ");
+  response.addResponse(itos(this->_body.size()));
+  response.addResponse("\r\n");
+  this->appendBody(response);
+#ifdef DEBUG_MSG_BODY
   std::cout << this->_response << "\n";
-  #endif
-  this->_responseFlag = true;
+#endif
+  response.setResponseParsed();
 }
 
 std::string GET::validateContentType() {
-  if (_contentType == "text/html" || _contentType == "text/css" || _contentType == "application/json") {
+  if (_contentType == "text/html" || _contentType == "text/css" ||
+      _contentType == "application/json") {
     return _contentType + "; charset=UTF-8";
   }
   return _contentType;

@@ -27,4 +27,7 @@ class Response : public IResponse {
   bool getResponseFlag(void) const;
   const std::string &getResponse(void) const;
   void assembleResponseLine(void);
+  void addResponse(std::string msg);
+  void setResponseParsed();
+  bool isParsed();
 };
