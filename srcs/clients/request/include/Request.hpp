@@ -48,6 +48,7 @@ class Request : public IRequest {
 
  public:
   void parseRequest(short port);
+  void parseRequest(const std::string &request, short port);
 
   void appendRequest(const std::string &str);
   void appendRequest(const char *str);
@@ -61,4 +62,5 @@ class Request : public IRequest {
   const std::map<std::string, std::string> &getQueryString(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
+  const bool &isParsed(void) const;
 };

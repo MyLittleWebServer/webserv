@@ -67,6 +67,12 @@ void Request::parseRequest(short port) {
   _parser.parseRequest(_request_parser_dts, port);
 }
 
+void Request::parseRequest(const std::string &request, short port) {
+  _request = request;
+  _request_parser_dts.request = &_request;
+  _parser.parseRequest(_request_parser_dts, port);
+}
+
 void Request::appendRequest(const std::string &str) { this->_request += str; }
 void Request::appendRequest(const char *str) { this->_request += str; }
 
@@ -85,3 +91,5 @@ std::map<std::string, std::string> &Request::getHeaderFields(void) {
 const std::map<std::string, std::string> &Request::getQueryString(void) const {
   return (this->_queryString);
 }
+
+const bool &Request::isParsed() const { return _isParsed; }
