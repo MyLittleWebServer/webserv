@@ -7,11 +7,8 @@
 #include <sstream>
 #include <string>
 
-#include "CandidateFields.hpp"
 #include "Config.hpp"
-#include "IRequest.hpp"
 #include "Status.hpp"
-#include "Utils.hpp"
 
 typedef struct RequestDts {
   Status* statusCode;

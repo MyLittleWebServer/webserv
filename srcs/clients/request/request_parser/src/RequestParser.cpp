@@ -1,5 +1,7 @@
 #include "RequestParser.hpp"
 
+#include "CandidateFields.hpp"
+
 RequestParser::RequestParser()
     : _candidateFields(CandidateFields::getInstance().getCandidateFields()) {}
 

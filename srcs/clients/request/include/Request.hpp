@@ -1,17 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <list>
-#include <map>
-#include <set>
-#include <sstream>
-#include <string>
-
-#include "CandidateFields.hpp"
 #include "Config.hpp"
 #include "IRequest.hpp"
 #include "RequestParser.hpp"
-#include "Status.hpp"
 
 class Request : public IRequest {
  public:
@@ -54,6 +45,7 @@ class Request : public IRequest {
   void appendRequest(const std::string &str);
   void appendRequest(const char *str);
 
+  RequestDts &getRequestParserDts(void);
   const std::string &getRequest(void) const;
   const std::string &getMethod(void) const;
   const std::string &getPath(void) const;
