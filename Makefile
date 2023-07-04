@@ -68,9 +68,15 @@ sources1 +=	ServerManager.cpp \
 						Kqueue.cpp \
 						EventHandler.cpp
 
+# ---- HTTP ---- #
+
+sources1 +=	Request.cpp \
+						RequestParser.cpp \
+						Response.cpp \
+						CandidateFields.cpp
+
 # ---- Method ---- #
-sources1 +=	AMethod.cpp \
-						GET.cpp \
+sources1 +=	GET.cpp \
 						POST.cpp \
 						DELETE.cpp \
 						PUT.cpp \
