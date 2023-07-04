@@ -26,8 +26,10 @@ class POST : public AMethod {
   void doRequest();
   void generateUrlEncoded();
   void generateMultipart();
+  void prepareTextBody(const std::string& body);
   void prepareBinaryBody(const std::string& filename);
-  void createSuccessResponse(std::string const& head);
+  void createSuccessResponse(void);
+  void createDisposSuccessResponse(void);
   std::string createHTML(std::string const& head);
 
   std::string decodeURL(std::string const& encoded_string);
