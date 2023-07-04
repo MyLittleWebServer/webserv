@@ -1,16 +1,15 @@
 #ifndef DUMMYMETHOD_HPP
 #define DUMMYMETHOD_HPP
 
-#include "AMethod.hpp"
-#include "Status.hpp"
+#include "IMethod.hpp"
 
-class DummyMethod : public AMethod {
+class DummyMethod : public IMethod {
  public:
   DummyMethod(Status statusCode);
   ~DummyMethod();
 
-  void doRequest(void);
-  void createSuccessResponse(void);
+  void doRequest(RequestDts& dts);
+  void createSuccessResponse(IResponse& response);
 };
 
 #endif

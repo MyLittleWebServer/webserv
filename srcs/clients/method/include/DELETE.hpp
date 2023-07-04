@@ -6,16 +6,15 @@
 #include <cstdio>
 #include <iostream>
 
-#include "AMethod.hpp"
+#include "IMethod.hpp"
 
-class DELETE : public AMethod {
+class DELETE : public IMethod {
  public:
   DELETE();
-  DELETE(std::string &request);
   ~DELETE();
 
-  void doRequest(void);
-  void createSuccessResponse(void);
+  void doRequest(RequestDts& dts);
+  void createSuccessResponse(IResponse& response);
 };
 
 #endif
