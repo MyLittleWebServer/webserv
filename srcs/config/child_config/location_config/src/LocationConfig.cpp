@@ -19,16 +19,15 @@ void LocationConfig::init() {
   _data.insert(std::pair<std::string, std::string>(
       "limit_client_body_size", DEFAULT_LIMIT_CLIENT_BODY_SIZE));
 
-  std::map<std::string, bool> result;
-  result.insert(std::pair<std::string, bool>("GET", false));
-  result.insert(std::pair<std::string, bool>("HEAD", false));
-  result.insert(std::pair<std::string, bool>("POST", false));
-  result.insert(std::pair<std::string, bool>("PUT", false));
-  result.insert(std::pair<std::string, bool>("DELETE", false));
-  result.insert(std::pair<std::string, bool>("CONNECT", false));
-  result.insert(std::pair<std::string, bool>("OPTIONS", false));
-  result.insert(std::pair<std::string, bool>("TRACE", false));
-  result.insert(std::pair<std::string, bool>("PATCH", false));
+  _method_info.insert(std::pair<std::string, bool>("GET", false));
+  _method_info.insert(std::pair<std::string, bool>("HEAD", false));
+  _method_info.insert(std::pair<std::string, bool>("POST", false));
+  _method_info.insert(std::pair<std::string, bool>("PUT", false));
+  _method_info.insert(std::pair<std::string, bool>("DELETE", false));
+  _method_info.insert(std::pair<std::string, bool>("CONNECT", false));
+  _method_info.insert(std::pair<std::string, bool>("OPTIONS", false));
+  _method_info.insert(std::pair<std::string, bool>("TRACE", false));
+  _method_info.insert(std::pair<std::string, bool>("PATCH", false));
 }
 
 LocationConfig::LocationConfig() { init(); }

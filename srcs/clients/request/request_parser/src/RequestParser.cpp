@@ -24,7 +24,13 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
     dts.linesBuffer->push_back(chunk);
     pos = delimeter + 2;
     delimeter = dts.request->find("\r\n", pos);
+    if (delimeter == pos) {
+      *dts.body = &(*dts.request)[pos + 2];
+      break;
+    }
   }
+  // 할지 안할지 고려
+  // dts.request->clear();
 }
 
 void RequestParser::parseRequestLine(RequestDts &dts) {
@@ -41,11 +47,47 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   dts.linesBuffer->pop_front();
   iss >> *dts.method >> *dts.path >> *dts.protocol;
 
-  std::cout << "method: " << dts.method << std::endl;
-  std::cout << "path: " << dts.path << std::endl;
-  std::cout << "protocol: " << dts.protocol << std::endl;
+  size_t anchorPos = dts.path->find("#");
+  if (anchorPos != std::string::npos) parseAnchor(dts, anchorPos);
+  size_t qMarkPos = dts.path->find("?");
+  if (qMarkPos != std::string::npos) parseQueryString(dts, qMarkPos);
+
+  std::cout << "method: " << *dts.method << std::endl;
+  std::cout << "path: " << *dts.path << std::endl;
+  std::cout << "protocol: " << *dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(_statusCode = BAD_REQUEST);
+}
+
+void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
+  *dts.anchor = &(*dts.path)[anchorPos + 1];
+  *dts.path = dts.path->substr(0, anchorPos);
+}
+
+void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
+  std::string tempQuery(
+      dts.path->substr(qMarkPos + 1, dts.path->size() - qMarkPos - 1));
+  *dts.path = dts.path->substr(0, qMarkPos);
+  size_t andPos = tempQuery.find("&", 0);
+  if (andPos == std::string::npos) {
+    parseQueryKeyValue(dts, tempQuery);
+    return;
+  }
+  size_t start = 0;
+  while (andPos != std::string::npos) {
+    std::string tempPair = tempQuery.substr(start, andPos);
+    parseQueryKeyValue(dts, tempPair);
+    start = andPos + 1;
+    andPos = tempQuery.find("&", start);
+  }
+}
+
+void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
+  size_t pos = str.find("=");
+  if (pos == std::string::npos) throw(_statusCode = BAD_REQUEST);
+  std::string key = str.substr(0, pos);
+  std::string value = str.substr(pos + 1, str.size() - pos - 1);
+  (*dts.queryString)[key] = value;
 }
 
 void RequestParser::parseHeaderFields(RequestDts &dts) {
@@ -54,29 +96,66 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
 
   std::string key;
   std::string value;
-
   size_t pos = 0;
+  size_t end = 0;
+
   while (lineIt != lineEnd) {
     pos = (*lineIt).find(": ");
+    end = (*lineIt).find("\r\n");
     key = toLowerString((*lineIt).substr(0, pos));
     if (_candidateFields.find(key) != _candidateFields.end()) {
-      value =
-          toLowerString((*lineIt).substr(pos + 2, (*lineIt).size() - pos - 2));
+      value = toLowerString((*lineIt).substr(pos + 2, end - pos - 2));
       // value 검증 필요
       (*dts.headerFields)[key] = value;
     }
     ++lineIt;
-    dts.linesBuffer->pop_front();
-    if (checkBodyExistance(lineIt, dts)) {
-      dts.linesBuffer->pop_front();
-      return;
-    }
+  }
+  dts.linesBuffer->clear();
+}
+
+void RequestParser::parseContent(RequestDts &dts) {
+  if (dts.body->empty())
+    return;
+  else if ((*dts.headerFields)["transfer-encoding"] != "")
+    return parseTransferEncoding(dts);
+  else
+    return parseContentLength(dts);
+}
+
+void RequestParser::parseContentLength(RequestDts &dts) {
+  *dts.contentLength =
+      std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
+  if (dts.body->size() >= *dts.contentLength) {
+    *dts.body = dts.body->substr(0, *dts.contentLength);
+    *dts.isParsed = true;
   }
 }
 
-bool RequestParser::checkBodyExistance(
-    std::list<std::string>::const_iterator it, RequestDts &dts) const {
-  return (!dts.linesBuffer->empty() && *it == "");
+void RequestParser::parseTransferEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["transfer-encoding"] == "chunked")
+    return parseChunkedEncoding(dts);
+}
+
+void RequestParser::parseChunkedEncoding(RequestDts &dts) {
+  std::string body = *dts.body;
+  *dts.contentLength = 0;
+  size_t pos = 0;
+  size_t end = 0;
+  size_t chunkSize = 0;
+  std::string chunk;
+
+  while (pos != std::string::npos) {
+    end = body.find("\r\n", pos);
+    chunkSize = std::strtol(body.substr(pos, end - pos).c_str(), NULL, 16);
+    if (chunkSize == 0) {
+      *dts.isParsed = true;
+      return;
+    }
+    chunk = body.substr(end + 2, chunkSize);
+    *dts.body += chunk;
+    *dts.contentLength += chunkSize;
+    pos = end + 2 + chunkSize + 2;
+  }
 }
 
 bool RequestParser::checkPathForm(RequestDts &dts) {
@@ -172,13 +251,85 @@ void RequestParser::validatePath(RequestDts &dts) {
   this->setDefaultLocation(defaultLocation, dts);
 }
 
-void RequestParser::parseRequest(RequestDts &requestDts) {
-  this->splitLinesByCRLF(requestDts);
-  this->parseRequestLine(requestDts);
-  this->parseHeaderFields(requestDts);
+void RequestParser::parseCgi(RequestDts &dts) {
+  *dts.is_cgi = false;
+  const std::string &extension = dts.matchedServer->getCgi();
+  if (dts.path->size() < extension.size()) return;
+  std::string cgiPath =
+      dts.path->substr(dts.path->size() - extension.size(), extension.size());
+  if (cgiPath != extension) return;
+  *dts.is_cgi = true;
+  *dts.cgi_path = cgiPath;
+}
+
+void RequestParser::parseRequest(RequestDts &dts, short port) {
+  splitLinesByCRLF(dts);
+  parseRequestLine(dts);
+  parseHeaderFields(dts);
+  parseContent(dts);
+  matchServerConf(port, dts);
+  validatePath(dts);
+  parseCgi(dts);
+  requestChecker(dts);
 }
 
 RequestParser &RequestParser::getInstance() {
   static RequestParser instance;
   return instance;
+}
+
+void RequestParser::requestChecker(RequestDts &dts) {
+  checkContentLenghWithTransferEncoding(dts);
+  checkRequestUriLimitLength(dts);
+  checkHeaderLimitSize(dts);
+  checkBodyLimitLength(dts);
+  checkAllowedMethods(dts);
+  checkCgiMethod(dts);
+  if (dts.isParsed == false) return;
+}
+
+void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["content-length"] != "" &&
+      (*dts.headerFields)["transfer-encoding"] != "")
+    throw(_statusCode = BAD_REQUEST);
+}
+
+void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
+  // body uri header별로 따로따로 정의할건지 정하기
+  if (dts.path->size() >
+      Config::getInstance().getProxyConfig().getRequestUriLimitSize())
+    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+}
+
+void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
+  std::map<std::string, std::string>::const_iterator lineIt =
+      dts.headerFields->begin();
+  std::map<std::string, std::string>::const_iterator lineEnd =
+      dts.headerFields->end();
+
+  while (lineIt != lineEnd) {
+    if (lineIt->first.size() >
+        Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
+      throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+    ++lineIt;
+  }
+}
+
+void RequestParser::checkBodyLimitLength(RequestDts &dts) {
+  if (*dts.contentLength > dts.matchedLocation->getLimitClientBodySize())
+    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+}
+
+void RequestParser::checkAllowedMethods(RequestDts &dts) {
+  std::map<std::string, bool> method_info =
+      dts.matchedLocation->getAllowMethod();
+  if (method_info.find(*dts.method) != method_info.end() &&
+      method_info[*dts.method] == true)
+    return;
+  throw(_statusCode = METHOD_NOT_ALLOWED);
+}
+
+void RequestParser::checkCgiMethod(RequestDts &dts) {
+  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
+    throw(_statusCode = BAD_REQUEST);
 }
