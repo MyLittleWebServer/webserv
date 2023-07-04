@@ -48,3 +48,17 @@ ExceptionThrower::InvalidConfigException::InvalidConfigException(
 const char* ExceptionThrower::InvalidConfigException::what() const throw() {
   return std::invalid_argument::what();
 }
+
+ExceptionThrower::CGINotFinishedException::CGINotFinishedException()
+    : std::runtime_error(CGI_NOT_FINISHED) {}
+
+const char* ExceptionThrower::CGINotFinishedException::what() const throw() {
+  return std::runtime_error::what();
+}
+
+ExceptionThrower::CGIPipeException::CGIPipeException()
+    : std::runtime_error(CGI_NOT_FINISHED) {}
+
+const char* ExceptionThrower::CGIPipeException::what() const throw() {
+  return std::runtime_error::what();
+}

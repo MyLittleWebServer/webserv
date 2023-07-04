@@ -47,4 +47,18 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class CGINotFinishedException : public std::runtime_error {
+   public:
+    CGINotFinishedException();
+
+    virtual const char* what() const throw();
+  };
+
+  class CGIPipeException : public std::runtime_error {
+   public:
+    CGIPipeException();
+
+    virtual const char* what() const throw();
+  };
 };
