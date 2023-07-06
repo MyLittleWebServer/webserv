@@ -79,9 +79,6 @@ void Request::parseRequest(const std::string &request, short port) {
   _parser.parseRequest(_request_parser_dts, port);
 }
 
-void Request::appendRequest(const std::string &str) { this->_request += str; }
-void Request::appendRequest(const char *str) { this->_request += str; }
-
 RequestDts &Request::getRequestParserDts(void) {
   return this->_request_parser_dts;
 }
@@ -105,3 +102,11 @@ const std::map<std::string, std::string> &Request::getQueryString(void) const {
 const bool &Request::isParsed() const { return _isParsed; }
 
 const bool &Request::isCgi() const { return _is_cgi; }
+
+std::ostream &operator<<(std::ostream &os, const Request &request) {
+  os << request.getMethod() << request.getRequest() << request.getPath()
+     << request.getProtocol() << request.getCgiPath() << request.getBody()
+     << std::endl;
+
+  return os;
+}

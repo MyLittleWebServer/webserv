@@ -15,7 +15,7 @@ class GET : public IMethod {
   void prepareFileList(const std::string& path, RequestDts& dts,
                        IResponse& response);
   void prepareBody(const std::string& pathIndex, IResponse& response);
-  void getContentType(const std::string& path);
+  void getContentType(const std::string& path, IResponse &response);
 
   void prepareTextBody(const std::string& path, IResponse& response);
   void prepareBinaryBody(const std::string& path, IResponse& response);
