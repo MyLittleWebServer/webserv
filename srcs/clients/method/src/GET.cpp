@@ -26,9 +26,10 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
                      : "/" + dts.matchedLocation->getIndex();
   }
 #ifdef DEBUG_MSG
-  std::cout << " -- this : " << this->_path << std::endl;
+  std::cout << " -- this : " << *dts.path << std::endl;
   std::cout << " -- this : " << pathIndex << std::endl;
 #endif
+
   if (access(dts.path->c_str(), R_OK) == 0 &&
       (*dts.path)[dts.path->size() - 1] != '/') {
     *dts.statusCode = OK;
@@ -38,7 +39,7 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
              pathIndex[pathIndex.size() - 1] != '/') {
     *dts.statusCode = OK;
     // return fileHandler(pathIndex);
-    prepareBody(*dts.path, response);
+    prepareBody(pathIndex, response);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
              (*dts.path)[dts.path->size() - 1] == '/' &&
              dts.matchedLocation->getAutoindex() == "on") {
@@ -103,7 +104,7 @@ void GET::prepareFileList(const std::string& path, RequestDts& dts,
 }
 
 void GET::prepareBody(const std::string& path, IResponse& response) {
-  getContentType(path);
+  getContentType(path, response);
   const std::string& value = response.getFieldValue("Content-Type");
   if (value == "text/html" || value == "text/css" ||
       value == "application/json") {
@@ -150,13 +151,13 @@ void GET::validateContentType(IResponse& response) {
   }
 }
 
-void GET::getContentType(const std::string& path) {
+void GET::getContentType(const std::string& path, IResponse &response) {
   std::string extension = path.substr(path.find_last_of(".") + 1);
   MimeTypesConfig& config = dynamic_cast<MimeTypesConfig&>(
       Config::getInstance().getMimeTypesConfig());
   try {
     std::cout << "extension::" << extension << std::endl;
-    _contentType = config.getVariable(extension);
+    response.setHeaderField("Content-Type", config.getVariable(extension));
     return;
   } catch (std::exception& e) {
     std::cout << "find :: ";
