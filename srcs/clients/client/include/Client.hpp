@@ -63,6 +63,7 @@ class Client {
   bool isCgi();
   void doRequest();
   void createErrorResponse();
+  void createSuccessResponse();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:

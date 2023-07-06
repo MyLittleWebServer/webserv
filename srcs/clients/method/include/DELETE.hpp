@@ -13,7 +13,7 @@ class DELETE : public IMethod {
   DELETE();
   ~DELETE();
 
-  void doRequest(RequestDts& dts);
+  void doRequest(RequestDts& dts, IResponse& response);
   void createSuccessResponse(IResponse& response);
 };
 

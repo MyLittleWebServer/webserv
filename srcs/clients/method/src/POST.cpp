@@ -10,15 +10,10 @@ POST::POST(void) {}
 
 POST::~POST(void) {}
 
-void POST::doRequest(RequestDts& dts) {
-  size_t bodySize = 0;
-  std::istringstream ss((*dts.headerFields)["content-length"]);
-  ss >> bodySize;
-
-  if (bodySize > dts.matchedLocation->getLimitClientBodySize())
-    throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
-  *dts.statusCode = CREATED;
+void POST::doRequest(RequestDts& dts, IResponse &response) {
+  (void)response;
   this->generateFile(dts);
+  *dts.statusCode = CREATED;
 }
 
 void POST::generateFile(RequestDts& dts) {
@@ -120,26 +115,22 @@ void POST::prepareBinaryBody(const std::string& filename) {
 }
 
 void POST::createSuccessResponse(IResponse& response) {
-  response.assembleResponseLine();
-  response.addResponse(getCurrentTime());
-  response.addResponse("\r\n");
-  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
-  response.addResponse("Content-Length: ");
-  response.addResponse(itos(this->_body.size()));
-  response.addResponse("\r\n");
+  // response.assembleResponseLine();
+  // response.addResponse(getCurrentTime());
+  // response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  // response.addResponse("Content-Length: ");
+  // response.addResponse(itos(this->_body.size()));
   this->createHTML(this->_title);
   // std::cout << this->_response << "\n";
   response.setResponseParsed();
 }
 
 void POST::createDisposSuccessResponse(IResponse& response) {
-  response.assembleResponseLine();
-  response.addResponse(getCurrentTime());
-  response.addResponse("\r\n");
-  response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
-  response.addResponse("Content-Length: ");
-  response.addResponse(itos(this->_body.size()));
-  response.addResponse("\r\n");
+  // response.assembleResponseLine();
+  // response.addResponse(getCurrentTime());
+  // response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
+  // response.addResponse("Content-Length: ");
+  // response.addResponse(itos(this->_body.size()));
   this->createHTML(this->_disposFilename);
   // std::cout << this->_response << "\n";
   response.setResponseParsed();

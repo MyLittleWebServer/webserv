@@ -12,10 +12,11 @@
 #include "Kqueue.hpp"
 #include "Utils.hpp"
 
-GET::GET() : IMethod(), _contentType("text/plain") {}
+GET::GET() : IMethod() {}
 GET::~GET() {}
 
-void GET::doRequest(RequestDts& dts) {
+void GET::doRequest(RequestDts& dts, IResponse& response) {
+  response.setHeaderField("Content-Type", "text/plain");
   std::string pathIndex;
 
   pathIndex = *dts.path;
@@ -25,33 +26,32 @@ void GET::doRequest(RequestDts& dts) {
                      : "/" + dts.matchedLocation->getIndex();
   }
 #ifdef DEBUG_MSG
-  std::cout << " -- this : " << this->_path << std::endl;
+  std::cout << " -- this : " << *dts.path << std::endl;
   std::cout << " -- this : " << pathIndex << std::endl;
 #endif
+
   if (access(dts.path->c_str(), R_OK) == 0 &&
       (*dts.path)[dts.path->size() - 1] != '/') {
     *dts.statusCode = OK;
-    return fileHandler(*dts.path);
+    // return fileHandler(*dts.path);
+    prepareBody(*dts.path, response);
   } else if (access(pathIndex.c_str(), R_OK) == 0 &&
              pathIndex[pathIndex.size() - 1] != '/') {
     *dts.statusCode = OK;
-    return fileHandler(pathIndex);
+    // return fileHandler(pathIndex);
+    prepareBody(pathIndex, response);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
              (*dts.path)[dts.path->size() - 1] == '/' &&
              dts.matchedLocation->getAutoindex() == "on") {
     *dts.statusCode = OK;
-    prepareFileList(*dts.path, dts);
+    prepareFileList(*dts.path, dts, response);
     // return 0;
   } else {
     throw(*dts.statusCode = NOT_FOUND);
   }
-  if (this->_body == "") {
+  if (response.getBody().empty()) {
     *dts.statusCode = NO_CONTENT;
   }
-}
-
-void GET::appendBody(IResponse& response) {
-  response.addResponse("\r\n" + this->_body);
 }
 
 std::vector<std::string> GET::getFileList(const std::string& path,
@@ -91,74 +91,73 @@ void GET::fileHandler(const std::string& path) {
   // error handling code
 }
 
-void GET::prepareFileList(const std::string& path, RequestDts& dts) {
+void GET::prepareFileList(const std::string& path, RequestDts& dts,
+                          IResponse& response) {
   try {
     std::vector<std::string> files = getFileList(path, dts);
-    this->_body = generateHTML(files);
-    this->_contentType = "text/html";
+    response.setBody(generateHTML(files));
+    response.setHeaderField("Content-Type", "text/html");
   } catch (int statusCode) {
-    this->_body = "Could not open directory";
+    response.setBody("Could not open directory");
     throw(statusCode);
   }
 }
 
-void GET::prepareBody(const std::string& path) {
-  getContentType(path);
-  if (this->_contentType == "text/html" || this->_contentType == "text/css" ||
-      this->_contentType == "application/json") {
-    prepareTextBody(path);
+void GET::prepareBody(const std::string& path, IResponse& response) {
+  getContentType(path, response);
+  const std::string& value = response.getFieldValue("Content-Type");
+  if (value == "text/html" || value == "text/css" ||
+      value == "application/json") {
+    prepareTextBody(path, response);
   } else {
-    prepareBinaryBody(path);
+    prepareBinaryBody(path, response);
   }
 }
 
-void GET::prepareTextBody(const std::string& path) {
+void GET::prepareTextBody(const std::string& path, IResponse& response) {
   std::ifstream file(path.c_str(), std::ios::in);
   std::string buff;
-  while (std::getline(file, buff)) this->_body += buff + "\r\n";
+  while (std::getline(file, buff)) {
+    response.addBody(buff);
+    response.addBody("\r\n");
+  }
   file.close();
 }
 
-void GET::prepareBinaryBody(const std::string& path) {
+void GET::prepareBinaryBody(const std::string& path, IResponse& response) {
   std::ifstream file(path.c_str(), std::ios::binary);
   std::stringstream buffer;
   buffer << file.rdbuf();
-  this->_body = buffer.str();
+  response.addBody(buffer.str());
   file.close();
 }
 
 void GET::createSuccessResponse(IResponse& response) {
-  response.assembleResponseLine();
-  response.addResponse(getCurrentTime());
-  response.addResponse("\r\n");
-  response.addResponse("Content-Type: ");
-  response.addResponse(validateContentType());
-  response.addResponse("\r\n");
-  response.addResponse("Content-Length: ");
-  response.addResponse(itos(this->_body.size()));
-  response.addResponse("\r\n");
-  this->appendBody(response);
+  validateContentType(response);
+  response.setHeaderField("Date", getCurrentTime());
+  response.setHeaderField("Content-Length", itos(response.getBody().size()));
+  response.assembleResponse();
 #ifdef DEBUG_MSG_BODY
-  std::cout << this->_response << "\n";
+  std::cout << response.getResponse() << "\n";
 #endif
   response.setResponseParsed();
 }
 
-std::string GET::validateContentType() {
-  if (_contentType == "text/html" || _contentType == "text/css" ||
-      _contentType == "application/json") {
-    return _contentType + "; charset=UTF-8";
+void GET::validateContentType(IResponse& response) {
+  const std::string& value = response.getFieldValue("Content-Type");
+  if (value == "text/html" || value == "text/css" ||
+      value == "application/json") {
+    response.setHeaderField("Content-Type", value + "; charset=UTF-8");
   }
-  return _contentType;
 }
 
-void GET::getContentType(const std::string& path) {
+void GET::getContentType(const std::string& path, IResponse &response) {
   std::string extension = path.substr(path.find_last_of(".") + 1);
   MimeTypesConfig& config = dynamic_cast<MimeTypesConfig&>(
       Config::getInstance().getMimeTypesConfig());
   try {
     std::cout << "extension::" << extension << std::endl;
-    _contentType = config.getVariable(extension);
+    response.setHeaderField("Content-Type", config.getVariable(extension));
     return;
   } catch (std::exception& e) {
     std::cout << "find :: ";

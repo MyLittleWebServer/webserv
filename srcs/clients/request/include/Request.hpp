@@ -42,9 +42,6 @@ class Request : public IRequest {
   void parseRequest(short port);
   void parseRequest(const std::string &request, short port);
 
-  void appendRequest(const std::string &str);
-  void appendRequest(const char *str);
-
   RequestDts &getRequestParserDts(void);
   const std::string &getRequest(void) const;
   const std::string &getMethod(void) const;
@@ -58,3 +55,5 @@ class Request : public IRequest {
   const bool &isParsed(void) const;
   const bool &isCgi(void) const;
 };
+
+std::ostream &operator<<(std::ostream &os, const Request &request);

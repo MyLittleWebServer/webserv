@@ -242,7 +242,7 @@ void RequestParser::validatePath(RequestDts &dts) {
       *dts.path = (*it)->getRoot() + *dts.path;
       dts.path->erase(0, 1);  // remove the first '/'
 #ifdef DEBUG_MSG
-      std::cout << "actual path: " << dts.path << '\n';
+      std::cout << "actual path: " << *dts.path << '\n';
 #endif
       if (this->checkPathForm(dts) == false) throw(_statusCode = NOT_FOUND);
       return;

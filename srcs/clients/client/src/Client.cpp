@@ -10,7 +10,11 @@ char Client::_buf[RECEIVE_LEN + 1] = {0};
 
 Client::Client() : _flag(START), _sd(0), _method(NULL) {}
 
-Client::Client(const uintptr_t sd) : _flag(START), _sd(sd), _method(NULL) {}
+Client::Client(const uintptr_t sd) {
+  this->_flag = RECEIVING;
+  this->_sd = sd;
+  this->_method = NULL;
+}
 
 Client &Client::operator=(const Client &client) {
   this->_flag = client._flag;
@@ -50,7 +54,6 @@ void Client::receiveRequest(void) {
                 << std::endl;
 #endif
       this->_flag = RECEIVE_DONE;
-      this->_recvBuff.clear();
       signal(SIGPIPE, SIG_DFL);
       return;
     }
@@ -59,6 +62,7 @@ void Client::receiveRequest(void) {
 }
 
 void Client::createErrorResponse() { _response.createErrorResponse(); }
+void Client::createSuccessResponse() { _method->createSuccessResponse(_response); }
 
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
@@ -69,7 +73,7 @@ void Client::parseRequest(short port) {
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  this->_method->doRequest(_request.getRequestParserDts());
+  this->_method->doRequest(_request.getRequestParserDts(), _response);
 }
 
 void Client::sendResponse() {
@@ -78,6 +82,7 @@ void Client::sendResponse() {
   const std::string &response = _response.getResponse();
 
   ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
+  
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     signal(SIGPIPE, SIG_DFL);
@@ -90,15 +95,15 @@ void Client::sendResponse() {
 }
 
 void Client::newHTTPMethod(void) {
-  if (this->_request.getMethod().compare(0, 4, "GET ") == 0) {
+  if (this->_request.getMethod() == "GET") {
     this->_method = new GET();
     return;
   }
-  if (this->_request.getMethod().compare(0, 5, "POST ") == 0) {
+  if (this->_request.getMethod() == "POST") {
     this->_method = new POST();
     return;
   }
-  if (this->_request.getMethod().compare(0, 7, "DELETE ") == 0) {
+  if (this->_request.getMethod() == "DELETE") {
     this->_method = new DELETE();
     return;
   }

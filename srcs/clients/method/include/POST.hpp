@@ -20,7 +20,7 @@ class POST : public IMethod {
   POST();
   ~POST();
 
-  void doRequest(RequestDts& dts);
+  void doRequest(RequestDts& dts, IResponse& response);
   void createSuccessResponse(IResponse& response);
   void appendBody();
   void generateUrlEncoded(RequestDts& dts, IResponse& response);

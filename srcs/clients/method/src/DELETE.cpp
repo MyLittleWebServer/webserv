@@ -3,7 +3,8 @@
 DELETE::DELETE() {}
 DELETE::~DELETE() {}
 
-void DELETE::doRequest(RequestDts& dts) {
+void DELETE::doRequest(RequestDts& dts, IResponse &response) {
+  (void)response;
   if (std::remove(dts.path->c_str()) == false) {
     throw(*dts.statusCode = NOT_FOUND);
   }
@@ -11,6 +12,6 @@ void DELETE::doRequest(RequestDts& dts) {
 }
 
 void DELETE::createSuccessResponse(IResponse& response) {
-  response.assembleResponseLine();
+  response.assembleResponse();
   response.setResponseParsed();
 }

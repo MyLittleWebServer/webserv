@@ -31,12 +31,9 @@ std::string getCurrentTime() {
   std::tm *timePtr = std::gmtime(&t);
 
   char buffer[1000];
-  std::strftime(buffer, sizeof(buffer), "Date: %a, %d %b %Y %H:%M:%S GMT",
-                timePtr);
+  std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timePtr);
 
-  std::string date(buffer);
-
-  return (date);
+  return (std::string(buffer));
 }
 
 std::string itos(int num) {
