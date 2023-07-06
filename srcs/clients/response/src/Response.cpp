@@ -104,3 +104,5 @@ void Response::eraseHeaderField(const std::string &key) {
 }
 
 void Response::addBody(const std::string &str) { this->_body += str; }
+
+void Response::setBody(const std::string &str) { this->_body = str; }
