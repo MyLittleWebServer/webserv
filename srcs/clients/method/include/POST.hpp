@@ -27,7 +27,7 @@ class POST : public IMethod {
   void generateMultipart(RequestDts& dts, IResponse& response);
   void prepareTextBody(const std::string& body);
   void prepareBinaryBody(const std::string& filename);
-  void createDisposSuccessResponse(IResponse& response);
+
   std::string createHTML(std::string const& head);
 
   std::string decodeURL(std::string const& encoded_string);

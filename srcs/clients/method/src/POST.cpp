@@ -10,7 +10,7 @@ POST::POST(void) {}
 
 POST::~POST(void) {}
 
-void POST::doRequest(RequestDts& dts, IResponse &response) {
+void POST::doRequest(RequestDts& dts, IResponse& response) {
   (void)response;
   this->generateFile(dts);
   *dts.statusCode = CREATED;
@@ -115,24 +115,10 @@ void POST::prepareBinaryBody(const std::string& filename) {
 }
 
 void POST::createSuccessResponse(IResponse& response) {
-  // response.assembleResponseLine();
-  // response.addResponse(getCurrentTime());
-  // response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
-  // response.addResponse("Content-Length: ");
-  // response.addResponse(itos(this->_body.size()));
-  this->createHTML(this->_title);
-  // std::cout << this->_response << "\n";
-  response.setResponseParsed();
-}
-
-void POST::createDisposSuccessResponse(IResponse& response) {
-  // response.assembleResponseLine();
-  // response.addResponse(getCurrentTime());
-  // response.addResponse("Content-Type: text/html; charset=UTF-8\r\n");
-  // response.addResponse("Content-Length: ");
-  // response.addResponse(itos(this->_body.size()));
-  this->createHTML(this->_disposFilename);
-  // std::cout << this->_response << "\n";
+  const std::string& value = response.getFieldValue("Content-Type");
+  response.setHeaderField("Content-Type", value + "; charset=UTF-8");
+  response.setHeaderField("Date", getCurrentTime());
+  response.assembleResponse();
   response.setResponseParsed();
 }
 
