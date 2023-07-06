@@ -11,20 +11,20 @@ class GET : public IMethod {
   std::vector<std::string> getFileList(const std::string& path,
                                        RequestDts& dts);
   std::string generateHTML(const std::vector<std::string>& files);
-  std::string validateContentType();
-  void prepareFileList(const std::string& path, RequestDts& dts);
-  void prepareBody(const std::string& pathIndex);
+  void validateContentType(IResponse &response);
+  void prepareFileList(const std::string& path, RequestDts& dts,
+                       IResponse& response);
+  void prepareBody(const std::string& pathIndex, IResponse& response);
   void getContentType(const std::string& path);
 
-  void prepareTextBody(const std::string& path);
-  void prepareBinaryBody(const std::string& path);
+  void prepareTextBody(const std::string& path, IResponse& response);
+  void prepareBinaryBody(const std::string& path, IResponse& response);
 
  public:
   GET();
   ~GET();
 
-  void doRequest(RequestDts& dts);
-  void appendBody(IResponse& response);
+  void doRequest(RequestDts& dts, IResponse& response);
   void fileHandler(const std::string& path);
   void createSuccessResponse(IResponse& response);
 };

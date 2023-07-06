@@ -12,7 +12,7 @@
 class IMethod {
  public:
   virtual ~IMethod(){};
-  virtual void doRequest(RequestDts& dts) = 0;
+  virtual void doRequest(RequestDts& dts, IResponse &respose) = 0;
   // virtual int fileHandler(const std::string& path);
   virtual void createSuccessResponse(IResponse& response) = 0;
 };

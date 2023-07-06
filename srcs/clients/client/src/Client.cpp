@@ -69,7 +69,7 @@ void Client::parseRequest(short port) {
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  this->_method->doRequest(_request.getRequestParserDts());
+  this->_method->doRequest(_request.getRequestParserDts(), _response);
 }
 
 void Client::sendResponse() {
