@@ -66,9 +66,9 @@ void EventHandler::processRequest(Client &currClient) {
     else {
       currClient.doRequest();
     }
-    // currClient.createSuccessResponse();
-    // enableEvent(currClient.getSD(), EVFILT_WRITE,
-    //             static_cast<void *>(&currClient));
+    currClient.createSuccessResponse();
+    enableEvent(currClient.getSD(), EVFILT_WRITE,
+                static_cast<void *>(&currClient));
   } catch (enum Status &code) {
     currClient.createErrorResponse();
     enableEvent(currClient.getSD(), EVFILT_WRITE,
@@ -83,14 +83,17 @@ void EventHandler::processRequest(Client &currClient) {
 void EventHandler::processResponse(Client &currClient) {
   try {
     currClient.sendResponse();
-    disableEvent(currClient.getSD(), EVFILT_WRITE,
-                 static_cast<void *>(&currClient));
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
   };
-  if (currClient.getFlag() == END) {
+    disableEvent(currClient.getSD(), EVFILT_WRITE,
+                 static_cast<void *>(&currClient));
+ if (currClient.getFlag() == END) {
     disconnectClient(&currClient);
-  }
+    return;
+ }
+ // TODO : init member
+ currClient.setFlag(RECEIVING);
 }
 
 void EventHandler::acceptClient() {
