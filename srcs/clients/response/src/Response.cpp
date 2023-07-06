@@ -26,21 +26,27 @@ const std::string &Response::getResponse(void) const {
   return (this->_response);
 }
 
+const std::string &Response::getBody(void) const { return (this->_body); }
+
 bool Response::getResponseFlag(void) const { return (this->_responseFlag); }
+
+std::string &Response::getFieldValue(const std::string &key) {
+  return (this->_headerFields[key]);
+}
 
 void Response::createErrorResponse(void) {
   resetResponse();
   // redirection response (300). need to replace the url with actual url
   if (statusInfo[this->_statusCode].body == NULL) {
-    this->addHeaderField("Location", "http://example.com/redirect_url");
+    this->setHeaderField("Location", "http://example.com/redirect_url");
     this->_responseFlag = true;
     return;
   }
   // response for status code 400 ~ 500
-  this->addHeaderField("Content-Type", "text/plain");
+  this->setHeaderField("Content-Type", "text/plain");
   this->addBody(statusInfo[this->_statusCode].body);
   this->addBody("\r\n");
-  this->addHeaderField("Content-Length", itos(this->_body.size()));
+  this->setHeaderField("Content-Length", itos(this->_body.size()));
   this->assembleResponse();
 
   this->_responseFlag = true;
@@ -88,7 +94,7 @@ void Response::putBody(void) {
   this->_response += "\r\n" + this->_body;
 }
 
-void Response::addHeaderField(const std::string &key,
+void Response::setHeaderField(const std::string &key,
                               const std::string &value) {
   this->_headerFields[key] = value;
 }

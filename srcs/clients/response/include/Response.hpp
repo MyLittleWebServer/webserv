@@ -32,13 +32,16 @@ class Response : public IResponse {
   virtual void createErrorResponse(void);
   bool getResponseFlag(void) const;
   const std::string &getResponse(void) const;
+  const std::string &getBody(void) const;
+  std::string &getFieldValue(const std::string &key);
 
   void assembleResponse(void);
 
-  void addHeaderField(const std::string &key, const std::string &value);
   void eraseHeaderField(const std::string &key);
   void addBody(const std::string &str);
 
+  void setHeaderField(const std::string &key, const std::string &value);
+  void setBody(const std::string &str);
   void setResponseParsed();
   bool isParsed();
 };
