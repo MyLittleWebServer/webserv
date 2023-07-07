@@ -66,7 +66,8 @@ sources1 +=	Client.cpp
 sources1 +=	ServerManager.cpp \
 						Server.cpp \
 						Kqueue.cpp \
-						EventHandler.cpp
+						EventHandler.cpp \
+						FdInfo.cpp
 
 # ---- HTTP ---- #
 
