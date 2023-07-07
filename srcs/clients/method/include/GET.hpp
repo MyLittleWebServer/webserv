@@ -9,7 +9,7 @@ class GET : public IMethod {
   std::string _contentType;
 
   std::vector<std::string> getFileList(const std::string& path,
-                                       RequestDts& dts);
+                                       RequestDts& dts, std::vector<std::string> &files);
   std::string generateHTML(const std::vector<std::string>& files);
   void validateContentType(IResponse &response);
   void prepareFileList(const std::string& path, RequestDts& dts,
@@ -19,6 +19,11 @@ class GET : public IMethod {
 
   void prepareTextBody(const std::string& path, IResponse& response);
   void prepareBinaryBody(const std::string& path, IResponse& response);
+
+  std::string makePathIndex(RequestDts& dts);
+
+  bool checkFilePath(const std::string &path);
+  bool checkDirectoryPath(const std::string &pathIndex, RequestDts &dts);
 
  public:
   GET();

@@ -17,48 +17,54 @@ GET::~GET() {}
 
 void GET::doRequest(RequestDts& dts, IResponse& response) {
   response.setHeaderField("Content-Type", "text/plain");
-  std::string pathIndex;
+  std::string pathIndex = makePathIndex(dts);
 
-  pathIndex = *dts.path;
-  if (dts.matchedLocation->getIndex() != "") {
-    pathIndex += (*dts.path)[dts.path->size() - 1] == '/'
-                     ? dts.matchedLocation->getIndex()
-                     : "/" + dts.matchedLocation->getIndex();
-  }
 #ifdef DEBUG_MSG
   std::cout << " -- this : " << *dts.path << std::endl;
   std::cout << " -- this : " << pathIndex << std::endl;
 #endif
 
-  if (access(dts.path->c_str(), R_OK) == 0 &&
-      (*dts.path)[dts.path->size() - 1] != '/') {
-    *dts.statusCode = OK;
-    // return fileHandler(*dts.path);
+  if (checkFilePath(*dts.path)) {
     prepareBody(*dts.path, response);
-  } else if (access(pathIndex.c_str(), R_OK) == 0 &&
-             pathIndex[pathIndex.size() - 1] != '/') {
-    *dts.statusCode = OK;
-    // return fileHandler(pathIndex);
+  } else if (checkFilePath(pathIndex)) {
     prepareBody(pathIndex, response);
-  } else if (access(pathIndex.c_str(), R_OK) < 0 &&
-             (*dts.path)[dts.path->size() - 1] == '/' &&
-             dts.matchedLocation->getAutoindex() == "on") {
-    *dts.statusCode = OK;
+  } else if (checkDirectoryPath(pathIndex, dts)) {
     prepareFileList(*dts.path, dts, response);
-    // return 0;
   } else {
     throw(*dts.statusCode = NOT_FOUND);
   }
+  *dts.statusCode = OK;
   if (response.getBody().empty()) {
     *dts.statusCode = NO_CONTENT;
   }
 }
 
+std::string GET::makePathIndex(RequestDts& dts) {
+  std::string pathIndex = *dts.path;
+  if (dts.matchedLocation->getIndex() != "") {
+    pathIndex += (*dts.path)[dts.path->size() - 1] == '/'
+                     ? dts.matchedLocation->getIndex()
+                     : "/" + dts.matchedLocation->getIndex();
+  }
+  return (pathIndex);
+}
+
+bool GET::checkFilePath(const std::string& path) {
+  return (access(path.c_str(), R_OK) == 0 && path[path.size() - 1] != '/');
+}
+
+bool GET::checkDirectoryPath(const std::string& pathIndex, RequestDts& dts) {
+  return (access(pathIndex.c_str(), R_OK) < 0 &&
+          access((*dts.path).c_str(), R_OK) == 0 &&
+          (*dts.path)[dts.path->size() - 1] == '/' &&
+          dts.matchedLocation->getAutoindex() == "on");
+}
+
 std::vector<std::string> GET::getFileList(const std::string& path,
-                                          RequestDts& dts) {
+                                          RequestDts& dts,
+                                          std::vector<std::string>& files) {
   DIR* dir;
   struct dirent* ent;
-  std::vector<std::string> files;
 
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
@@ -94,7 +100,8 @@ void GET::fileHandler(const std::string& path) {
 void GET::prepareFileList(const std::string& path, RequestDts& dts,
                           IResponse& response) {
   try {
-    std::vector<std::string> files = getFileList(path, dts);
+    std::vector<std::string> files;
+    getFileList(path, dts, files);
     response.setBody(generateHTML(files));
     response.setHeaderField("Content-Type", "text/html");
   } catch (int statusCode) {
@@ -151,7 +158,7 @@ void GET::validateContentType(IResponse& response) {
   }
 }
 
-void GET::getContentType(const std::string& path, IResponse &response) {
+void GET::getContentType(const std::string& path, IResponse& response) {
   std::string extension = path.substr(path.find_last_of(".") + 1);
   MimeTypesConfig& config = dynamic_cast<MimeTypesConfig&>(
       Config::getInstance().getMimeTypesConfig());
@@ -165,9 +172,9 @@ void GET::getContentType(const std::string& path, IResponse &response) {
     for (it = config._data.begin(); it != config._data.end(); ++it) {
       if (it->first.find(extension) != std::string::npos) {
         std::cout << it->second << std::endl;
-        _contentType = it->second;
+        response.setHeaderField("Content-Type", it->second);
       }
     }
-    _contentType = "text/plain";
+    response.setHeaderField("Content-Type", "text/plain");
   }
 }
