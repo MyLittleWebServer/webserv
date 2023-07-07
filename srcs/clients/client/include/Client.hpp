@@ -16,17 +16,12 @@
 #define RECEIVE_LEN 1000
 
 enum ClientFlag {
-  START,
   RECEIVING,
   RECEIVE_DONE,
-  REQUEST_HEAD,
-  REQUEST_ENTITY,
-  REQUEST_DONE,
-  FILE_READ,
-  FILE_CGI,
-  FILE_WRITE,
-  FILE_DONE,
-  RESPONSE_DONE,
+  REQUEST_PARSED,
+  FILE_IO,
+  PIPE_IO,
+  RESPONSE_CREATED,
   END
 };
 
@@ -40,6 +35,7 @@ class Client {
   Request _request;
   Response _response;
   IMethod *_method;
+  FdInfo _fdInfo;
 
   static char _buf[RECEIVE_LEN + 1];
 
@@ -55,6 +51,7 @@ class Client {
  public:
   uintptr_t getSD() const;
   IMethod *getMethod() const;
+  const FdInfo &getFdInfo() const;
   void receiveRequest();
   void newHTTPMethod();
   void sendResponse();

@@ -10,8 +10,9 @@ POST::POST(void) {}
 
 POST::~POST(void) {}
 
-void POST::doRequest(RequestDts& dts, IResponse &response) {
+void POST::doRequest(RequestDts& dts, IResponse &response, FdInfo& fdInfo) {
   (void)response;
+  (void)fdInfo;
   this->generateFile(dts);
   *dts.statusCode = CREATED;
 }

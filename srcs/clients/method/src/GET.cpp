@@ -15,9 +15,10 @@
 GET::GET() : IMethod() {}
 GET::~GET() {}
 
-void GET::doRequest(RequestDts& dts, IResponse& response) {
+void GET::doRequest(RequestDts& dts, IResponse& response, FdInfo& fdInfo) {
   response.setHeaderField("Content-Type", "text/plain");
   std::string pathIndex = makePathIndex(dts);
+  (void)fdInfo;
 
 #ifdef DEBUG_MSG
   std::cout << " -- this : " << *dts.path << std::endl;

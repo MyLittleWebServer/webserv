@@ -8,7 +8,7 @@ class DummyMethod : public IMethod {
   DummyMethod(Status statusCode);
   ~DummyMethod();
 
-  void doRequest(RequestDts& dts, IResponse& response);
+  void doRequest(RequestDts& dts, IResponse& response, FdInfo &fdInfo);
   void createSuccessResponse(IResponse& response);
 };
 

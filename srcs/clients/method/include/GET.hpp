@@ -29,7 +29,7 @@ class GET : public IMethod {
   GET();
   ~GET();
 
-  void doRequest(RequestDts& dts, IResponse& response);
+  void doRequest(RequestDts& dts, IResponse& response, FdInfo &fdInfo);
   void fileHandler(const std::string& path);
   void createSuccessResponse(IResponse& response);
 };

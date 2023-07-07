@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Config.hpp"
+#include "FdInfo.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Status.hpp"
@@ -12,7 +13,8 @@
 class IMethod {
  public:
   virtual ~IMethod(){};
-  virtual void doRequest(RequestDts& dts, IResponse &response) = 0;
+  virtual void doRequest(RequestDts& dts, IResponse& response,
+                         FdInfo& fdInfo) = 0;
   // virtual int fileHandler(const std::string& path);
   virtual void createSuccessResponse(IResponse& response) = 0;
 };

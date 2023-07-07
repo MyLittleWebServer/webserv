@@ -8,7 +8,7 @@
 
 char Client::_buf[RECEIVE_LEN + 1] = {0};
 
-Client::Client() : _flag(START), _sd(0), _method(NULL) {}
+Client::Client() : _flag(RECEIVING), _sd(0), _method(NULL) {}
 
 Client::Client(const uintptr_t sd) {
   this->_flag = RECEIVING;
@@ -62,18 +62,20 @@ void Client::receiveRequest(void) {
 }
 
 void Client::createErrorResponse() { _response.createErrorResponse(); }
-void Client::createSuccessResponse() { _method->createSuccessResponse(_response); }
+void Client::createSuccessResponse() {
+  _method->createSuccessResponse(_response);
+}
 
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _flag = REQUEST_DONE;
+  if (_request.isParsed()) _flag = REQUEST_PARSED;
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  this->_method->doRequest(_request.getRequestParserDts(), _response);
+  this->_method->doRequest(_request.getRequestParserDts(), _response, _fdInfo);
 }
 
 void Client::sendResponse() {
@@ -82,7 +84,7 @@ void Client::sendResponse() {
   const std::string &response = _response.getResponse();
 
   ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-  
+
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     signal(SIGPIPE, SIG_DFL);
@@ -118,6 +120,8 @@ ClientFlag Client::getFlag() const { return this->_flag; }
 void Client::setFlag(ClientFlag flag) { this->_flag = flag; }
 
 uintptr_t Client::getSD() const { return this->_sd; }
+
+const FdInfo &Client::getFdInfo() const { return this->_fdInfo; };
 
 const char *Client::RecvFailException::what() const throw() {
   return ("error occured in recv()");
