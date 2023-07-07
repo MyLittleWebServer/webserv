@@ -147,11 +147,13 @@ void EventHandler::registerIOEvent(Client &client) {
   if (fdInfo.getFdType() == FILE_READ) {
     addEvent(fdInfo.getReadFd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
              static_cast<void *>(&client));
+    client.setFlag(FILE_IO);
     return;
   }
   if (fdInfo.getFdType() == FILE_WRITE) {
     addEvent(fdInfo.getWriteFd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
              static_cast<void *>(&client));
+    client.setFlag(FILE_IO);
     return;
   }
   if (fdInfo.getFdType() == PIPE) {
@@ -159,6 +161,7 @@ void EventHandler::registerIOEvent(Client &client) {
              static_cast<void *>(&client));
     addEvent(fdInfo.getWriteFd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
              static_cast<void *>(&client));
+    client.setFlag(PIPE_IO);
     return;
   }
 }
