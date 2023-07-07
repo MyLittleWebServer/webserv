@@ -20,7 +20,8 @@ class EventHandler : public Kqueue {
   void checkErrorOnSocket(void);
   void acceptClient(void);
   void disconnectClient(const Client* client);
-  void registClient(const uintptr_t clientSocket);
+  void registerClient(const uintptr_t clientSocket);
+  void registerIOEvent(Client& client);
   void processRequest(Client& client);
   void processResponse(Client& client);
 
