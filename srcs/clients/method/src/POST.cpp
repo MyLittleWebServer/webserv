@@ -11,31 +11,44 @@ POST::POST(void) {}
 POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
-  (void)response;
-  this->generateFile(dts);
+  // std::map<std::string, std::string>::iterator it =
+  // (dts.headerFields->begin()); std::map<std::string, std::string>::iterator
+  // end = (dts.headerFields->end()); while (it != end) {
+  //   std::cout << "key: " << it->first << "   value: " << it->second << "\n";
+  //   it++;
+  // }
+  this->generateResource(dts, response);
   *dts.statusCode = CREATED;
 }
 
-void POST::generateFile(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
-  std::ofstream file(dts.path->c_str(), std::ios::out);
-  if (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-  std::list<std::string>::const_iterator it = dts.linesBuffer->begin();
-  std::list<std::string>::const_iterator end = dts.linesBuffer->end();
-  while (it != end) {
-    file << *it++;
-    if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-  }
-  file.close();
-  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-}
+// void POST::generateFile(RequestDts& dts) {
+//   if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) =
+//   FORBIDDEN); std::ofstream file(dts.path->c_str(), std::ios::out); if
+//   (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+//   std::list<std::string>::const_iterator it = dts.linesBuffer->begin();
+//   std::list<std::string>::const_iterator end = dts.linesBuffer->end();
+//   while (it != end) {
+//     file << *it++;
+//     if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+//   }
+//   file.close();
+//   if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+// }
 
 void POST::generateResource(RequestDts& dts, IResponse& response) {
-  if (_contentType == "application/x-www-form-urlencoded")
+  this->_contentType = (*dts.headerFields)["content-type"].c_str();
+  std::string parsedContent = this->_contentType;
+  if (this->_contentType.find(';') != std::string::npos) {
+    parsedContent = _contentType.substr(0, _contentType.find(';'));
+  }
+  // std::cout << "CONTENT-TYPE" << parsedContent << "\n";
+  if (parsedContent == "application/x-www-form-urlencoded") {
+    std::cout << "sibal1\n";
     this->generateUrlEncoded(dts, response);
-  else if (_contentType.substr(0, 20) == "multipart/form-data" &&
-           _contentType.find(";") != std::string::npos)
+  } else if (parsedContent == "multipart/form-data") {
+    std::cout << "sibal2\n";
     this->generateMultipart(dts, response);
+  }
 }
 
 void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
@@ -69,32 +82,7 @@ void POST::generateMultipart(RequestDts& dts, IResponse& response) {
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
   if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
-  size_t dispositionPos = _body.find("content-disposition");
-  size_t typePos = _body.find("content-type");
-  if (dispositionPos == std::string::npos || typePos == std::string::npos)
-    throw(*dts.statusCode = BAD_REQUEST);
-
-  std::string disposition =
-      _body.substr(dispositionPos + 20, typePos - (dispositionPos + 20));
-  if (disposition == "") throw(*dts.statusCode = BAD_REQUEST);
-
-  size_t equalPos = disposition.find('=');
-  size_t semicolonPos = disposition.find(';');
-  if (equalPos == std::string::npos || semicolonPos == std::string::npos)
-    throw(*dts.statusCode = BAD_REQUEST);
-
-  this->_disposName =
-      disposition.substr(equalPos + 1, semicolonPos - (equalPos + 1));
-  this->_disposFilename = disposition.substr(semicolonPos + 11);
-  if (this->_disposName == "" || this->_disposFilename == "")
-    throw(*dts.statusCode = BAD_REQUEST);
-
-  this->_type = _body.substr(typePos + 14);
-  if (this->_type == "") throw(*dts.statusCode = BAD_REQUEST);
-  if (this->_type != "image/png" && this->_type != "image/jpeg")
-    throw(*dts.statusCode = UNSUPPORTED_MEDIA_TYPE);
-
-  prepareBinaryBody(this->_disposFilename);
+  prepareBinaryBody(this->_path);
 
   *dts.statusCode = CREATED;
   createSuccessResponse(response);
