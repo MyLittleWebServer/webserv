@@ -20,15 +20,12 @@ class POST : public IMethod {
 
   void doRequest(RequestDts& dts, IResponse& response);
   void createSuccessResponse(IResponse& response);
-  void appendBody();
   void generateUrlEncoded(RequestDts& dts, IResponse& response);
   void generateMultipart(RequestDts& dts, IResponse& response);
-  void prepareTextBody(const std::string& body);
+  void prepareTextBody(RequestDts& dts);
   void prepareBinaryBody(const std::string& filename);
 
-  std::string createHTML(std::string const& head);
-
-  std::string decodeURL(std::string const& encoded_string);
+  std::string decodeURL(std::string encoded_string);
 
   // std::string validateContentType();
 };

@@ -21,20 +21,6 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   *dts.statusCode = CREATED;
 }
 
-// void POST::generateFile(RequestDts& dts) {
-//   if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) =
-//   FORBIDDEN); std::ofstream file(dts.path->c_str(), std::ios::out); if
-//   (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-//   std::list<std::string>::const_iterator it = dts.linesBuffer->begin();
-//   std::list<std::string>::const_iterator end = dts.linesBuffer->end();
-//   while (it != end) {
-//     file << *it++;
-//     if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-//   }
-//   file.close();
-//   if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
-// }
-
 void POST::generateResource(RequestDts& dts, IResponse& response) {
   this->_contentType = (*dts.headerFields)["content-type"].c_str();
   std::string parsedContent = this->_contentType;
@@ -52,8 +38,10 @@ void POST::generateResource(RequestDts& dts, IResponse& response) {
 }
 
 void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
-  std::string decodedBody = decodeURL(this->_body);
+  std::cout << "rawBody: " << *dts.body << "\n";
+  std::string decodedBody = decodeURL(*dts.body);
 
+  std::cout << "decodedBody: " << decodedBody << "\n";
   if (decodedBody.find("title") == std::string::npos ||
       decodedBody.find("content") == std::string::npos)
     throw(*dts.statusCode = BAD_REQUEST);
@@ -63,14 +51,16 @@ void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
   if (andPos == std::string::npos || equalPos1 == std::string::npos) {
     throw(*dts.statusCode = BAD_REQUEST);
   }
-  this->_title = decodedBody.substr(equalPos1, andPos - equalPos1);
-  decodedBody = decodedBody.substr(andPos);
+  this->_title = decodedBody.substr(equalPos1 + 1, andPos - equalPos1 - 1);
+  decodedBody = decodedBody.substr(andPos + 1);
   size_t equalPos2 = decodedBody.find('=');
-  this->_content = decodedBody.substr(equalPos2);
-
-  if (access(this->_path.c_str(), F_OK) < 0) throw(*dts.statusCode = FORBIDDEN);
-
-  prepareTextBody(this->_path);
+  this->_content = decodedBody.substr(equalPos2 + 1);
+#ifdef DEBUG_MSG
+  std::cout << "title: " << this->_title << "\n";
+  std::cout << "content: " << this->_content << "\n";
+  std::cout << "path: " << *dts.path << "\n";
+#endif
+  prepareTextBody(dts);
 
   *dts.statusCode = CREATED;
   createSuccessResponse(response);
@@ -82,16 +72,22 @@ void POST::generateMultipart(RequestDts& dts, IResponse& response) {
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
   if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
-  prepareBinaryBody(this->_path);
+  prepareBinaryBody(*dts.path);
 
   *dts.statusCode = CREATED;
   createSuccessResponse(response);
 }
 
-void POST::prepareTextBody(const std::string& path) {
-  std::ofstream file(path.c_str(), std::ios::out);
-  std::string buff;
+void POST::prepareTextBody(RequestDts& dts) {
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN); 
+  std::string pathInfo = *dts.path + this->_title + ".txt";
+  std::cout << "pathInfo: " << pathInfo << "\n";
+  std::ofstream file(pathInfo, std::ios::out);
+  if (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  file << this->_content << "\n";
+  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
   file.close();
+  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
 }
 
 void POST::prepareBinaryBody(const std::string& filename) {
@@ -110,25 +106,18 @@ void POST::createSuccessResponse(IResponse& response) {
   response.setResponseParsed();
 }
 
-std::string POST::createHTML(std::string const& head) {
-  std::string html = "<html><body>";
-  html += "<a href=\"" + head + "\">" + head + "</a><br>";
-  html += "</body></html>";
-  return html;
-}
-
-std::string POST::decodeURL(std::string const& encoded_string) {
+std::string POST::decodeURL(std::string encoded_string) {
+  std::replace(encoded_string.begin(), encoded_string.end(), '+', ' ');
+  size_t len = encoded_string.length();
   int buf_len = 0;
-  std::string decoded_string = encoded_string;
-  std::replace(decoded_string.begin(), decoded_string.end(), '+', ' ');
-  size_t len = decoded_string.length();
-
   for (size_t i = 0; i < len; ++i) {
-    if (encoded_string.at(i) == '%') i += 2;
+    if (encoded_string.at(i) == '%') {
+      i += 2;
+    }
     ++buf_len;
   }
-  char* buf = new char[buf_len];
-  std::memset(buf, 0, buf_len);
+  char *buf = new char[buf_len];
+  bzero(buf, buf_len);
   char c = 0;
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j) {
@@ -145,7 +134,9 @@ std::string POST::decodeURL(std::string const& encoded_string) {
     }
     buf[j] = c;
   }
+  std::string decoded_string;
   for (int i = 0; i < buf_len; ++i) decoded_string.push_back(buf[i]);
+
   delete[] buf;
   return decoded_string;
 }
