@@ -27,12 +27,10 @@ void POST::generateResource(RequestDts& dts, IResponse& response) {
   if (this->_contentType.find(';') != std::string::npos) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
-  // std::cout << "CONTENT-TYPE" << parsedContent << "\n";
+  std::cout << "CONTENT-TYPE: " << parsedContent << "\n";
   if (parsedContent == "application/x-www-form-urlencoded") {
-    std::cout << "sibal1\n";
     this->generateUrlEncoded(dts, response);
   } else if (parsedContent == "multipart/form-data") {
-    std::cout << "sibal2\n";
     this->generateMultipart(dts, response);
   }
 }
@@ -72,7 +70,7 @@ void POST::generateMultipart(RequestDts& dts, IResponse& response) {
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
   if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
-  prepareBinaryBody(*dts.path);
+  prepareBinaryBody(dts);
 
   *dts.statusCode = CREATED;
   createSuccessResponse(response);
@@ -90,11 +88,22 @@ void POST::prepareTextBody(RequestDts& dts) {
   if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
 }
 
-void POST::prepareBinaryBody(const std::string& filename) {
+void POST::prepareBinaryBody(RequestDts& dts) {
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
+  std::string filename = *dts.path + "tmpTitle";
   std::ofstream file(filename.c_str(), std::ios::binary);
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  this->_body = buffer.str();
+  std::string binBody = (*dts.body).data();
+  size_t boundaryPos = binBody.find("boundary");
+  
+  if (boundaryPos == std::string::npos) throw((*dts.statusCode) = BAD_REQUEST);
+  size_t start = binBody.find("\r\n\r\n", boundaryPos, binBody.find("Content-Type"));
+  size_t end = binBody.rfind("------WebKitFormBoundary");
+  if (start == std::string::npos || end == std::string::npos) 
+    throw((*dts.statusCode) = BAD_REQUEST);
+  start += 4;
+  end -= 2;
+  std::string content = binBody.substr(start, end - start).data();
+  file << content;
   file.close();
 }
 

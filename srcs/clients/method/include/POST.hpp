@@ -23,7 +23,7 @@ class POST : public IMethod {
   void generateUrlEncoded(RequestDts& dts, IResponse& response);
   void generateMultipart(RequestDts& dts, IResponse& response);
   void prepareTextBody(RequestDts& dts);
-  void prepareBinaryBody(const std::string& filename);
+  void prepareBinaryBody(RequestDts& dts);
 
   std::string decodeURL(std::string encoded_string);
 
