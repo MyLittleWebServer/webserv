@@ -12,7 +12,7 @@ class POST : public IMethod {
   std::string _title;
   std::string _content;
   std::string _type;
-  void generateResource(RequestDts& dts, IResponse& response);
+  void generateResource(RequestDts& dts);
 
  public:
   POST();
@@ -20,8 +20,8 @@ class POST : public IMethod {
 
   void doRequest(RequestDts& dts, IResponse& response);
   void createSuccessResponse(IResponse& response);
-  void generateUrlEncoded(RequestDts& dts, IResponse& response);
-  void generateMultipart(RequestDts& dts, IResponse& response);
+  void generateUrlEncoded(RequestDts& dts);
+  void generateMultipart(RequestDts& dts);
   void prepareTextBody(RequestDts& dts);
   void prepareBinaryBody(RequestDts& dts);
 

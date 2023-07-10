@@ -11,31 +11,32 @@ POST::POST(void) {}
 POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
+  (void)response;
   // std::map<std::string, std::string>::iterator it =
   // (dts.headerFields->begin()); std::map<std::string, std::string>::iterator
   // end = (dts.headerFields->end()); while (it != end) {
   //   std::cout << "key: " << it->first << "   value: " << it->second << "\n";
   //   it++;
   // }
-  this->generateResource(dts, response);
-  *dts.statusCode = CREATED;
+  this->generateResource(dts);
+  response.setStatusCode(CREATED);
 }
 
-void POST::generateResource(RequestDts& dts, IResponse& response) {
+void POST::generateResource(RequestDts& dts) {
   this->_contentType = (*dts.headerFields)["content-type"].c_str();
   std::string parsedContent = this->_contentType;
   if (this->_contentType.find(';') != std::string::npos) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
-  std::cout << "CONTENT-TYPE: " << parsedContent << "\n";
+  // std::cout << "CONTENT-TYPE: " << parsedContent << "\n";
   if (parsedContent == "application/x-www-form-urlencoded") {
-    this->generateUrlEncoded(dts, response);
+    this->generateUrlEncoded(dts);
   } else if (parsedContent == "multipart/form-data") {
-    this->generateMultipart(dts, response);
+    this->generateMultipart(dts);
   }
 }
 
-void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
+void POST::generateUrlEncoded(RequestDts& dts) {
   std::cout << "rawBody: " << *dts.body << "\n";
   std::string decodedBody = decodeURL(*dts.body);
 
@@ -59,25 +60,19 @@ void POST::generateUrlEncoded(RequestDts& dts, IResponse& response) {
   std::cout << "path: " << *dts.path << "\n";
 #endif
   prepareTextBody(dts);
-
-  *dts.statusCode = CREATED;
-  createSuccessResponse(response);
 }
 
-void POST::generateMultipart(RequestDts& dts, IResponse& response) {
+void POST::generateMultipart(RequestDts& dts) {
   size_t boundaryPos = this->_contentType.find("boundary");
   if (boundaryPos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
   if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
 
   prepareBinaryBody(dts);
-
-  *dts.statusCode = CREATED;
-  createSuccessResponse(response);
 }
 
 void POST::prepareTextBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN); 
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
   std::string pathInfo = *dts.path + this->_title + ".txt";
   std::cout << "pathInfo: " << pathInfo << "\n";
   std::ofstream file(pathInfo, std::ios::out);
@@ -94,11 +89,12 @@ void POST::prepareBinaryBody(RequestDts& dts) {
   std::ofstream file(filename.c_str(), std::ios::binary);
   std::string binBody = (*dts.body).data();
   size_t boundaryPos = binBody.find("boundary");
-  
+
   if (boundaryPos == std::string::npos) throw((*dts.statusCode) = BAD_REQUEST);
-  size_t start = binBody.find("\r\n\r\n", boundaryPos, binBody.find("Content-Type"));
+  size_t start =
+      binBody.find("\r\n\r\n", boundaryPos, binBody.find("Content-Type"));
   size_t end = binBody.rfind("------WebKitFormBoundary");
-  if (start == std::string::npos || end == std::string::npos) 
+  if (start == std::string::npos || end == std::string::npos)
     throw((*dts.statusCode) = BAD_REQUEST);
   start += 4;
   end -= 2;
@@ -108,9 +104,6 @@ void POST::prepareBinaryBody(RequestDts& dts) {
 }
 
 void POST::createSuccessResponse(IResponse& response) {
-  const std::string& value = response.getFieldValue("Content-Type");
-  response.setHeaderField("Content-Type", value + "; charset=UTF-8");
-  response.setHeaderField("Date", getCurrentTime());
   response.assembleResponse();
   response.setResponseParsed();
 }
@@ -125,7 +118,7 @@ std::string POST::decodeURL(std::string encoded_string) {
     }
     ++buf_len;
   }
-  char *buf = new char[buf_len];
+  char* buf = new char[buf_len];
   bzero(buf, buf_len);
   char c = 0;
   size_t j = 0;
