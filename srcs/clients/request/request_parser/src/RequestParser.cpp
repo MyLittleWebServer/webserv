@@ -43,7 +43,7 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
     delim_cnt++;
     pos = firstLine.find(" ", ++pos);
   }
-  if (delim_cnt != 2) throw(_statusCode = BAD_REQUEST);
+  if (delim_cnt != 2) throw(*dts.statusCode = BAD_REQUEST);
 
   std::istringstream iss(firstLine);
   dts.linesBuffer->pop_front();
@@ -58,7 +58,7 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   std::cout << "path: " << *dts.path << std::endl;
   std::cout << "protocol: " << *dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
-    throw(_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 }
 
 void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
@@ -86,7 +86,7 @@ void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
 
 void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
   size_t pos = str.find("=");
-  if (pos == std::string::npos) throw(_statusCode = BAD_REQUEST);
+  if (pos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
   std::string key = str.substr(0, pos);
   std::string value = str.substr(pos + 1, str.size() - pos - 1);
   (*dts.queryString)[key] = value;
@@ -202,7 +202,7 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
 #ifdef DEBUG_MSG
     std::cout << "no matched server" << std::endl;
 #endif
-    throw(_statusCode = NOT_FOUND);
+    throw(*dts.statusCode = NOT_FOUND);
   }
 }
 
@@ -244,7 +244,7 @@ void RequestParser::validatePath(RequestDts &dts) {
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (this->checkPathForm(dts) == false) throw(_statusCode = NOT_FOUND);
+      if (this->checkPathForm(dts) == false) throw(*dts.statusCode = NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
@@ -293,14 +293,14 @@ void RequestParser::requestChecker(RequestDts &dts) {
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
   if ((*dts.headerFields)["content-length"] != "" &&
       (*dts.headerFields)["transfer-encoding"] != "")
-    throw(_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 }
 
 void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
   // body uri header별로 따로따로 정의할건지 정하기
   if (dts.path->size() >
       Config::getInstance().getProxyConfig().getRequestUriLimitSize())
-    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+    throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
 }
 
 void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
@@ -312,26 +312,26 @@ void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
   while (lineIt != lineEnd) {
     if (lineIt->first.size() >
         Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
-      throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+      throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
     ++lineIt;
   }
 }
 
 void RequestParser::checkBodyLimitLength(RequestDts &dts) {
   if (*dts.contentLength > dts.matchedLocation->getLimitClientBodySize())
-    throw(_statusCode = REQUEST_ENTITY_TOO_LARGE);
+    throw(*dts.statusCode = REQUEST_ENTITY_TOO_LARGE);
 }
 
 void RequestParser::checkAllowedMethods(RequestDts &dts) {
-  std::map<std::string, bool> method_info =
+  const std::map<std::string, bool> &method_info =
       dts.matchedLocation->getAllowMethod();
-  if (method_info.find(*dts.method) != method_info.end() &&
-      method_info[*dts.method] == true)
-    return;
-  throw(_statusCode = METHOD_NOT_ALLOWED);
+  std::map<std::string, bool>::const_iterator it =
+      method_info.find(*dts.method);
+  if (it != method_info.end() && it->second == true) return;
+  throw(*dts.statusCode = METHOD_NOT_ALLOWED);
 }
 
 void RequestParser::checkCgiMethod(RequestDts &dts) {
   if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
-    throw(_statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = BAD_REQUEST);
 }
