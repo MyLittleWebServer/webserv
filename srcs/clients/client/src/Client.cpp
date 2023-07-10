@@ -61,8 +61,12 @@ void Client::receiveRequest(void) {
   }
 }
 
-void Client::createErrorResponse() { _response.createErrorResponse(); }
-void Client::createSuccessResponse() { _method->createSuccessResponse(_response); }
+void Client::createErrorResponse() {
+  _response.createErrorResponse(*_request.getRequestParserDts().statusCode);
+}
+void Client::createSuccessResponse() {
+  _method->createSuccessResponse(_response);
+}
 
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
@@ -82,7 +86,7 @@ void Client::sendResponse() {
   const std::string &response = _response.getResponse();
 
   ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-  
+
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     signal(SIGPIPE, SIG_DFL);
