@@ -121,6 +121,10 @@ const std::map<std::string, std::string> &Request::getQueryStringElements(
   return (this->_queryStringElements);
 }
 
+IServerConfig *Request::getMatchedServer(void) const {
+  return (this->_request_parser_dts.matchedServer);
+}
+
 const bool &Request::isParsed() const { return _isParsed; }
 
 const bool &Request::isCgi() const { return _is_cgi; }

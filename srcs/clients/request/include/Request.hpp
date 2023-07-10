@@ -54,11 +54,14 @@ class Request : public IRequest {
   const std::string &getCgiPath(void) const;
   const std::string &getBody(void) const;
   const std::string &getQueryString(void) const;
+  const std::string getHeaderField(std::string key) const;
+
   size_t getContentLength(void) const;
   const std::map<std::string, std::string> &getQueryStringElements(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
-  const std::string getHeaderField(std::string key) const;
+  IServerConfig *getMatchedServer(void) const;
+
   const bool &isParsed(void) const;
   const bool &isCgi(void) const;
 };

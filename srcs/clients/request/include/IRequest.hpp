@@ -23,6 +23,7 @@ class IRequest {
       void) const = 0;
   virtual Status getStatusCode(void) const = 0;
   virtual std::map<std::string, std::string> &getHeaderFields(void) = 0;
+  virtual IServerConfig *getMatchedServer(void) const = 0;
 
   virtual const std::string getHeaderField(std::string key) const = 0;
 };
