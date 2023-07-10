@@ -8,6 +8,7 @@
 #include "Config.hpp"
 #include "ExceptionThrower.hpp"
 #include "ICGI.hpp"
+#include "Kqueue.hpp"
 #include "Request.hpp"
 
 /**
@@ -18,27 +19,33 @@
 
 class CGI : public ICGI {
  private:
+  uintptr_t _client_fd;
   std::string _cgiResult;
   bool _excuteFlag;
   bool _finishFlag;
   pid_t _pid;
   int _in_pipe[2];
   int _out_pipe[2];
-  IRequest* request;
-  char** _env;
+  IRequest* _request;
+  std::vector<const char*> _env;
 
  private:
   CGI();
   CGI(const CGI& copy);
   CGI& operator=(const CGI& copy);
 
+  void initEnv();
+
   void excuteCgi();
   void waitAndRead();
   void waitChild();
   void readChild();
 
+  void setPipeNonblock();
+  void setFcntl(int fd);
+
  public:
-  CGI(IRequest* request);
+  CGI(IRequest* request, uintptr_t client_fd);
   ~CGI();
 
   void execute();

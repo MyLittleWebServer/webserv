@@ -12,4 +12,7 @@
 class ICGI {
  public:
   virtual ~ICGI(){};
+
+  virtual void execute() = 0;
+  virtual const std::string& getCgiResult() = 0;
 };
