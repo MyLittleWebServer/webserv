@@ -24,13 +24,14 @@ class Request : public IRequest {
   std::string _protocol;
   std::string _cgi_path;
   std::string _body;
+  std::string _query_string;
   Status _statusCode;
   IRequestParser &_parser;
   RequestDts _request_parser_dts;
 
   std::list<std::string> _linesBuffer;
   std::map<std::string, std::string> _headerFields;
-  std::map<std::string, std::string> _queryString;
+  std::map<std::string, std::string> _queryStringElements;
   std::map<std::string, std::string> _serverConf;
   IServerConfig *_matchedServer;
   ILocationConfig *_matchedLocation;
@@ -52,8 +53,9 @@ class Request : public IRequest {
   const std::string &getProtocol(void) const;
   const std::string &getCgiPath(void) const;
   const std::string &getBody(void) const;
+  const std::string &getQueryString(void) const;
   size_t getContentLength(void) const;
-  const std::map<std::string, std::string> &getQueryString(void) const;
+  const std::map<std::string, std::string> &getQueryStringElements(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
   const std::string getHeaderField(std::string key) const;

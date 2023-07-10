@@ -18,7 +18,8 @@ class IRequest {
   virtual const std::string &getCgiPath(void) const = 0;
   virtual const std::string &getBody(void) const = 0;
   virtual size_t getContentLength(void) const = 0;
-  virtual const std::map<std::string, std::string> &getQueryString(
+  virtual const std::string &getQueryString(void) const = 0;
+  virtual const std::map<std::string, std::string> &getQueryStringElements(
       void) const = 0;
   virtual Status getStatusCode(void) const = 0;
   virtual std::map<std::string, std::string> &getHeaderFields(void) = 0;

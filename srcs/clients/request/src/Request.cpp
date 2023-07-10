@@ -32,7 +32,8 @@ Request &Request::operator=(const Request &src) {
     this->_method = src._method;
     this->_request = src._request;
     this->_statusCode = src._statusCode;
-    this->_queryString = src._queryString;
+    this->_query_string = src._query_string;
+    this->_queryStringElements = src._queryStringElements;
     this->_body = src._body;
     this->_anchor = src._anchor;
     this->_isParsed = src._isParsed;
@@ -61,7 +62,8 @@ void Request::initDts() {
   _request_parser_dts.body = &_body;
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
-  _request_parser_dts.queryString = &_queryString;
+  _request_parser_dts.query_string = &_query_string;
+  _request_parser_dts.queryStringElements = &_queryStringElements;
   _request_parser_dts.serverConf = &_serverConf;
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
@@ -96,6 +98,8 @@ const std::string &Request::getProtocol(void) const {
 }
 const std::string &Request::getCgiPath(void) const { return (this->_cgi_path); }
 const std::string &Request::getBody(void) const { return (this->_body); }
+const std::string &Request::getQueryString(void) const { return _query_string; }
+
 size_t Request::getContentLength(void) const { return (this->_contentLength); }
 
 Status Request::getStatusCode(void) const { return (this->_statusCode); }
@@ -112,8 +116,9 @@ const std::string Request::getHeaderField(std::string key) const {
     return "";
   }
 }
-const std::map<std::string, std::string> &Request::getQueryString(void) const {
-  return (this->_queryString);
+const std::map<std::string, std::string> &Request::getQueryStringElements(
+    void) const {
+  return (this->_queryStringElements);
 }
 
 const bool &Request::isParsed() const { return _isParsed; }
