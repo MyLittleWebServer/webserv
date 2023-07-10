@@ -41,7 +41,6 @@ class RequestParser : public IRequestParser {
 
  private:
   const std::set<std::string>& _candidateFields;
-  Status _statusCode;
 
  public:
   void parseRequest(RequestDts& dts, short port);

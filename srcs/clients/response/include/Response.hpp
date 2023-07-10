@@ -29,7 +29,7 @@ class Response : public IResponse {
   void putBody(void);
 
  public:
-  virtual void createErrorResponse(void);
+  virtual void createErrorResponse(Status statusCode);
   bool getResponseFlag(void) const;
   Status getStatus(void);
   const std::string &getResponse(void) const;

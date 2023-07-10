@@ -36,19 +36,20 @@ std::string &Response::getFieldValue(const std::string &key) {
   return (this->_headerFields[key]);
 }
 
-void Response::createErrorResponse(void) {
+void Response::createErrorResponse(Status statusCode) {
   resetResponse();
   // redirection response (300). need to replace the url with actual url
-  if (statusInfo[this->_statusCode].body == NULL) {
+  if (statusInfo[statusCode].body == NULL) {
     this->setHeaderField("Location", "http://example.com/redirect_url");
     this->_responseFlag = true;
     return;
   }
   // response for status code 400 ~ 500
   this->setHeaderField("Content-Type", "text/plain");
-  this->addBody(statusInfo[this->_statusCode].body);
+  this->addBody(statusInfo[statusCode].body);
   this->addBody("\r\n");
   this->setHeaderField("Content-Length", itos(this->_body.size()));
+  this->_statusCode = statusCode;
   this->assembleResponse();
 
   this->_responseFlag = true;
