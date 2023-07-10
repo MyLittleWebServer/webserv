@@ -5,7 +5,7 @@
 Response::Response()
     : _responseFlag(false),
       _assembleFlag(false),
-      _statusCode(this->_statusCode = OK) {}
+      _statusCode(CREATED) {}
 
 Response::~Response() {}
 
@@ -29,6 +29,8 @@ const std::string &Response::getResponse(void) const {
 const std::string &Response::getBody(void) const { return (this->_body); }
 
 bool Response::getResponseFlag(void) const { return (this->_responseFlag); }
+
+Status Response::getStatus(void) { return (this->_statusCode); }
 
 std::string &Response::getFieldValue(const std::string &key) {
   return (this->_headerFields[key]);
@@ -93,6 +95,8 @@ void Response::putBody(void) {
   if (this->_body.empty() == true) return;
   this->_response += "\r\n" + this->_body;
 }
+
+void Response::setStatusCode(Status code) { this->_statusCode = code; }
 
 void Response::setHeaderField(const std::string &key,
                               const std::string &value) {
