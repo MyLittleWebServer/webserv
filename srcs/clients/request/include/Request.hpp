@@ -52,9 +52,11 @@ class Request : public IRequest {
   const std::string &getProtocol(void) const;
   const std::string &getCgiPath(void) const;
   const std::string &getBody(void) const;
+  size_t getContentLength(void) const;
   const std::map<std::string, std::string> &getQueryString(void) const;
   Status getStatusCode(void) const;
   std::map<std::string, std::string> &getHeaderFields(void);
+  const std::string getHeaderField(std::string key) const;
   const bool &isParsed(void) const;
   const bool &isCgi(void) const;
 };
