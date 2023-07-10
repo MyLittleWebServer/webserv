@@ -3,7 +3,8 @@
 CGI::CGI() {
   _cgiResult = "";
   _excuteFlag = false;
-  _finishFlag = false;
+  _waitFinishFlag = false;
+  _cgiFinishFlag = false;
   initEnv();
 }
 
@@ -11,7 +12,8 @@ CGI::CGI(IRequest* request, uintptr_t client_fd) {
   _client_fd = client_fd;
   _cgiResult = "";
   _excuteFlag = false;
-  _finishFlag = false;
+  _waitFinishFlag = false;
+  _cgiFinishFlag = false;
   this->_request = request;
   initEnv();
 }
@@ -26,7 +28,8 @@ CGI& CGI::operator=(const CGI& copy) {
     this->_client_fd = copy._client_fd;
     this->_cgiResult = copy._cgiResult;
     this->_excuteFlag = copy._excuteFlag;
-    this->_finishFlag = copy._finishFlag;
+    this->_waitFinishFlag = copy._waitFinishFlag;
+    this->_cgiFinishFlag = copy._cgiFinishFlag;
     initEnv();
   }
   return *this;
@@ -67,12 +70,15 @@ void CGI::initEnv() {
 }
 
 void CGI::execute() {
-  if (!_excuteFlag) excuteCgi();
+  try {
+    if (!_excuteFlag) excuteCgi();
+  } catch (ExceptionThrower::CGIPipeException& e) {
+    _cgiFinishFlag = true;
+  }
 }
 
 const std::string& CGI::getCgiResult() {
-  if (!_finishFlag) waitAndRead();
-  if (!_finishFlag) throw new ExceptionThrower::CGINotFinishedException();
+  if (!_cgiFinishFlag) throw new ExceptionThrower::CGINotFinishedException();
   return this->_cgiResult;
 }
 
@@ -89,23 +95,28 @@ void CGI::setFcntl(int fd) {
 }
 
 void CGI::excuteCgi() {
-  // char** env;
-
-  // env = getEnv();
   _excuteFlag = true;
 
-  if (pipe(_in_pipe) < 0 || pipe(_out_pipe) < 0) {
+  if (pipe(_in_pipe) < 0) {
     throw new ExceptionThrower::CGIPipeException();
   }
+  if (pipe(_out_pipe) < 0) {
+    close(_in_pipe[0]);
+    close(_in_pipe[1]);
+    throw new ExceptionThrower::CGIPipeException();
+  }
+
   setPipeNonblock();
+  Kqueue::setFdSet(_in_pipe[1], FD_CGI);
   Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-                   (void*)this, FD_CGI);
+                   (void*)this);
+
+  ///////////WriteEvent 블록/////////////////
   // write(in_pipe[1], getBody().c_str(), getBody().size());
-
+  Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+  Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
   close(_in_pipe[1]);
-
   _pid = fork();
-
   if (_pid == -1) {
     // throw new ExceptionThrower::CGIForkException();
   } else if (!_pid) {
@@ -117,28 +128,39 @@ void CGI::excuteCgi() {
     execve(_request->getPath().c_str(), NULL, const_cast<char**>(_env.data()));
     // throw new ExceptionThrower::CGIExcuteException();
   }
-  waitAndRead();
+  Kqueue::setFdSet(_out_pipe[0], FD_CGI);
+  Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+                   (void*)this);
 }
 
 void CGI::waitAndRead() {
-  if (_finishFlag) return;
+  if (_cgiFinishFlag) return;
   waitChild();
-  if (!_finishFlag) return;
+  if (!_waitFinishFlag) return;
   close(_in_pipe[0]);
   close(_out_pipe[1]);
-  readChild();
+  if (!readChildFinish()) return;
+  Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+  Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
   close(_out_pipe[0]);
+  _cgiFinishFlag = true;
 }
 
 void CGI::waitChild() {
-  if (waitpid(_pid, NULL, WNOHANG)) _finishFlag = true;
+  if (_waitFinishFlag) return;
+  if (waitpid(_pid, NULL, WNOHANG)) _waitFinishFlag = true;
 }
 
-void CGI::readChild() {
+bool CGI::readChildFinish() {
   char buffer[1024];
-  memset(buffer, 0, 1024);
-  while (read(_out_pipe[0], buffer, 1024 - 1) > 0) {
-    _cgiResult += buffer;
+  ssize_t readSize;
+  while (true) {
     memset(buffer, 0, 1024);
+    readSize = read(_out_pipe[0], buffer, 1024 - 1);
+    if (readSize == 0) return true;
+    if (readSize == -1) return false;
+    _cgiResult += buffer;
   }
 }
+
+bool CGI::isCgiFinish() { return _cgiFinishFlag; }

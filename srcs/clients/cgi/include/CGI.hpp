@@ -22,7 +22,8 @@ class CGI : public ICGI {
   uintptr_t _client_fd;
   std::string _cgiResult;
   bool _excuteFlag;
-  bool _finishFlag;
+  bool _waitFinishFlag;
+  bool _cgiFinishFlag;
   pid_t _pid;
   int _in_pipe[2];
   int _out_pipe[2];
@@ -39,7 +40,7 @@ class CGI : public ICGI {
   void excuteCgi();
   void waitAndRead();
   void waitChild();
-  void readChild();
+  bool readChildFinish();
 
   void setPipeNonblock();
   void setFcntl(int fd);
@@ -50,4 +51,5 @@ class CGI : public ICGI {
 
   void execute();
   const std::string& getCgiResult();
+  bool isCgiFinish();
 };
