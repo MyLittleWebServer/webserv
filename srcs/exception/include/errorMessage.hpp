@@ -14,3 +14,9 @@ static const std::string INVALID_LOCATION_CONFIG =
 
 static const std::string NOT_SUPPORT_CONFIG =
     "Config does not support in this program";
+
+static const std::string CGI_NOT_FINISHED = "Cgi is not finished yet";
+
+static const std::string CGI_PIPE_FAILED = "Cannot create pipe for cgi";
+
+static const std::string FILE_ACCESS_FAILED = "File access failed";

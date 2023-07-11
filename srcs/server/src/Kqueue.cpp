@@ -1,5 +1,10 @@
 #include "Kqueue.hpp"
 
+fd_set Kqueue::_server_fds;
+fd_set Kqueue::_client_fds;
+fd_set Kqueue::_method_fds;
+fd_set Kqueue::_cgi_fds;
+
 int Kqueue::_kq = 0;
 std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>();
 struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {};
@@ -72,4 +77,61 @@ int Kqueue::newEvents() {
 
 const struct kevent& Kqueue::getEvent(int index) const {
   return (this->_eventList[index]);
+}
+
+void Kqueue::init(void) {
+  FD_ZERO(&Kqueue::_server_fds);
+  FD_ZERO(&Kqueue::_client_fds);
+  FD_ZERO(&Kqueue::_method_fds);
+  FD_ZERO(&Kqueue::_cgi_fds);
+}
+
+e_fd_type Kqueue::getFdType(uintptr_t ident) {
+  if (FD_ISSET(ident, &Kqueue::_server_fds))
+    return (FD_SERVER);
+  else if (FD_ISSET(ident, &Kqueue::_client_fds))
+    return (FD_CLIENT);
+  else if (FD_ISSET(ident, &Kqueue::_method_fds))
+    return (FD_METHOD);
+  else if (FD_ISSET(ident, &Kqueue::_cgi_fds))
+    return (FD_CGI);
+  return (FD_NONE);
+}
+
+void Kqueue::setFdSet(uintptr_t ident, e_fd_type type) {
+  switch (type) {
+    case FD_SERVER:
+      FD_SET(ident, &Kqueue::_server_fds);
+      break;
+    case FD_CLIENT:
+      FD_SET(ident, &Kqueue::_client_fds);
+      break;
+    case FD_METHOD:
+      FD_SET(ident, &Kqueue::_method_fds);
+      break;
+    case FD_CGI:
+      FD_SET(ident, &Kqueue::_cgi_fds);
+      break;
+    default:
+      break;
+  }
+}
+
+void Kqueue::deleteFdSet(uintptr_t ident, e_fd_type type) {
+  switch (type) {
+    case FD_SERVER:
+      FD_CLR(ident, &Kqueue::_server_fds);
+      break;
+    case FD_CLIENT:
+      FD_CLR(ident, &Kqueue::_client_fds);
+      break;
+    case FD_METHOD:
+      FD_CLR(ident, &Kqueue::_method_fds);
+      break;
+    case FD_CGI:
+      FD_CLR(ident, &Kqueue::_cgi_fds);
+      break;
+    default:
+      break;
+  }
 }

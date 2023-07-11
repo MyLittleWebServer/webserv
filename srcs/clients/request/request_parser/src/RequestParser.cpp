@@ -69,6 +69,7 @@ void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
 void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
   std::string tempQuery(
       dts.path->substr(qMarkPos + 1, dts.path->size() - qMarkPos - 1));
+  *dts.query_string = tempQuery;
   *dts.path = dts.path->substr(0, qMarkPos);
   size_t andPos = tempQuery.find("&", 0);
   if (andPos == std::string::npos) {
@@ -89,7 +90,7 @@ void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
   if (pos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
   std::string key = str.substr(0, pos);
   std::string value = str.substr(pos + 1, str.size() - pos - 1);
-  (*dts.queryString)[key] = value;
+  (*dts.queryStringElements)[key] = value;
 }
 
 void RequestParser::parseHeaderFields(RequestDts &dts) {

@@ -1,14 +1,14 @@
 #include "Request.hpp"
 
 Request::Request() : _parser(RequestParser::getInstance()) {
-  initDts();
   initMember();
+  initDts();
 }
 
 Request::Request(const std::string &request)
     : _request(request), _parser(RequestParser::getInstance()) {
-  initDts();
   initMember();
+  initDts();
 }
 
 Request::~Request() {}
@@ -32,7 +32,8 @@ Request &Request::operator=(const Request &src) {
     this->_method = src._method;
     this->_request = src._request;
     this->_statusCode = src._statusCode;
-    this->_queryString = src._queryString;
+    this->_query_string = src._query_string;
+    this->_queryStringElements = src._queryStringElements;
     this->_body = src._body;
     this->_anchor = src._anchor;
     this->_isParsed = src._isParsed;
@@ -47,6 +48,7 @@ void Request::initMember() {
   _isParsed = false;
   _contentLength = 0;
   _is_cgi = false;
+  _path = "";
 }
 
 void Request::initDts() {
@@ -60,7 +62,8 @@ void Request::initDts() {
   _request_parser_dts.body = &_body;
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
-  _request_parser_dts.queryString = &_queryString;
+  _request_parser_dts.query_string = &_query_string;
+  _request_parser_dts.queryStringElements = &_queryStringElements;
   _request_parser_dts.serverConf = &_serverConf;
   _request_parser_dts.matchedServer = _matchedServer;
   _request_parser_dts.matchedLocation = _matchedLocation;
@@ -76,6 +79,7 @@ void Request::parseRequest(short port) {
 void Request::parseRequest(const std::string &request, short port) {
   _request = request;
   _request_parser_dts.request = &_request;
+  std::cout << "request: " << _request << std::endl;
   _parser.parseRequest(_request_parser_dts, port);
 }
 
@@ -91,12 +95,31 @@ const std::string &Request::getProtocol(void) const {
 }
 const std::string &Request::getCgiPath(void) const { return (this->_cgi_path); }
 const std::string &Request::getBody(void) const { return (this->_body); }
+const std::string &Request::getQueryString(void) const { return _query_string; }
+
+size_t Request::getContentLength(void) const { return (this->_contentLength); }
+
 Status Request::getStatusCode(void) const { return (this->_statusCode); }
 std::map<std::string, std::string> &Request::getHeaderFields(void) {
   return (this->_headerFields);
 }
-const std::map<std::string, std::string> &Request::getQueryString(void) const {
-  return (this->_queryString);
+const std::string Request::getHeaderField(std::string key) const {
+  key = toLowerString(key).substr(0, key.length());
+  std::map<std::string, std::string>::const_iterator iter =
+      _headerFields.find(key);
+  if (iter != _headerFields.end()) {
+    return iter->second;
+  } else {
+    return "";
+  }
+}
+const std::map<std::string, std::string> &Request::getQueryStringElements(
+    void) const {
+  return (this->_queryStringElements);
+}
+
+IServerConfig *Request::getMatchedServer(void) const {
+  return (this->_request_parser_dts.matchedServer);
 }
 
 const bool &Request::isParsed() const { return _isParsed; }
