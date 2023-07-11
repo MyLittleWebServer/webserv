@@ -14,6 +14,8 @@ class ICGI {
   virtual ~ICGI(){};
 
   virtual void execute() = 0;
+  virtual void writeCGI() = 0;
+  virtual void waitAndReadCGI() = 0;
   virtual const std::string& getCgiResult() = 0;
   virtual bool isCgiFinish() = 0;
 };
