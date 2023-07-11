@@ -10,6 +10,7 @@
 #include "ICGI.hpp"
 #include "Kqueue.hpp"
 #include "Request.hpp"
+#include "Response.hpp"
 
 /**
  * @brief CGI 인터페이스
@@ -28,7 +29,10 @@ class CGI : public ICGI {
   int _in_pipe[2];
   int _out_pipe[2];
   IRequest* _request;
+  IResponse* _response;
   std::vector<const char*> _env;
+  void* _client_info;
+  std::string _body;
 
  private:
   CGI();
@@ -38,18 +42,23 @@ class CGI : public ICGI {
   void initEnv();
 
   void excuteCgi();
-  void waitAndRead();
   void waitChild();
   bool readChildFinish();
 
   void setPipeNonblock();
   void setFcntl(int fd);
 
+  void generateErrorResponse(Status status);
+
  public:
-  CGI(IRequest* request, uintptr_t client_fd);
+  CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
+      void* client_info);
   ~CGI();
 
   void execute();
+  void writeCGI();
+  void waitAndRead();
+
   const std::string& getCgiResult();
   bool isCgiFinish();
 };

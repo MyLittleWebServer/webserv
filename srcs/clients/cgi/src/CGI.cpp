@@ -8,13 +8,17 @@ CGI::CGI() {
   initEnv();
 }
 
-CGI::CGI(IRequest* request, uintptr_t client_fd) {
+CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
+         void* client_info) {
   _client_fd = client_fd;
   _cgiResult = "";
   _excuteFlag = false;
   _waitFinishFlag = false;
   _cgiFinishFlag = false;
-  this->_request = request;
+  _request = request;
+  _response = response;
+  _body = _request->getBody();
+  _client_info = client_info;
   initEnv();
 }
 
@@ -25,8 +29,10 @@ CGI::CGI(const CGI& copy) { *this = copy; }
 CGI& CGI::operator=(const CGI& copy) {
   if (this != &copy) {
     this->_request = copy._request;
+    this->_response = copy._response;
     this->_client_fd = copy._client_fd;
     this->_cgiResult = copy._cgiResult;
+    this->_body = copy._body;
     this->_excuteFlag = copy._excuteFlag;
     this->_waitFinishFlag = copy._waitFinishFlag;
     this->_cgiFinishFlag = copy._cgiFinishFlag;
@@ -69,17 +75,16 @@ void CGI::initEnv() {
   _env.push_back(server_software.c_str());
 }
 
-void CGI::execute() {
-  try {
-    if (!_excuteFlag) excuteCgi();
-  } catch (ExceptionThrower::CGIPipeException& e) {
-    _cgiFinishFlag = true;
-  }
-}
+void CGI::generateErrorResponse(Status status) {
+  _cgiFinishFlag = true;
+  // _response->setStatusCode(status);
+  // _response.createErrorResponse();
+  Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
+};
 
-const std::string& CGI::getCgiResult() {
-  if (!_cgiFinishFlag) throw new ExceptionThrower::CGINotFinishedException();
-  return this->_cgiResult;
+void CGI::setFcntl(int fd) {
+  int flags = fcntl(fd, F_GETFL, 0);
+  fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
 void CGI::setPipeNonblock() {
@@ -89,14 +94,11 @@ void CGI::setPipeNonblock() {
   setFcntl(_out_pipe[1]);
 }
 
-void CGI::setFcntl(int fd) {
-  int flags = fcntl(fd, F_GETFL, 0);
-  fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-}
-
 void CGI::excuteCgi() {
   _excuteFlag = true;
-
+  if (access(_request->getPath().c_str(), R_OK) == -1) {
+    throw new ExceptionThrower::FileAcccessFailedException();
+  }
   if (pipe(_in_pipe) < 0) {
     throw new ExceptionThrower::CGIPipeException();
   }
@@ -105,32 +107,61 @@ void CGI::excuteCgi() {
     close(_in_pipe[1]);
     throw new ExceptionThrower::CGIPipeException();
   }
-
   setPipeNonblock();
   Kqueue::setFdSet(_in_pipe[1], FD_CGI);
   Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-                   (void*)this);
+                   static_cast<void*>(this));
+}
 
-  ///////////WriteEvent 블록/////////////////
-  // write(in_pipe[1], getBody().c_str(), getBody().size());
+void CGI::execute() {
+  try {
+    if (!_excuteFlag) excuteCgi();
+  } catch (ExceptionThrower::CGIPipeException& e) {
+    generateErrorResponse(INTERNAL_SERVER_ERROR);
+  } catch (ExceptionThrower::FileAcccessFailedException& e) {
+    generateErrorResponse(NOT_FOUND);
+  }
+}
+
+void CGI::writeCGI() {
+  if (_request->getMethod() == "POST") {
+    ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
+    if (ret != _body.size()) {
+      if (ret == -1) {
+        Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+        close(_out_pipe[0]);
+        close(_out_pipe[1]);
+        close(_in_pipe[0]);
+        close(_in_pipe[1]);
+        generateErrorResponse(INTERNAL_SERVER_ERROR);
+        return;
+      };
+      _body = _body.substr(ret);
+      return;
+    }
+  }
+
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
   close(_in_pipe[1]);
   _pid = fork();
   if (_pid == -1) {
-    // throw new ExceptionThrower::CGIForkException();
-  } else if (!_pid) {
     close(_out_pipe[0]);
+    close(_out_pipe[1]);
+    close(_in_pipe[0]);
+    generateErrorResponse(INTERNAL_SERVER_ERROR);
+  } else if (!_pid) {
     dup2(_in_pipe[0], STDIN_FILENO);
     dup2(_out_pipe[1], STDOUT_FILENO);
     close(_in_pipe[0]);
+    close(_out_pipe[0]);
     close(_out_pipe[1]);
     execve(_request->getPath().c_str(), NULL, const_cast<char**>(_env.data()));
-    // throw new ExceptionThrower::CGIExcuteException();
   }
   Kqueue::setFdSet(_out_pipe[0], FD_CGI);
   Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-                   (void*)this);
+                   static_cast<void*>(this));
 }
 
 void CGI::waitAndRead() {
@@ -164,3 +195,8 @@ bool CGI::readChildFinish() {
 }
 
 bool CGI::isCgiFinish() { return _cgiFinishFlag; }
+
+const std::string& CGI::getCgiResult() {
+  if (!_cgiFinishFlag) throw new ExceptionThrower::CGINotFinishedException();
+  return this->_cgiResult;
+}
