@@ -53,9 +53,7 @@ void Client::receiveRequest(void) {
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
 #endif
-      this->_flag = RECEIVE_DONE;
-      signal(SIGPIPE, SIG_DFL);
-      return;
+      break;
     }
     signal(SIGPIPE, SIG_DFL);
   }
