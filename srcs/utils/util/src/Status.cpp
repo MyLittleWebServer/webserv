@@ -22,6 +22,7 @@ msgArray statusInfo[] = {
     msgArray("Conflict", "409", 18, "Resource conflict."),
     msgArray("Request Entity Too Large", "413", 27,
              "Request Entity Too Large."),
+    msgArray("Unsupported Media Type", "415", 24, "Unsupported Media Type."),
     msgArray("Internal Server Error", "500", 21, "Internal Server Error"),
     msgArray("Not_Implemented", "501", 19, "Not Implemented Yet."),
     msgArray("Bad Gateway", "502", 11, "Bad Gateway"),

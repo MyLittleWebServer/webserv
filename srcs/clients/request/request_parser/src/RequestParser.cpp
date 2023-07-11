@@ -282,6 +282,7 @@ RequestParser &RequestParser::getInstance() {
 }
 
 void RequestParser::requestChecker(RequestDts &dts) {
+  checkProtocolVersion(dts);
   checkContentLenghWithTransferEncoding(dts);
   checkRequestUriLimitLength(dts);
   checkHeaderLimitSize(dts);
@@ -289,6 +290,21 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkAllowedMethods(dts);
   checkCgiMethod(dts);
   if (dts.isParsed == false) return;
+}
+
+void RequestParser::checkProtocolVersion(RequestDts &dts) {
+  const std::string &protocol = *dts.protocol;
+  if (protocol.substr(0, 5) != "HTTP/" || protocol.size() != 8)
+    throw(*dts.statusCode = BAD_REQUEST);
+  const std::string versionStr = protocol.substr(5, 3);
+  if (versionStr == "1.1" || versionStr == "1.0") return;
+  if (versionStr.find(".") != 1) throw(*dts.statusCode = BAD_REQUEST);
+  char *endPtr;
+  double versionVal = std::strtod(versionStr.c_str(), &endPtr);
+  if (*endPtr != '\0') throw(*dts.statusCode = BAD_REQUEST);
+  if (versionVal > 1.1 || versionVal < 1.0) {
+    throw(*dts.statusCode = HTTP_VERSION_NOT_SUPPORTED);
+  }
 }
 
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
