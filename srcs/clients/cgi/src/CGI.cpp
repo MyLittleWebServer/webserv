@@ -76,6 +76,7 @@ void CGI::initEnv() {
 }
 
 void CGI::generateErrorResponse(Status status) {
+  (void)status;
   _cgiFinishFlag = true;
   // _response->setStatusCode(status);
   // _response.createErrorResponse();
@@ -159,7 +160,7 @@ void CGI::makeChild() {
 void CGI::writeCGI() {
   if (_request->getMethod() == "POST") {
     ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
-    if (ret != _body.size()) {
+    if (ret != static_cast<ssize_t>(_body.size())) {
       if (ret == -1) {
         Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
         Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);

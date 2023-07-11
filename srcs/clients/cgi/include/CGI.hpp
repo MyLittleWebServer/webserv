@@ -51,9 +51,6 @@ class CGI : public ICGI {
 
   bool readChildFinish();
 
-  void setPipeNonblock();
-  void setFcntl(int fd);
-
   void generateErrorResponse(Status status);
   void generateResponse();
 

@@ -1,3 +1,5 @@
+#include <string>
+
 #pragma once
 
 /**
@@ -13,7 +15,7 @@ class ICGI {
  public:
   virtual ~ICGI(){};
 
-  virtual void execute() = 0;
+  virtual void executeCGI() = 0;
   virtual void writeCGI() = 0;
   virtual void waitAndReadCGI() = 0;
   virtual const std::string& getCgiResult() = 0;
