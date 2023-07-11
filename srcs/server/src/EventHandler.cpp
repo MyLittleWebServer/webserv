@@ -73,15 +73,15 @@ void EventHandler::processRequest(Client &currClient) {
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
     if (currClient.getFlag() == RECEIVING) return;
-    currClient.newHTTPMethod();
-    if (currClient.isCgi())
-      (void)NULL;  // cgi 처리 로직
-    else {
+    if (currClient.isCgi()) {
+      (void)currClient;
+    } else {
+      currClient.newHTTPMethod();
       currClient.doRequest();
+      currClient.createSuccessResponse();
+      enableEvent(currClient.getSD(), EVFILT_WRITE,
+                  static_cast<void *>(&currClient));
     }
-    currClient.createSuccessResponse();
-    enableEvent(currClient.getSD(), EVFILT_WRITE,
-                static_cast<void *>(&currClient));
   } catch (enum Status &code) {
     currClient.createErrorResponse();
     enableEvent(currClient.getSD(), EVFILT_WRITE,
