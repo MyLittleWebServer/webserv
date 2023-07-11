@@ -86,14 +86,14 @@ void EventHandler::processResponse(Client &currClient) {
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
   };
-    disableEvent(currClient.getSD(), EVFILT_WRITE,
-                 static_cast<void *>(&currClient));
- if (currClient.getFlag() == END) {
+  disableEvent(currClient.getSD(), EVFILT_WRITE,
+               static_cast<void *>(&currClient));
+  if (currClient.getFlag() == END) {
     disconnectClient(&currClient);
     return;
- }
- // TODO : init member
- currClient.setFlag(RECEIVING);
+  }
+  // TODO : init member
+  currClient.setFlag(RECEIVING);
 }
 
 void EventHandler::acceptClient() {
@@ -107,15 +107,17 @@ void EventHandler::acceptClient() {
 
 void EventHandler::registClient(const uintptr_t clientSocket) {
   Client *newClient = new Client(clientSocket);
-  addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-           static_cast<void *>(newClient));
-  addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
-           static_cast<void *>(newClient));
+  Kqueue::addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+                   static_cast<void *>(newClient));
+  Kqueue::addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
+                   static_cast<void *>(newClient));
+  Kqueue::setFdSet(clientSocket, FD_CLIENT);
 }
 
 void EventHandler::disconnectClient(const Client *client) {
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
+  Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
   close(client->getSD());
   if (client->getMethod() != NULL) delete client->getMethod();
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
