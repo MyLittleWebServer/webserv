@@ -82,6 +82,16 @@ void CGI::generateErrorResponse(Status status) {
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 };
 
+void CGI::generateResponse() {
+  _cgiFinishFlag = true;
+  // 첫줄이 200 ok 출력되었을 때에만 response를 생성한다.
+  // generateErrorResponse(400);
+  // _response->setStatusCode(OK);
+  // _response->setBody(_cgiResult);
+  // _response->createResponse();
+  Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
+}
+
 void CGI::setFcntl(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
   fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -180,7 +190,6 @@ void CGI::waitChild() {
       Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
       Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
       close(_out_pipe[0]);
-      _cgiFinishFlag = true;
       break;
     }
     default:
@@ -211,7 +220,7 @@ void CGI::waitAndReadCGI() {
   Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
   Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
   close(_out_pipe[0]);
-  _cgiFinishFlag = true;
+  generateResponse();
 }
 
 bool CGI::isCgiFinish() { return _cgiFinishFlag; }

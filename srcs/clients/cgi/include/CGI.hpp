@@ -55,6 +55,7 @@ class CGI : public ICGI {
   void setFcntl(int fd);
 
   void generateErrorResponse(Status status);
+  void generateResponse();
 
  public:
   CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
