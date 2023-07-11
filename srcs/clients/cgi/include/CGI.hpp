@@ -22,7 +22,7 @@ class CGI : public ICGI {
  private:
   uintptr_t _client_fd;
   std::string _cgiResult;
-  bool _excuteFlag;
+  bool _executeFlag;
   bool _waitFinishFlag;
   bool _cgiFinishFlag;
   pid_t _pid;
@@ -43,7 +43,7 @@ class CGI : public ICGI {
 
   void setFcntl(int fd);
   void setPipeNonblock();
-  void excuteCgi();
+  void execute();
 
   void makeChild();
 

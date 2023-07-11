@@ -2,7 +2,7 @@
 
 CGI::CGI() {
   _cgiResult = "";
-  _excuteFlag = false;
+  _executeFlag = false;
   _waitFinishFlag = false;
   _cgiFinishFlag = false;
   initEnv();
@@ -12,7 +12,7 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
          void* client_info) {
   _client_fd = client_fd;
   _cgiResult = "";
-  _excuteFlag = false;
+  _executeFlag = false;
   _waitFinishFlag = false;
   _cgiFinishFlag = false;
   _request = request;
@@ -33,7 +33,7 @@ CGI& CGI::operator=(const CGI& copy) {
     this->_client_fd = copy._client_fd;
     this->_cgiResult = copy._cgiResult;
     this->_body = copy._body;
-    this->_excuteFlag = copy._excuteFlag;
+    this->_executeFlag = copy._executeFlag;
     this->_waitFinishFlag = copy._waitFinishFlag;
     this->_cgiFinishFlag = copy._cgiFinishFlag;
     initEnv();
@@ -59,7 +59,7 @@ void CGI::initEnv() {
   std::string query_string = "QUERY_STRING=" + _request->getQueryString();
   std::string remote_addr = "REMOTE_ADDR=" + _request->getHeaderField("HOST");
   std::string request_method = "REQUEST_METHOD=" + _request->getMethod();
-  std::string scritp_filename = "SCRIPT_FILENAME=" + _request->getPath();
+  std::string script_filename = "SCRIPT_FILENAME=" + _request->getPath();
 
   if (_request->getMethod() == "POST") _env.push_back(content_length.c_str());
   if (_request->getMethod() == "GET") _env.push_back(query_string.c_str());
@@ -67,7 +67,7 @@ void CGI::initEnv() {
   _env.push_back(http_user_agent.c_str());
   _env.push_back(path_info.c_str());
   _env.push_back(remote_addr.c_str());
-  _env.push_back(scritp_filename.c_str());
+  _env.push_back(script_filename.c_str());
   _env.push_back(script_name.c_str());
   _env.push_back(server_software.c_str());
   _env.push_back(request_method.c_str());
@@ -105,8 +105,8 @@ void CGI::setPipeNonblock() {
   setFcntl(_out_pipe[1]);
 }
 
-void CGI::excuteCgi() {
-  _excuteFlag = true;
+void CGI::execute() {
+  _executeFlag = true;
   if (access(_request->getPath().c_str(), R_OK) == -1) {
     throw new ExceptionThrower::FileAcccessFailedException();
   }
@@ -126,7 +126,7 @@ void CGI::excuteCgi() {
 
 void CGI::executeCGI() {
   try {
-    if (!_excuteFlag) excuteCgi();
+    if (!_executeFlag) execute();
   } catch (ExceptionThrower::CGIPipeException& e) {
     generateErrorResponse(INTERNAL_SERVER_ERROR);
   } catch (ExceptionThrower::FileAcccessFailedException& e) {
