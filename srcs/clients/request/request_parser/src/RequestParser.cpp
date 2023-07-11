@@ -121,9 +121,7 @@ void RequestParser::parseContent(RequestDts &dts) {
       (*dts.headerFields)["content-length"] == "") {
     *dts.isParsed = true;
     return;
-  } else if (dts.body->empty())
-    return;
-  else if ((*dts.headerFields)["transfer-encoding"] != "")
+  } else if ((*dts.headerFields)["transfer-encoding"] != "")
     return parseTransferEncoding(dts);
   else
     return parseContentLength(dts);
