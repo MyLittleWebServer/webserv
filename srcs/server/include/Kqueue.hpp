@@ -26,10 +26,6 @@ class Kqueue {
   static fd_set _method_fds;
   static fd_set _cgi_fds;
 
- private:
-  static void setFdSet(uintptr_t ident, e_fd_type type);
-  static void deleteFdSet(uintptr_t ident, e_fd_type type);
-
  protected:
   static int _kq;
   static std::vector<struct kevent> _eventsToAdd;
@@ -44,9 +40,6 @@ class Kqueue {
   static void addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                        uint32_t fflags, intptr_t data, void* udata);
   static void addEvent(uintptr_t ident);
-  static void addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
-                       uint32_t fflags, intptr_t data, void* udata,
-                       e_fd_type type);
 
   static void enableEvent(uintptr_t ident, int16_t filter, void* udata);
   static void disableEvent(uintptr_t ident, int16_t filter, void* udata);
@@ -55,6 +48,8 @@ class Kqueue {
   int newEvents(void);
 
   static e_fd_type getFdType(uintptr_t ident);
+  static void setFdSet(uintptr_t ident, e_fd_type type);
+  static void deleteFdSet(uintptr_t ident, e_fd_type type);
 
  public:
   const struct kevent& getEvent(int index) const;
