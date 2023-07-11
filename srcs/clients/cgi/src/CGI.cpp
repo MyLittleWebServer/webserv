@@ -169,7 +169,24 @@ void CGI::writeCGI() {
 
 void CGI::waitChild() {
   if (_waitFinishFlag) return;
-  if (waitpid(_pid, NULL, WNOHANG)) _waitFinishFlag = true;
+  pid_t result = waitpid(_pid, NULL, WNOHANG);
+  switch (result) {
+    case 0:
+      break;
+    case -1: {
+      generateErrorResponse(INTERNAL_SERVER_ERROR);
+      close(_in_pipe[0]);
+      close(_out_pipe[1]);
+      Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      close(_out_pipe[0]);
+      _cgiFinishFlag = true;
+      break;
+    }
+    default:
+      _waitFinishFlag = true;
+      break;
+  }
 }
 
 bool CGI::readChildFinish() {

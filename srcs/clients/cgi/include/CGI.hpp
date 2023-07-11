@@ -45,6 +45,8 @@ class CGI : public ICGI {
   void setPipeNonblock();
   void excuteCgi();
 
+  void makeChild();
+
   void waitChild();
 
   bool readChildFinish();
@@ -59,9 +61,9 @@ class CGI : public ICGI {
       void* client_info);
   ~CGI();
 
-  void execute();
+  void executeCGI();
   void writeCGI();
-  void waitAndRead();
+  void waitAndReadCGI();
 
   const std::string& getCgiResult();
   bool isCgiFinish();
