@@ -62,3 +62,10 @@ ExceptionThrower::CGIPipeException::CGIPipeException()
 const char* ExceptionThrower::CGIPipeException::what() const throw() {
   return std::runtime_error::what();
 }
+
+ExceptionThrower::FileAcccessFailedException::FileAcccessFailedException()
+    : std::runtime_error(FILE_ACCESS_FAILED) {}
+
+const char* ExceptionThrower::FileAcccessFailedException::what() const throw() {
+  return std::runtime_error::what();
+}

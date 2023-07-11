@@ -61,4 +61,11 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class FileAcccessFailedException : public std::runtime_error {
+   public:
+    FileAcccessFailedException();
+
+    virtual const char* what() const throw();
+  };
 };
