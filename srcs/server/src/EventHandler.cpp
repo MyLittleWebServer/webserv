@@ -39,6 +39,15 @@ void EventHandler::setCurrentEvent(int i) {
   this->_currentEvent = &(this->_eventList[i]);
 }
 
+void EventHandler::clientCondtion() {
+  Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
+  if (this->_currentEvent->filter == EVFILT_READ) {
+    processRequest(currClient);
+    return;
+  }
+  processResponse(currClient);
+}
+
 void EventHandler::branchCondition(void) {
   if (this->_errorFlag == true) return;
   e_fd_type fd_type = Kqueue::getFdType(this->_currentEvent->ident);
@@ -48,12 +57,7 @@ void EventHandler::branchCondition(void) {
       break;
     }
     case FD_CLIENT: {
-      Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
-      if (this->_currentEvent->filter == EVFILT_READ) {
-        processRequest(currClient);
-        return;
-      }
-      processResponse(currClient);
+      clientCondtion();
       break;
     }
     case FD_CGI:

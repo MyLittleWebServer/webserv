@@ -24,6 +24,8 @@ class EventHandler : public Kqueue {
   void processRequest(Client& client);
   void processResponse(Client& client);
 
+  void clientCondtion();
+
  public:
   EventHandler(const std::vector<Server*>& serverVector);
   virtual ~EventHandler();
