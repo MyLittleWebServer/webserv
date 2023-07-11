@@ -86,14 +86,14 @@ void EventHandler::processResponse(Client &currClient) {
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
   };
-    disableEvent(currClient.getSD(), EVFILT_WRITE,
-                 static_cast<void *>(&currClient));
- if (currClient.getFlag() == END) {
+  disableEvent(currClient.getSD(), EVFILT_WRITE,
+               static_cast<void *>(&currClient));
+  if (currClient.getFlag() == END) {
     disconnectClient(&currClient);
     return;
- }
- // TODO : init member
- currClient.setFlag(RECEIVING);
+  }
+  // TODO : init member
+  currClient.setFlag(RECEIVING);
 }
 
 void EventHandler::acceptClient() {
@@ -111,13 +111,28 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
            static_cast<void *>(newClient));
   addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
            static_cast<void *>(newClient));
+  this->_clients[clientSocket] = newClient;
 }
 
 void EventHandler::disconnectClient(const Client *client) {
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
+  this->_clients.erase((uintptr_t)client->getSD());
   close(client->getSD());
   if (client->getMethod() != NULL) delete client->getMethod();
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
   delete client;
+}
+
+void EventHandler::handleTimeOut(void) {
+  std::map<uintptr_t, Client *>::const_iterator it = this->_clients.begin();
+  std::map<uintptr_t, Client *>::const_iterator end = this->_clients.end();
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  for (; it != end; ++it) {
+    if (it->second->isTimeOut(now)) {
+      it->second->sendTimeOutResponse();
+      disconnectClient(it->second);
+    }
+  }
 }

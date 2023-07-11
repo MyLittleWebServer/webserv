@@ -2,6 +2,7 @@
 #include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <cstdarg>
@@ -51,4 +52,10 @@ std::string toLowerString(std::string str) {
     ++it;
   }
   return str;
+}
+
+time_t getTimeInMicroSec() {
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  return (time.tv_sec * static_cast<uint64_t>(1000000) + time.tv_usec);
 }

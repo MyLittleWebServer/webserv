@@ -115,6 +115,16 @@ void Client::newHTTPMethod(void) {
   throw(NOT_IMPLEMENTED);
 }
 
+bool Client::isTimeOut(struct timeval &now) {
+  if (((now.tv_sec - this->_start.tv_sec) * (uint64_t)1000000 +
+       (now.tv_usec - this->_start.tv_usec) / 1000) > TIMEOUT) {
+    return true;
+  }
+  return false;
+}
+
+void Client::sendTimeOutResponse() {}
+
 IMethod *Client::getMethod() const { return this->_method; }
 
 ClientFlag Client::getFlag() const { return this->_flag; }

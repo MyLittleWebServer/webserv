@@ -14,6 +14,7 @@ class Client;
 class EventHandler : public Kqueue {
  private:
   std::set<uintptr_t> _serverSocketSet;
+  std::map<uintptr_t, Client*> _clients;
   struct kevent* _currentEvent;
   bool _errorFlag;
 
@@ -28,6 +29,7 @@ class EventHandler : public Kqueue {
   EventHandler(const std::vector<Server*>& serverVector);
   virtual ~EventHandler();
 
+  void handleTimeOut(void);
   void setCurrentEvent(int i);
   void checkFlags(void);
   void branchCondition(void);

@@ -14,6 +14,7 @@
 #include "Response.hpp"
 
 #define RECEIVE_LEN 1000
+#define TIMEOUT 5000000
 
 enum ClientFlag {
   START,
@@ -41,6 +42,8 @@ class Client {
   Response _response;
   IMethod *_method;
 
+  time_t _start;
+
   static char _buf[RECEIVE_LEN + 1];
 
   bool checkIfReceiveFinished(ssize_t n);
@@ -64,6 +67,8 @@ class Client {
   void doRequest();
   void createErrorResponse();
   void createSuccessResponse();
+  bool isTimeOut(struct timeval &now);
+  void sendTimeOutResponse();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:

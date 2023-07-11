@@ -50,6 +50,7 @@ void ServerManager::startServer(void) {
     EventHandler eventHandler(_serverVector);
     while (1) {
       int eventCount = _eventQueue.newEvents();
+      if (eventCount == 0) eventHandler.handleTimeOut();
       for (int i = 0; i < eventCount; ++i) {
         eventHandler.setCurrentEvent(i);
         eventHandler.checkFlags();
