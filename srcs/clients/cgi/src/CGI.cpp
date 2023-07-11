@@ -108,15 +108,15 @@ void CGI::setPipeNonblock() {
 void CGI::execute() {
   _executeFlag = true;
   if (access(_request->getPath().c_str(), R_OK) == -1) {
-    throw new ExceptionThrower::FileAcccessFailedException();
+    throw ExceptionThrower::FileAcccessFailedException();
   }
   if (pipe(_in_pipe) < 0) {
-    throw new ExceptionThrower::CGIPipeException();
+    throw ExceptionThrower::CGIPipeException();
   }
   if (pipe(_out_pipe) < 0) {
     close(_in_pipe[0]);
     close(_in_pipe[1]);
-    throw new ExceptionThrower::CGIPipeException();
+    throw ExceptionThrower::CGIPipeException();
   }
   setPipeNonblock();
   Kqueue::setFdSet(_in_pipe[1], FD_CGI);
@@ -227,6 +227,6 @@ void CGI::waitAndReadCGI() {
 bool CGI::isCgiFinish() { return _cgiFinishFlag; }
 
 const std::string& CGI::getCgiResult() {
-  if (!_cgiFinishFlag) throw new ExceptionThrower::CGINotFinishedException();
+  if (!_cgiFinishFlag) throw ExceptionThrower::CGINotFinishedException();
   return this->_cgiResult;
 }
