@@ -41,17 +41,26 @@ void EventHandler::setCurrentEvent(int i) {
 
 void EventHandler::branchCondition(void) {
   if (this->_errorFlag == true) return;
-  if (_serverSocketSet.find(this->_currentEvent->ident) !=
-      this->_serverSocketSet.end()) {
-    acceptClient();
-    return;
+  e_fd_type fd_type = Kqueue::getFdType(this->_currentEvent->ident);
+  switch (fd_type) {
+    case FD_SERVER: {
+      acceptClient();
+      break;
+    }
+    case FD_CLIENT: {
+      Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
+      if (this->_currentEvent->filter == EVFILT_READ) {
+        processRequest(currClient);
+        return;
+      }
+      processResponse(currClient);
+      break;
+    }
+    case FD_CGI:
+      break;
+    default:
+      break;
   }
-  Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
-  if (this->_currentEvent->filter == EVFILT_READ) {
-    processRequest(currClient);
-    return;
-  }
-  processResponse(currClient);
 }
 
 void EventHandler::processRequest(Client &currClient) {
