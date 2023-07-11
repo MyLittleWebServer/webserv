@@ -34,6 +34,7 @@ void ServerManager::initServer(void) {
       server->initServerSocket();
       std::cout << "server: " << server->getPort();
       _eventQueue.addEvent(server->getSocket());
+      Kqueue::setFdSet(server->getSocket(), FD_SERVER);
       _serverVector.push_back(server);
       std::cout << ":" << server->getSocket() << std::endl;
       ++it;
