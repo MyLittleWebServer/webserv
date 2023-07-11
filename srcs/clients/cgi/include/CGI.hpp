@@ -41,8 +41,12 @@ class CGI : public ICGI {
 
   void initEnv();
 
+  void setFcntl(int fd);
+  void setPipeNonblock();
   void excuteCgi();
+
   void waitChild();
+
   bool readChildFinish();
 
   void setPipeNonblock();

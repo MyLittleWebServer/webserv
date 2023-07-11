@@ -113,7 +113,7 @@ void CGI::excuteCgi() {
                    static_cast<void*>(this));
 }
 
-void CGI::execute() {
+void CGI::executeCGI() {
   try {
     if (!_excuteFlag) excuteCgi();
   } catch (ExceptionThrower::CGIPipeException& e) {
@@ -123,25 +123,7 @@ void CGI::execute() {
   }
 }
 
-void CGI::writeCGI() {
-  if (_request->getMethod() == "POST") {
-    ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
-    if (ret != _body.size()) {
-      if (ret == -1) {
-        Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
-        close(_out_pipe[0]);
-        close(_out_pipe[1]);
-        close(_in_pipe[0]);
-        close(_in_pipe[1]);
-        generateErrorResponse(INTERNAL_SERVER_ERROR);
-        return;
-      };
-      _body = _body.substr(ret);
-      return;
-    }
-  }
-
+void CGI::makeChild() {
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
   close(_in_pipe[1]);
@@ -164,17 +146,25 @@ void CGI::writeCGI() {
                    static_cast<void*>(this));
 }
 
-void CGI::waitAndRead() {
-  if (_cgiFinishFlag) return;
-  waitChild();
-  if (!_waitFinishFlag) return;
-  close(_in_pipe[0]);
-  close(_out_pipe[1]);
-  if (!readChildFinish()) return;
-  Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-  Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
-  close(_out_pipe[0]);
-  _cgiFinishFlag = true;
+void CGI::writeCGI() {
+  if (_request->getMethod() == "POST") {
+    ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
+    if (ret != _body.size()) {
+      if (ret == -1) {
+        Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+        close(_out_pipe[0]);
+        close(_out_pipe[1]);
+        close(_in_pipe[0]);
+        close(_in_pipe[1]);
+        generateErrorResponse(INTERNAL_SERVER_ERROR);
+        return;
+      };
+      _body = _body.substr(ret);
+      return;
+    }
+  }
+  makeChild();
 }
 
 void CGI::waitChild() {
@@ -192,6 +182,19 @@ bool CGI::readChildFinish() {
     if (readSize == -1) return false;
     _cgiResult += buffer;
   }
+}
+
+void CGI::waitAndReadCGI() {
+  if (_cgiFinishFlag) return;
+  waitChild();
+  if (!_waitFinishFlag) return;
+  close(_in_pipe[0]);
+  close(_out_pipe[1]);
+  if (!readChildFinish()) return;
+  Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+  Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+  close(_out_pipe[0]);
+  _cgiFinishFlag = true;
 }
 
 bool CGI::isCgiFinish() { return _cgiFinishFlag; }
