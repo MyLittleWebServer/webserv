@@ -33,8 +33,8 @@ Client::~Client(void) {
   std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
-  if (_method) delete _method;
-  if (_cgi) delete _cgi;
+  // if (_method) delete _method;
+  // if (_cgi) delete _cgi;
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
@@ -68,7 +68,7 @@ void Client::receiveRequest(void) {
 }
 
 void Client::createErrorResponse() {
-  _response.createErrorResponse(*_request.getRequestParserDts().statusCode);
+  _response.createErrorResponse(_request.getRequestParserDts());
 }
 void Client::createSuccessResponse() {
   _method->createSuccessResponse(_response);
@@ -117,8 +117,8 @@ void Client::newHTTPMethod(void) {
     this->_method = new DELETE();
     return;
   }
-  this->_method = new DummyMethod(NOT_IMPLEMENTED);
-  throw(NOT_IMPLEMENTED);
+  this->_method = new DummyMethod(E_501_NOT_IMPLEMENTED);
+  throw(E_501_NOT_IMPLEMENTED);
 }
 
 IMethod *Client::getMethod() const { return this->_method; }

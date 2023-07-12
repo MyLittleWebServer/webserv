@@ -3,7 +3,9 @@
 #include "Status.hpp"
 
 Response::Response()
-    : _responseFlag(false), _assembleFlag(false), _statusCode(CREATED) {}
+    : _responseFlag(false),
+      _assembleFlag(false),
+      _statusCode(E_200_OK) {}
 
 Response::~Response() {}
 
@@ -34,20 +36,17 @@ std::string &Response::getFieldValue(const std::string &key) {
   return (this->_headerFields[key]);
 }
 
-void Response::createErrorResponse(Status statusCode) {
+void Response::createErrorResponse(RequestDts &dts) {
   resetResponse();
   // redirection response (300). need to replace the url with actual url
-  if (statusInfo[statusCode].body == NULL) {
+  if (statusInfo[*dts.statusCode].body == NULL) {
     this->setHeaderField("Location", "http://example.com/redirect_url");
     this->_responseFlag = true;
     return;
   }
   // response for status code 400 ~ 500
-  this->setHeaderField("Content-Type", "text/plain");
-  this->addBody(statusInfo[statusCode].body);
-  this->addBody("\r\n");
+  this->configureErrorPages(dts);
   this->setHeaderField("Content-Length", itos(this->_body.size()));
-  this->_statusCode = statusCode;
   this->assembleResponse();
 
   this->_responseFlag = true;
@@ -113,3 +112,28 @@ void Response::addBody(const std::string &str) { this->_body += str; }
 void Response::setBody(const std::string &str) { this->_body = str; }
 
 void Response::setResponse(std::string response) { this->_response = response; }
+
+void Response::configureErrorPages(RequestDts &dts) {
+  this->setStatusCode(*dts.statusCode);
+
+  IServerConfig &serverConfig = *dts.matchedServer;
+
+  std::string path = serverConfig.getErrorPage() + statusInfo[*dts.statusCode].code + ".html";
+  std::ifstream file(path.c_str() + 1, std::ios::in);
+  if (file.is_open() == false) {
+    std::cout << "Error: " << strerror(errno) << std::endl;
+    this->setHeaderField("Content-Type", "text/plain");
+    this->addBody(statusInfo[*dts.statusCode].body);
+    return;
+  } else {
+    std::cout << "Error: file in" << strerror(errno) << std::endl;
+    this->setHeaderField("Content-Type", "text/html; charset=UTF-8");
+    std::string buff;
+  while (std::getline(file, buff)) {
+    this->addBody(buff);
+    this->addBody("\r\n");
+  }
+  file.close();
+  }
+}
+

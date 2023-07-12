@@ -6,6 +6,7 @@
 #include "IResponse.hpp"
 #include "Status.hpp"
 #include "Utils.hpp"
+#include "IRequest.hpp"
 
 class Response : public IResponse {
  public:
@@ -21,15 +22,16 @@ class Response : public IResponse {
   Status _statusCode;
   std::map<std::string, std::string> _headerFields;
   std::string _body;
-
+ 
   void resetResponse();
 
   void assembleResponseLine(void);
   void putHeaderFields(void);
   void putBody(void);
+  void configureErrorPages(RequestDts &dts);
 
  public:
-  virtual void createErrorResponse(Status statusCode);
+  virtual void createErrorResponse(RequestDts &dts);
   bool getResponseFlag(void) const;
   Status getStatus(void);
   const std::string &getResponse(void) const;
