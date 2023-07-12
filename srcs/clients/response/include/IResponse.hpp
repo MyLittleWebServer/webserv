@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Status.hpp"
 #include <string>
+
+#include "Status.hpp"
 
 class IResponse {
  public:
@@ -20,4 +21,6 @@ class IResponse {
   virtual void setStatusCode(Status code) = 0;
   virtual void setResponseParsed() = 0;
   virtual bool isParsed() = 0;
+
+  virtual void setResponse(std::string response) = 0;
 };
