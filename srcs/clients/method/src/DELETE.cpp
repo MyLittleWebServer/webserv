@@ -6,9 +6,9 @@ DELETE::~DELETE() {}
 void DELETE::doRequest(RequestDts& dts, IResponse &response) {
   (void)response;
   if (std::remove(dts.path->c_str()) == false) {
-    throw(*dts.statusCode = NOT_FOUND);
+    throw(*dts.statusCode = E_404_NOT_FOUND);
   }
-  *dts.statusCode = OK;
+  *dts.statusCode = E_200_OK;
 }
 
 void DELETE::createSuccessResponse(IResponse& response) {

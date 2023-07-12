@@ -32,25 +32,25 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
 
   if (access(dts.path->c_str(), R_OK) == 0 &&
       (*dts.path)[dts.path->size() - 1] != '/') {
-    *dts.statusCode = OK;
+    *dts.statusCode = E_200_OK;
     // return fileHandler(*dts.path);
     prepareBody(*dts.path, response);
   } else if (access(pathIndex.c_str(), R_OK) == 0 &&
              pathIndex[pathIndex.size() - 1] != '/') {
-    *dts.statusCode = OK;
+    *dts.statusCode = E_200_OK;
     // return fileHandler(pathIndex);
     prepareBody(pathIndex, response);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
              (*dts.path)[dts.path->size() - 1] == '/' &&
              dts.matchedLocation->getAutoindex() == "on") {
-    *dts.statusCode = OK;
+    *dts.statusCode = E_200_OK;
     prepareFileList(*dts.path, dts, response);
     // return 0;
   } else {
-    throw(*dts.statusCode = NOT_FOUND);
+    throw(*dts.statusCode = E_404_NOT_FOUND);
   }
   if (response.getBody().empty()) {
-    *dts.statusCode = NO_CONTENT;
+    *dts.statusCode = E_204_NO_CONTENT;
   }
 }
 
@@ -70,7 +70,7 @@ std::vector<std::string> GET::getFileList(const std::string& path,
     }
     closedir(dir);
   } else {
-    throw(*dts.statusCode = FORBIDDEN);
+    throw(*dts.statusCode = E_403_FORBIDDEN);
   }
   return files;
 }
