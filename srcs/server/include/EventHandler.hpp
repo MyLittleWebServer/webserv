@@ -25,6 +25,7 @@ class EventHandler : public Kqueue {
   void processResponse(Client& client);
 
   void clientCondtion();
+  void cgiCondition();
 
  public:
   EventHandler(const std::vector<Server*>& serverVector);
