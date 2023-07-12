@@ -1,5 +1,7 @@
 #include "CGI.hpp"
 
+#include <signal.h>
+
 CGI::CGI() {
   _client_fd = 0;
   _cgi_status = CGI_START;
@@ -20,6 +22,41 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
 }
 
 CGI::~CGI() {
+  switch (_cgi_status) {
+    case CGI_WRITE: {
+      Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+      Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+      close(_in_pipe[0]);
+      close(_in_pipe[1]);
+      close(_out_pipe[1]);
+      close(_out_pipe[1]);
+      break;
+    }
+    case CGI_WAIT_CHILD: {
+      kill(_pid, SIGKILL);
+      close(_in_pipe[0]);
+      close(_out_pipe[1]);
+      Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      close(_out_pipe[0]);
+      break;
+    }
+    case CGI_RECEIVING: {
+      Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      close(_out_pipe[0]);
+      break;
+    }
+    default:
+      break;
+  }
+
+  if (_cgi_status == CGI_WRITE) {
+    close(_out_pipe[0]);
+    close(_out_pipe[1]);
+    close(_in_pipe[0]);
+    close(_in_pipe[1]);
+  }
   if (_cgi_status == CGI_END) return;
 }
 
@@ -95,7 +132,6 @@ void CGI::setPipeNonblock() {
 }
 
 void CGI::execute() {
-  _cgi_status = CGI_EXECUTE;
   if (access(_request->getPath().c_str(), R_OK) == -1) {
     throw ExceptionThrower::FileAcccessFailedException();
   }
