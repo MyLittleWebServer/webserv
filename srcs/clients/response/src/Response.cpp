@@ -3,9 +3,7 @@
 #include "Status.hpp"
 
 Response::Response()
-    : _responseFlag(false),
-      _assembleFlag(false),
-      _statusCode(CREATED) {}
+    : _responseFlag(false), _assembleFlag(false), _statusCode(CREATED) {}
 
 Response::~Response() {}
 
@@ -61,6 +59,8 @@ void Response::assembleResponseLine(void) {
   this->_response += " ";
   this->_response += statusInfo[this->_statusCode].message;
   this->_response += "\r\n";
+  std::cout << _response << std::endl;
+  std::cout << _response << std::endl;
 }
 
 void Response::resetResponse(void) {
@@ -111,3 +111,5 @@ void Response::eraseHeaderField(const std::string &key) {
 void Response::addBody(const std::string &str) { this->_body += str; }
 
 void Response::setBody(const std::string &str) { this->_body = str; }
+
+void Response::setResponse(std::string response) { this->_response = response; }

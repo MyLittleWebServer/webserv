@@ -9,6 +9,7 @@ int main(int ac, char **av) {
   atexit(leakCheck);
 #endif
   try {
+    Kqueue::init();
     ServerManager serverManager(ac, av);
     serverManager.initConfig();
     serverManager.initServer();

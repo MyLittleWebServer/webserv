@@ -58,7 +58,6 @@ sources1 += FileChecker.cpp \
 						Reader.cpp \
 						Utils.cpp \
 						Status.cpp
-
 # ---- Network ---- #
 
 sources1 +=	Client.cpp
@@ -76,11 +75,17 @@ sources1 +=	Request.cpp \
 						CandidateFields.cpp
 
 # ---- Method ---- #
+
 sources1 +=	GET.cpp \
 						POST.cpp \
 						DELETE.cpp \
 						PUT.cpp \
 						DummyMethod.cpp
+
+# ---- CGI ---- #
+
+sources1 +=	CGI.cpp
+
 
 # ---- Config ---- #
 
@@ -113,7 +118,7 @@ objects2 = $(SRCS_BONUS:.cpp=.o)
 all_objects = $(objects1) $(objects2)
 
 define objects_goal
-$(addprefix $(OBJ_DIR)/, $(call $(if $(filter bonus, $(MAKECMDGOALS)), objects2, objects1))) 
+$(addprefix $(OBJ_DIR)/, $(call $(if $(filter bonus, $(MAKECMDGOALS)), objects2, objects1)))
 endef
 
 define react
@@ -149,7 +154,7 @@ fclean : clean
 
 re : fclean
 	@make $(react)
-	
+
 # ---- Test ---- #
 
 leaks: export MallocStackLogging=1
@@ -173,7 +178,7 @@ test: all
 # test1: CFLAGS += -D PORT=8081
 test1: fclean all
 	./$(EXEC)
-	
+
 # test2: CFLAGS += -D PORT=8082
 test2: fclean all
 	./$(EXEC)
