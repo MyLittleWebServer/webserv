@@ -33,19 +33,16 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
   if (access(dts.path->c_str(), R_OK) == 0 &&
       (*dts.path)[dts.path->size() - 1] != '/') {
     *dts.statusCode = E_200_OK;
-    // return fileHandler(*dts.path);
     prepareBody(*dts.path, response);
   } else if (access(pathIndex.c_str(), R_OK) == 0 &&
              pathIndex[pathIndex.size() - 1] != '/') {
     *dts.statusCode = E_200_OK;
-    // return fileHandler(pathIndex);
     prepareBody(pathIndex, response);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
              (*dts.path)[dts.path->size() - 1] == '/' &&
              dts.matchedLocation->getAutoindex() == "on") {
     *dts.statusCode = E_200_OK;
     prepareFileList(*dts.path, dts, response);
-    // return 0;
   } else {
     throw(*dts.statusCode = E_404_NOT_FOUND);
   }
@@ -59,7 +56,7 @@ std::vector<std::string> GET::getFileList(const std::string& path,
   DIR* dir;
   struct dirent* ent;
   std::vector<std::string> files;
-
+  
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
       if (ent->d_name[0] == '.') continue;
@@ -70,7 +67,7 @@ std::vector<std::string> GET::getFileList(const std::string& path,
     }
     closedir(dir);
   } else {
-    throw(*dts.statusCode = E_403_FORBIDDEN);
+    throw(*dts.statusCode = E_404_NOT_FOUND);
   }
   return files;
 }
