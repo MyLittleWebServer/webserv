@@ -1,20 +1,17 @@
 #include "CGI.hpp"
 
 CGI::CGI() {
+  _client_fd = 0;
+  _cgi_status = CGI_START;
   _cgiResult = "";
-  _executeFlag = false;
-  _waitFinishFlag = false;
-  _cgiFinishFlag = false;
   initEnv();
 }
 
 CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
          void* client_info) {
   _client_fd = client_fd;
+  _cgi_status = CGI_START;
   _cgiResult = "";
-  _executeFlag = false;
-  _waitFinishFlag = false;
-  _cgiFinishFlag = false;
   _request = request;
   _response = response;
   _body = _request->getBody();
@@ -22,20 +19,20 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
   initEnv();
 }
 
-CGI::~CGI() {}
+CGI::~CGI() {
+  if (_cgi_status == CGI_END) return;
+}
 
 CGI::CGI(const CGI& copy) { *this = copy; }
 
 CGI& CGI::operator=(const CGI& copy) {
   if (this != &copy) {
+    this->_cgi_status = copy._cgi_status;
     this->_request = copy._request;
     this->_response = copy._response;
     this->_client_fd = copy._client_fd;
     this->_cgiResult = copy._cgiResult;
     this->_body = copy._body;
-    this->_executeFlag = copy._executeFlag;
-    this->_waitFinishFlag = copy._waitFinishFlag;
-    this->_cgiFinishFlag = copy._cgiFinishFlag;
     initEnv();
   }
   return *this;
@@ -70,7 +67,7 @@ void CGI::initEnv() {
 
 void CGI::generateErrorResponse(Status status) {
   (void)status;
-  _cgiFinishFlag = true;
+  _cgi_status = CGI_END;
   _response->setStatusCode(status);
   _response->assembleResponse();
   _response->setResponseParsed();
@@ -78,7 +75,7 @@ void CGI::generateErrorResponse(Status status) {
 };
 
 void CGI::generateResponse() {
-  _cgiFinishFlag = true;
+  _cgi_status = CGI_END;
   _cgiResult.replace(_cgiResult.find("Status:"), 7, "HTTP/1.1");
   _response->setResponse(_cgiResult);
   _response->setResponseParsed();
@@ -98,7 +95,7 @@ void CGI::setPipeNonblock() {
 }
 
 void CGI::execute() {
-  _executeFlag = true;
+  _cgi_status = CGI_EXECUTE;
   if (access(_request->getPath().c_str(), R_OK) == -1) {
     throw ExceptionThrower::FileAcccessFailedException();
   }
@@ -114,11 +111,12 @@ void CGI::execute() {
   Kqueue::setFdSet(_in_pipe[1], FD_CGI);
   Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
                    static_cast<void*>(this));
+  _cgi_status = CGI_WRITE;
 }
 
 void CGI::executeCGI() {
   try {
-    if (!_executeFlag) execute();
+    if (_cgi_status == CGI_START) execute();
   } catch (ExceptionThrower::CGIPipeException& e) {
     generateErrorResponse(INTERNAL_SERVER_ERROR);
   } catch (ExceptionThrower::FileAcccessFailedException& e) {
@@ -149,6 +147,7 @@ void CGI::makeChild() {
   Kqueue::setFdSet(_out_pipe[0], FD_CGI);
   Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
                    static_cast<void*>(this));
+  _cgi_status = CGI_WAIT_CHILD;
 }
 
 void CGI::writeCGI() {
@@ -173,7 +172,7 @@ void CGI::writeCGI() {
 }
 
 void CGI::waitChild() {
-  if (_waitFinishFlag) return;
+  if (_cgi_status != CGI_WAIT_CHILD) return;
   pid_t result = waitpid(_pid, NULL, WNOHANG);
   switch (result) {
     case 0:
@@ -188,7 +187,7 @@ void CGI::waitChild() {
       break;
     }
     default:
-      _waitFinishFlag = true;
+      _cgi_status = CGI_RECEIVING;
       break;
   }
 }
@@ -206,9 +205,8 @@ bool CGI::readChildFinish() {
 }
 
 void CGI::waitAndReadCGI() {
-  if (_cgiFinishFlag) return;
   waitChild();
-  if (!_waitFinishFlag) return;
+  if (_cgi_status != CGI_RECEIVING) return;
   close(_in_pipe[0]);
   close(_out_pipe[1]);
   if (!readChildFinish()) return;
@@ -219,9 +217,9 @@ void CGI::waitAndReadCGI() {
   generateResponse();
 }
 
-bool CGI::isCgiFinish() { return _cgiFinishFlag; }
+bool CGI::isCgiFinish() { return _cgi_status == CGI_END; }
 
 const std::string& CGI::getCgiResult() {
-  if (!_cgiFinishFlag) throw ExceptionThrower::CGINotFinishedException();
+  if (_cgi_status != CGI_END) throw ExceptionThrower::CGINotFinishedException();
   return this->_cgiResult;
 }
