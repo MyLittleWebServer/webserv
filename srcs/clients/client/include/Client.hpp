@@ -9,6 +9,8 @@
 #include <map>
 #include <string>
 
+#include "CGI.hpp"
+#include "ICGI.hpp"
 #include "IMethod.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
@@ -40,6 +42,7 @@ class Client {
   Request _request;
   Response _response;
   IMethod *_method;
+  ICGI *_cgi;
 
   static char _buf[RECEIVE_LEN + 1];
 
@@ -64,6 +67,7 @@ class Client {
   void doRequest();
   void createErrorResponse();
   void createSuccessResponse();
+  void makeAndExecuteCgi();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:
