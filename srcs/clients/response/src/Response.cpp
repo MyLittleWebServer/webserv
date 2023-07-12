@@ -119,7 +119,11 @@ void Response::configureErrorPages(RequestDts &dts) {
   IServerConfig &serverConfig = *dts.matchedServer;
 
   std::string path = serverConfig.getErrorPage() + statusInfo[*dts.statusCode].code + ".html";
-  std::ifstream file(path.c_str() + 1, std::ios::in);
+  
+  if (path[0] == '/') {
+      path = path.substr(1);
+  }
+  std::ifstream file(path.c_str(), std::ios::in);
   if (file.is_open() == false) {
     std::cout << "Error: " << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/plain");
