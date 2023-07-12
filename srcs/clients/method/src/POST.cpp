@@ -11,6 +11,13 @@ POST::POST(void) {}
 POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
+  std::cout << " >>>>>>>>>>>>>>> POST\n";
+  std::cout << "path: " << *dts.path << "\n";
+  std::cout << "body: " << *dts.body << "\n";
+  std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
+  std::cout << "content-length: " << (*dts.headerFields)["content-length"]
+            << "\n";
+  
   (void)response;
   // std::map<std::string, std::string>::iterator it =
   // (dts.headerFields->begin()); std::map<std::string, std::string>::iterator
@@ -19,7 +26,7 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   //   it++;
   // }
   this->generateResource(dts);
-  response.setStatusCode(CREATED);
+  response.setStatusCode(E_201_CREATED);
 }
 
 void POST::generateResource(RequestDts& dts) {
@@ -43,12 +50,12 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   std::cout << "decodedBody: " << decodedBody << "\n";
   if (decodedBody.find("title") == std::string::npos ||
       decodedBody.find("content") == std::string::npos)
-    throw(*dts.statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
 
   size_t andPos = decodedBody.find('&');
   size_t equalPos1 = decodedBody.find('=');
   if (andPos == std::string::npos || equalPos1 == std::string::npos) {
-    throw(*dts.statusCode = BAD_REQUEST);
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
   }
   this->_title = decodedBody.substr(equalPos1 + 1, andPos - equalPos1 - 1);
   decodedBody = decodedBody.substr(andPos + 1);
@@ -64,38 +71,38 @@ void POST::generateUrlEncoded(RequestDts& dts) {
 
 void POST::generateMultipart(RequestDts& dts) {
   size_t boundaryPos = this->_contentType.find("boundary");
-  if (boundaryPos == std::string::npos) throw(*dts.statusCode = BAD_REQUEST);
+  if (boundaryPos == std::string::npos) throw(*dts.statusCode = E_400_BAD_REQUEST);
   std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
-  if (boundaryValue == "") throw(*dts.statusCode = BAD_REQUEST);
+  if (boundaryValue == "") throw(*dts.statusCode = E_400_BAD_REQUEST);
 
   prepareBinaryBody(dts);
 }
 
 void POST::prepareTextBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string pathInfo = *dts.path + this->_title + ".txt";
   std::cout << "pathInfo: " << pathInfo << "\n";
   std::ofstream file(pathInfo, std::ios::out);
-  if (!file.is_open()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content << "\n";
-  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
-  if (file.fail()) throw((*dts.statusCode) = INTERNAL_SERVER_ERROR);
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 }
 
 void POST::prepareBinaryBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = FORBIDDEN);
+  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string filename = *dts.path + "tmpTitle";
   std::ofstream file(filename.c_str(), std::ios::binary);
   std::string binBody = (*dts.body).data();
   size_t boundaryPos = binBody.find("boundary");
 
-  if (boundaryPos == std::string::npos) throw((*dts.statusCode) = BAD_REQUEST);
+  if (boundaryPos == std::string::npos) throw((*dts.statusCode) = E_400_BAD_REQUEST);
   size_t start =
       binBody.find("\r\n\r\n", boundaryPos, binBody.find("Content-Type"));
   size_t end = binBody.rfind("------WebKitFormBoundary");
   if (start == std::string::npos || end == std::string::npos)
-    throw((*dts.statusCode) = BAD_REQUEST);
+    throw((*dts.statusCode) = E_400_BAD_REQUEST);
   start += 4;
   end -= 2;
   std::string content = binBody.substr(start, end - start).data();
