@@ -47,12 +47,14 @@ void Client::receiveRequest(void) {
     }
     Client::_buf[n] = '\0';
     this->_recvBuff += Client::_buf;
+
     std::memset(Client::_buf, 0, RECEIVE_LEN + 1);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
 #endif
+      signal(SIGPIPE, SIG_DFL);
       break;
     }
     signal(SIGPIPE, SIG_DFL);
@@ -140,4 +142,9 @@ const char *Client::DisconnectedDuringSendException::what() const throw() {
 std::ostream &operator<<(std::ostream &os, const Client &client) {
   os << "Client: " << client.getSD() << std::endl;
   return os;
+}
+
+void Client::makeAndExecuteCgi() {
+  _cgi = new CGI(&_request, &_response, _sd, static_cast<void *>(this));
+  _cgi->executeCGI();
 }
