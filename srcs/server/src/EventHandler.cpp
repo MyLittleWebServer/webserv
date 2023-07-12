@@ -48,6 +48,16 @@ void EventHandler::clientCondtion() {
   processResponse(currClient);
 }
 
+void EventHandler::cgiCondition() {
+  ICGI &cgi = *(static_cast<ICGI *>(_currentEvent->udata));
+  if (_currentEvent->filter == EVFILT_READ) {
+    cgi.waitAndReadCGI();
+  }
+  if (_currentEvent->filter == EVFILT_WRITE) {
+    cgi.writeCGI();
+  }
+}
+
 void EventHandler::branchCondition(void) {
   if (this->_errorFlag == true) return;
   e_fd_type fd_type = Kqueue::getFdType(this->_currentEvent->ident);
@@ -61,6 +71,7 @@ void EventHandler::branchCondition(void) {
       break;
     }
     case FD_CGI:
+      cgiCondition();
       break;
     default:
       break;
@@ -74,7 +85,7 @@ void EventHandler::processRequest(Client &currClient) {
     currClient.parseRequest(getBoundPort(_currentEvent));
     if (currClient.getFlag() == RECEIVING) return;
     if (currClient.isCgi()) {
-      (void)currClient;
+      currClient.makeAndExecuteCgi();
     } else {
       currClient.newHTTPMethod();
       currClient.doRequest();
