@@ -8,12 +8,16 @@
 
 char Client::_buf[RECEIVE_LEN + 1] = {0};
 
-Client::Client() : _flag(START), _sd(0), _method(NULL) {}
+Client::Client() : _flag(START), _sd(0), _method(NULL) {
+  this->_method = NULL;
+  this->_cgi = NULL;
+}
 
 Client::Client(const uintptr_t sd) {
   this->_flag = RECEIVING;
   this->_sd = sd;
   this->_method = NULL;
+  this->_cgi = NULL;
 }
 
 Client &Client::operator=(const Client &client) {
@@ -29,6 +33,8 @@ Client::~Client(void) {
   std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
+  if (_method) delete _method;
+  if (_cgi) delete _cgi;
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
