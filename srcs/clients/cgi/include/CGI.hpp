@@ -20,6 +20,18 @@
 
 class CGI : public ICGI {
  private:
+  std::string _content_type;
+  std::string _content_length;
+  std::string _http_user_agent;
+  std::string _server_name;
+  std::string _server_software;
+  std::string _path_info;
+  std::string _query_string;
+  std::string _remote_addr;
+  std::string _request_method;
+  std::string _script_filename;
+
+ private:
   uintptr_t _client_fd;
   std::string _cgiResult;
   bool _executeFlag;
