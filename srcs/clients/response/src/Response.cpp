@@ -39,11 +39,11 @@ std::string &Response::getFieldValue(const std::string &key) {
 void Response::createErrorResponse(RequestDts &dts) {
   resetResponse();
   // redirection response (300). need to replace the url with actual url
-  if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
-    this->setHeaderField("Location", "http://example.com/redirect_url");
-    this->_responseFlag = true;
-    return;
-  }
+  // if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
+  //   this->setHeaderField("Location", "http://example.com/redirect_url");
+  //   this->_responseFlag = true;
+  //   return;
+  // }
   // response for status code 400 ~ 500
   this->configureErrorPages(dts);
   this->setHeaderField("Content-Length", itos(this->_body.size()));
