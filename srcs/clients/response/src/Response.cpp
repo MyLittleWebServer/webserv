@@ -3,9 +3,7 @@
 #include "Status.hpp"
 
 Response::Response()
-    : _responseFlag(false),
-      _assembleFlag(false),
-      _statusCode(E_200_OK) {}
+    : _responseFlag(false), _assembleFlag(false), _statusCode(E_200_OK) {}
 
 Response::~Response() {}
 
@@ -38,14 +36,20 @@ std::string &Response::getFieldValue(const std::string &key) {
 
 void Response::createErrorResponse(RequestDts &dts) {
   resetResponse();
+  this->_statusCode = *dts.statusCode;
   // redirection response (300). need to replace the url with actual url
-  if (statusInfo[*dts.statusCode].body == NULL) {
-    this->setHeaderField("Location", "http://example.com/redirect_url");
-    this->_responseFlag = true;
-    return;
-  }
+  // if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
+  //   this->setHeaderField("Location", "http://example.com/redirect_url");
+  //   this->_responseFlag = true;
+  //   return;
+  // }
   // response for status code 400 ~ 500
-  this->configureErrorPages(dts);
+  if (*dts.matchedServer != NULL) {
+    this->configureErrorPages(dts);
+  } else {
+    this->addBody(statusInfo[*dts.statusCode].body);
+    this->addBody("\r\n");
+  }
   this->setHeaderField("Content-Length", itos(this->_body.size()));
   this->assembleResponse();
 
@@ -114,30 +118,27 @@ void Response::setBody(const std::string &str) { this->_body = str; }
 void Response::setResponse(std::string response) { this->_response = response; }
 
 void Response::configureErrorPages(RequestDts &dts) {
-  this->setStatusCode(*dts.statusCode);
+  IServerConfig &serverConfig = **dts.matchedServer;
 
-  IServerConfig &serverConfig = *dts.matchedServer;
+  std::string path =
+      serverConfig.getErrorPage() + statusInfo[*dts.statusCode].code + ".html";
 
-  std::string path = serverConfig.getErrorPage() + statusInfo[*dts.statusCode].code + ".html";
-  
   if (path[0] == '/') {
-      path = path.substr(1);
+    path = path.substr(1);
   }
   std::ifstream file(path.c_str(), std::ios::in);
   if (file.is_open() == false) {
-    std::cout << "Error: " << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/plain");
     this->addBody(statusInfo[*dts.statusCode].body);
+    this->addBody("\r\n");
     return;
   } else {
-    std::cout << "Error: file in" << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/html; charset=UTF-8");
     std::string buff;
-  while (std::getline(file, buff)) {
-    this->addBody(buff);
-    this->addBody("\r\n");
-  }
-  file.close();
+    while (std::getline(file, buff)) {
+      this->addBody(buff);
+      this->addBody("\r\n");
+    }
+    file.close();
   }
 }
-

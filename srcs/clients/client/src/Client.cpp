@@ -71,6 +71,12 @@ void Client::receiveRequest(void) {
 void Client::createErrorResponse() {
   _response.createErrorResponse(_request.getRequestParserDts());
 }
+
+void Client::createErrorResponse(Status statusCode) {
+  *_request.getRequestParserDts().statusCode = statusCode;
+  _response.createErrorResponse(_request.getRequestParserDts());
+}
+
 void Client::createSuccessResponse() {
   _method->createSuccessResponse(_response);
 }
@@ -118,8 +124,10 @@ void Client::newHTTPMethod(void) {
     this->_method = new DELETE();
     return;
   }
+  /*
   this->_method = new DummyMethod(E_501_NOT_IMPLEMENTED);
   throw(E_501_NOT_IMPLEMENTED);
+  */
 }
 
 IMethod *Client::getMethod() const { return this->_method; }

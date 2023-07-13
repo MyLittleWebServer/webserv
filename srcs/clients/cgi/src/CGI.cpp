@@ -25,7 +25,7 @@ CGI::~CGI() {
   switch (_cgi_status) {
     case CGI_WRITE: {
       Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-      Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+      Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
       close(_in_pipe[0]);
       close(_in_pipe[1]);
       close(_out_pipe[1]);
@@ -37,13 +37,13 @@ CGI::~CGI() {
       close(_in_pipe[0]);
       close(_out_pipe[1]);
       Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
       close(_out_pipe[0]);
       break;
     }
     case CGI_RECEIVING: {
       Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
       close(_out_pipe[0]);
       break;
     }
@@ -162,7 +162,7 @@ void CGI::executeCGI() {
 
 void CGI::makeChild() {
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-  Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+  Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
   close(_in_pipe[1]);
   _pid = fork();
   if (_pid == -1) {
@@ -191,7 +191,8 @@ void CGI::writeCGI() {
     if (ret != static_cast<ssize_t>(_body.size())) {
       if (ret == -1) {
         Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE);
+        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE,
+                            static_cast<void*>(this));
         close(_out_pipe[0]);
         close(_out_pipe[1]);
         close(_in_pipe[0]);
@@ -217,7 +218,7 @@ void CGI::waitChild() {
       close(_in_pipe[0]);
       close(_out_pipe[1]);
       Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
       close(_out_pipe[0]);
       break;
     }
@@ -246,7 +247,7 @@ void CGI::waitAndReadCGI() {
   close(_out_pipe[1]);
   if (!readChildFinish()) return;
   Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-  Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ);
+  Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
   close(_out_pipe[0]);
 
   generateResponse();

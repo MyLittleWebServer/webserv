@@ -177,14 +177,13 @@ bool RequestParser::checkPathForm(RequestDts &dts) {
 void RequestParser::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation,
     RequestDts &dts) {
-  dts.matchedLocation = *defaultLocation;
+  *dts.matchedLocation = *defaultLocation;
   dts.path->erase(0, 1);  // remove the first '/'
   *dts.path = (*defaultLocation)->getRoot() + *dts.path;
   dts.path->erase(0, 1);
 }
 
 void RequestParser::matchServerConf(short port, RequestDts &dts) {
-  dts.matchedServer = NULL;
   Config &config = Config::getInstance();
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
@@ -195,13 +194,13 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
       continue;
     }
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
-      dts.matchedServer = *it;
+      *dts.matchedServer = *it;
       return;
     } else
-      dts.matchedServer = *it;
+      *dts.matchedServer = *it;
     ++it;
   }
-  if (dts.matchedServer == NULL) {
+  if (*dts.matchedServer == NULL) {
 #ifdef DEBUG_MSG
     std::cout << "no matched server" << std::endl;
 #endif
@@ -223,13 +222,16 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
 // GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
   std::string firstToken = getFirstTokenOfPath(dts);
+  if (firstToken == "/health"){
+    throw(*dts.statusCode = E_200_OK);
+  }
 #ifdef DEBUG_MSG
   std::cout << "firstToken: " << firstToken << std::endl;
 #endif
   std::list<ILocationConfig *>::const_iterator it =
-      dts.matchedServer->getLocationConfigs().begin();
+      (*dts.matchedServer)->getLocationConfigs().begin();
   std::list<ILocationConfig *>::const_iterator endIt =
-      dts.matchedServer->getLocationConfigs().end();
+      (*dts.matchedServer)->getLocationConfigs().end();
   std::list<ILocationConfig *>::const_iterator defaultLocation;
   while (it != endIt) {
     const std::string &currRoute = (*it)->getRoute();
@@ -237,7 +239,7 @@ void RequestParser::validatePath(RequestDts &dts) {
     std::cout << "currRoute: " << currRoute << std::endl;
 #endif
     if (currRoute == firstToken) {
-      dts.matchedLocation = *it;
+      *dts.matchedLocation = *it;
       dts.path->erase(0, firstToken.size());
       if (dts.path->size() != 0 && (*dts.path)[0] == '/')
         dts.path->erase(0, 1);  // remove this because there is already a
@@ -247,7 +249,8 @@ void RequestParser::validatePath(RequestDts &dts) {
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (this->checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
+      if (this->checkPathForm(dts) == false)
+        throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
@@ -258,7 +261,7 @@ void RequestParser::validatePath(RequestDts &dts) {
 
 void RequestParser::parseCgi(RequestDts &dts) {
   *dts.is_cgi = false;
-  const std::string &extension = dts.matchedServer->getCgi();
+  const std::string &extension = (*dts.matchedServer)->getCgi();
   if (dts.path->size() < extension.size()) return;
   std::string cgiPath =
       dts.path->substr(dts.path->size() - extension.size(), extension.size());
@@ -284,6 +287,7 @@ RequestParser &RequestParser::getInstance() {
 }
 
 void RequestParser::requestChecker(RequestDts &dts) {
+  checkMethod(dts);
   checkProtocolVersion(dts);
   checkContentLenghWithTransferEncoding(dts);
   checkRequestUriLimitLength(dts);
@@ -292,6 +296,11 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkAllowedMethods(dts);
   checkCgiMethod(dts);
   if (dts.isParsed == false) return;
+}
+
+void RequestParser::checkMethod(RequestDts &dts) {
+  if (*dts.method != "GET" && *dts.method != "POST" && *dts.method != "DELETE")
+    throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
 void RequestParser::checkProtocolVersion(RequestDts &dts) {
@@ -337,13 +346,13 @@ void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
 }
 
 void RequestParser::checkBodyLimitLength(RequestDts &dts) {
-  if (*dts.contentLength > dts.matchedLocation->getLimitClientBodySize())
+  if (*dts.contentLength > ((*dts.matchedLocation)->getLimitClientBodySize()))
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 
 void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &method_info =
-      dts.matchedLocation->getAllowMethod();
+      (*dts.matchedLocation)->getAllowMethod();
   std::map<std::string, bool>::const_iterator it =
       method_info.find(*dts.method);
   if (it != method_info.end() && it->second == true) return;
