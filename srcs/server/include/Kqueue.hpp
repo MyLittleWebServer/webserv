@@ -43,7 +43,7 @@ class Kqueue {
 
   static void enableEvent(uintptr_t ident, int16_t filter, void* udata);
   static void disableEvent(uintptr_t ident, int16_t filter, void* udata);
-  static void deleteEvent(uintptr_t ident, int16_t filter);
+  static void deleteEvent(uintptr_t ident, int16_t filter, void* udata);
 
   int newEvents(void);
 
