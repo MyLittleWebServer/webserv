@@ -223,6 +223,9 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
 // GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
   std::string firstToken = getFirstTokenOfPath(dts);
+  if (firstToken == "/health"){
+    throw(*dts.statusCode = E_200_OK);
+  }
 #ifdef DEBUG_MSG
   std::cout << "firstToken: " << firstToken << std::endl;
 #endif
