@@ -33,8 +33,9 @@ Client::~Client(void) {
   std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
-  // if (_method) delete _method;
-  // if (_cgi) delete _cgi;
+  close(_sd);
+  if (_method != NULL) delete _method;
+  if (_cgi != NULL) delete _cgi;
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {

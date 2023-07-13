@@ -142,8 +142,7 @@ void EventHandler::disconnectClient(const Client *client) {
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
   Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
-  close(client->getSD());
-  if (client->getMethod() != NULL) delete client->getMethod();
+
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
   delete client;
 }
