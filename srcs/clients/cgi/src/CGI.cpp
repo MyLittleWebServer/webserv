@@ -154,9 +154,9 @@ void CGI::executeCGI() {
   try {
     if (_cgi_status == CGI_START) execute();
   } catch (ExceptionThrower::CGIPipeException& e) {
-    generateErrorResponse(INTERNAL_SERVER_ERROR);
+    generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
   } catch (ExceptionThrower::FileAcccessFailedException& e) {
-    generateErrorResponse(NOT_FOUND);
+    generateErrorResponse(E_404_NOT_FOUND);
   }
 }
 
@@ -169,8 +169,7 @@ void CGI::makeChild() {
     close(_out_pipe[0]);
     close(_out_pipe[1]);
     close(_in_pipe[0]);
-
-    generateErrorResponse(INTERNAL_SERVER_ERROR);
+    generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
   } else if (!_pid) {
     dup2(_in_pipe[0], STDIN_FILENO);
     dup2(_out_pipe[1], STDOUT_FILENO);
@@ -197,7 +196,7 @@ void CGI::writeCGI() {
         close(_out_pipe[1]);
         close(_in_pipe[0]);
         close(_in_pipe[1]);
-        generateErrorResponse(INTERNAL_SERVER_ERROR);
+        generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
         return;
       };
       _body = _body.substr(ret);
@@ -214,7 +213,7 @@ void CGI::waitChild() {
     case 0:
       break;
     case -1: {
-      generateErrorResponse(INTERNAL_SERVER_ERROR);
+      generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
       close(_in_pipe[0]);
       close(_out_pipe[1]);
       Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
