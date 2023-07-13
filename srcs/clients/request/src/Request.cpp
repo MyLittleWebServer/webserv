@@ -48,7 +48,8 @@ void Request::initMember() {
   _isParsed = false;
   _contentLength = 0;
   _is_cgi = false;
-  _path = "";
+  _matchedServer = 0;
+  _matchedLocation = 0;
 }
 
 void Request::initDts() {
@@ -65,8 +66,8 @@ void Request::initDts() {
   _request_parser_dts.query_string = &_query_string;
   _request_parser_dts.queryStringElements = &_queryStringElements;
   _request_parser_dts.serverConf = &_serverConf;
-  _request_parser_dts.matchedServer = _matchedServer;
-  _request_parser_dts.matchedLocation = _matchedLocation;
+  _request_parser_dts.matchedServer = &_matchedServer;
+  _request_parser_dts.matchedLocation = &_matchedLocation;
   _request_parser_dts.isParsed = &_isParsed;
   _request_parser_dts.is_cgi = &_is_cgi;
   _request_parser_dts.contentLength = &_contentLength;
@@ -119,7 +120,7 @@ const std::map<std::string, std::string> &Request::getQueryStringElements(
 }
 
 IServerConfig *Request::getMatchedServer(void) const {
-  return (this->_request_parser_dts.matchedServer);
+  return (*this->_request_parser_dts.matchedServer);
 }
 
 const bool &Request::isParsed() const { return _isParsed; }

@@ -24,8 +24,8 @@ typedef struct RequestDts {
   std::map<std::string, std::string>* queryStringElements;
   std::string* query_string;
   std::map<std::string, std::string>* serverConf;
-  IServerConfig* matchedServer;
-  ILocationConfig* matchedLocation;
+  IServerConfig** matchedServer;
+  ILocationConfig** matchedLocation;
   bool* isParsed;
   bool* is_cgi;
   unsigned long* contentLength;

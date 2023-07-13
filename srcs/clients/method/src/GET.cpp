@@ -20,10 +20,10 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
   std::string pathIndex;
 
   pathIndex = *dts.path;
-  if (dts.matchedLocation->getIndex() != "") {
+  if ((*dts.matchedLocation)->getIndex() != "") {
     pathIndex += (*dts.path)[dts.path->size() - 1] == '/'
-                     ? dts.matchedLocation->getIndex()
-                     : "/" + dts.matchedLocation->getIndex();
+                     ? (*dts.matchedLocation)->getIndex()
+                     : "/" + (*dts.matchedLocation)->getIndex();
   }
 #ifdef DEBUG_MSG
   std::cout << " -- this : " << *dts.path << std::endl;
@@ -40,7 +40,7 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
     prepareBody(pathIndex, response);
   } else if (access(pathIndex.c_str(), R_OK) < 0 &&
              (*dts.path)[dts.path->size() - 1] == '/' &&
-             dts.matchedLocation->getAutoindex() == "on") {
+             (*dts.matchedLocation)->getAutoindex() == "on") {
     *dts.statusCode = E_200_OK;
     prepareFileList(*dts.path, dts, response);
   } else {
@@ -56,7 +56,7 @@ std::vector<std::string> GET::getFileList(const std::string& path,
   DIR* dir;
   struct dirent* ent;
   std::vector<std::string> files;
-  
+
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
       if (ent->d_name[0] == '.') continue;
@@ -148,7 +148,7 @@ void GET::validateContentType(IResponse& response) {
   }
 }
 
-void GET::getContentType(const std::string& path, IResponse &response) {
+void GET::getContentType(const std::string& path, IResponse& response) {
   std::string extension = path.substr(path.find_last_of(".") + 1);
   MimeTypesConfig& config = dynamic_cast<MimeTypesConfig&>(
       Config::getInstance().getMimeTypesConfig());
