@@ -39,7 +39,7 @@ std::string &Response::getFieldValue(const std::string &key) {
 void Response::createErrorResponse(RequestDts &dts) {
   resetResponse();
   // redirection response (300). need to replace the url with actual url
-  if (statusInfo[*dts.statusCode].body == NULL) {
+  if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
     this->setHeaderField("Location", "http://example.com/redirect_url");
     this->_responseFlag = true;
     return;
@@ -115,6 +115,7 @@ void Response::setResponse(std::string response) { this->_response = response; }
 
 void Response::configureErrorPages(RequestDts &dts) {
   this->setStatusCode(*dts.statusCode);
+  if (this->_statusCode == E_200_OK) return;
 
   IServerConfig &serverConfig = *dts.matchedServer;
 
@@ -125,12 +126,10 @@ void Response::configureErrorPages(RequestDts &dts) {
   }
   std::ifstream file(path.c_str(), std::ios::in);
   if (file.is_open() == false) {
-    std::cout << "Error: " << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/plain");
     this->addBody(statusInfo[*dts.statusCode].body);
     return;
   } else {
-    std::cout << "Error: file in" << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/html; charset=UTF-8");
     std::string buff;
   while (std::getline(file, buff)) {
