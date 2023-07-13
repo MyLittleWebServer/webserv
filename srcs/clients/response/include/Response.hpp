@@ -3,10 +3,10 @@
 #include <iostream>
 
 #include "Config.hpp"
+#include "IRequest.hpp"
 #include "IResponse.hpp"
 #include "Status.hpp"
 #include "Utils.hpp"
-#include "IRequest.hpp"
 
 class Response : public IResponse {
  public:
@@ -22,7 +22,7 @@ class Response : public IResponse {
   Status _statusCode;
   std::map<std::string, std::string> _headerFields;
   std::string _body;
- 
+
   void resetResponse();
 
   void assembleResponseLine(void);

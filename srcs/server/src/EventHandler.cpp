@@ -25,6 +25,14 @@ void EventHandler::checkFlags(void) {
     this->_errorFlag = true;
     checkErrorOnSocket();
   }
+  /*
+  if (_currentEvent->flags & EV_EOF &&
+      Kqueue::getFdType(_currentEvent->ident) == FD_CLIENT) {
+    _errorFlag = true;
+    Kqueue::deleteEvent(_currentEvent->ident, EVFILT_TIMER,
+  _currentEvent->udata);
+  }
+  */
 }
 
 void EventHandler::checkErrorOnSocket() {
@@ -43,17 +51,20 @@ void EventHandler::clientCondtion() {
   Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
   if (this->_currentEvent->filter == EVFILT_READ) {
     processRequest(currClient);
-    return;
+  } else if (this->_currentEvent->filter == EVFILT_WRITE) {
+    processResponse(currClient);
+  } else if (this->_currentEvent->filter == EVFILT_TIMER) {
+    // create timeout response
+    std::cout << "TIMEOUT OCCORRED!!!!\n";
+    processTimeOut(currClient);
   }
-  processResponse(currClient);
 }
 
 void EventHandler::cgiCondition() {
   ICGI &cgi = *(static_cast<ICGI *>(_currentEvent->udata));
   if (_currentEvent->filter == EVFILT_READ) {
     cgi.waitAndReadCGI();
-  }
-  if (_currentEvent->filter == EVFILT_WRITE) {
+  } else if (_currentEvent->filter == EVFILT_WRITE) {
     cgi.writeCGI();
   }
 }
@@ -80,10 +91,14 @@ void EventHandler::branchCondition(void) {
 
 void EventHandler::processRequest(Client &currClient) {
   try {
+    Kqueue::addEvent(this->_currentEvent->ident, EVFILT_TIMER,
+                     EV_ADD | EV_ONESHOT, 0, 10,
+                     static_cast<void *>(this->_currentEvent->udata));
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
     if (currClient.getFlag() == RECEIVING) return;
+    Kqueue::_eventsToAdd.pop_back();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -120,6 +135,12 @@ void EventHandler::processResponse(Client &currClient) {
   currClient.setFlag(RECEIVING);
 }
 
+void EventHandler::processTimeOut(Client &currClient) {
+  currClient.createErrorResponse(E_408_REQUEST_TIMEOUT);
+  enableEvent(currClient.getSD(), EVFILT_WRITE,
+              static_cast<void *>(&currClient));
+}
+
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
   if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1)
@@ -138,9 +159,11 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
   Kqueue::setFdSet(clientSocket, FD_CLIENT);
 }
 
-void EventHandler::disconnectClient(const Client *client) {
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE);
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ);
+void EventHandler::disconnectClient(Client *client) {
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
+                      static_cast<void *>(client));
+  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
+                      static_cast<void *>(client));
   Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
   close(client->getSD());
   if (client->getMethod() != NULL) delete client->getMethod();

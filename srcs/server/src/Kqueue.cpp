@@ -56,10 +56,10 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
                     std::string(strerror(errno)));
 }
 
-void Kqueue::deleteEvent(uintptr_t ident, int16_t filter) {
+void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void *udata) {
   struct kevent temp_event;
 
-  EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, NULL);
+  EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1)
     throwWithPerror("kevent() error on deleteEvent\n" +

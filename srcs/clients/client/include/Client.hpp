@@ -66,6 +66,7 @@ class Client {
   bool isCgi();
   void doRequest();
   void createErrorResponse();
+  void createErrorResponse(Status statusCode);
   void createSuccessResponse();
   void makeAndExecuteCgi();
   ClientFlag getFlag() const;

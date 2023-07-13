@@ -19,10 +19,11 @@ class EventHandler : public Kqueue {
 
   void checkErrorOnSocket(void);
   void acceptClient(void);
-  void disconnectClient(const Client* client);
+  void disconnectClient(Client* client);
   void registClient(const uintptr_t clientSocket);
   void processRequest(Client& client);
   void processResponse(Client& client);
+  void processTimeOut(Client& client);
 
   void clientCondtion();
   void cgiCondition();
