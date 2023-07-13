@@ -38,11 +38,11 @@ void Response::createErrorResponse(RequestDts &dts) {
   resetResponse();
   this->_statusCode = *dts.statusCode;
   // redirection response (300). need to replace the url with actual url
-  if (statusInfo[*dts.statusCode].body == NULL) {
-    this->setHeaderField("Location", "http://example.com/redirect_url");
-    this->_responseFlag = true;
-    return;
-  }
+  // if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
+  //   this->setHeaderField("Location", "http://example.com/redirect_url");
+  //   this->_responseFlag = true;
+  //   return;
+  // }
   // response for status code 400 ~ 500
   if (*dts.matchedServer != NULL) {
     this->configureErrorPages(dts);
@@ -128,13 +128,11 @@ void Response::configureErrorPages(RequestDts &dts) {
   }
   std::ifstream file(path.c_str(), std::ios::in);
   if (file.is_open() == false) {
-    std::cout << "Error: " << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/plain");
     this->addBody(statusInfo[*dts.statusCode].body);
     this->addBody("\r\n");
     return;
   } else {
-    std::cout << "Error: file in" << strerror(errno) << std::endl;
     this->setHeaderField("Content-Type", "text/html; charset=UTF-8");
     std::string buff;
     while (std::getline(file, buff)) {
