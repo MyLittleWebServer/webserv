@@ -124,15 +124,19 @@ void EventHandler::processResponse(Client &currClient) {
     currClient.sendResponse();
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
+    disconnectClient(&currClient);
   };
-  disableEvent(currClient.getSD(), EVFILT_WRITE,
-               static_cast<void *>(&currClient));
-  if (currClient.getFlag() == END) {
+  if (currClient.getFlag() == END_KEEP_ALIVE) {
+    disableEvent(currClient.getSD(), EVFILT_WRITE,
+                 static_cast<void *>(&currClient));
+    // clearClient();
+    currClient.setFlag(RECEIVING);
+    return;
+  }
+  if (currClient.getFlag() == END_CLOSE) {
     disconnectClient(&currClient);
     return;
   }
-  // TODO : init member
-  currClient.setFlag(RECEIVING);
 }
 
 void EventHandler::processTimeOut(Client &currClient) {
@@ -164,6 +168,8 @@ void EventHandler::disconnectClient(Client *client) {
                       static_cast<void *>(client));
   Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
                       static_cast<void *>(client));
+  // Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_TIMER,
+  //                     static_cast<void *>(client));
   Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
 
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
