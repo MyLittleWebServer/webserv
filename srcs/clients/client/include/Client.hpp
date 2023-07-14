@@ -29,7 +29,8 @@ enum ClientFlag {
   FILE_WRITE,
   FILE_DONE,
   RESPONSE_DONE,
-  END
+  END_KEEP_ALIVE,
+  END_CLOSE
 };
 
 class Utils;
