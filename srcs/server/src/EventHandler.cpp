@@ -129,8 +129,7 @@ void EventHandler::processResponse(Client &currClient) {
   if (currClient.getFlag() == END_KEEP_ALIVE) {
     disableEvent(currClient.getSD(), EVFILT_WRITE,
                  static_cast<void *>(&currClient));
-    // clearClient();
-    currClient.setFlag(RECEIVING);
+    currClient.clear();
     return;
   }
   if (currClient.getFlag() == END_CLOSE) {
