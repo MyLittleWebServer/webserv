@@ -70,6 +70,7 @@ class Client {
   void createErrorResponse(Status statusCode);
   void createSuccessResponse();
   void makeAndExecuteCgi();
+  void clear();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:

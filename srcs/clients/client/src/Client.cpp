@@ -161,3 +161,20 @@ void Client::makeAndExecuteCgi() {
   _cgi = new CGI(&_request, &_response, _sd, static_cast<void *>(this));
   _cgi->executeCGI();
 }
+
+void Client::clear() {
+  _flag = RECEIVING;
+  _recvBuff.clear();
+
+  _request.clear();
+  _response.clear();
+
+  if (_cgi != NULL) {
+    delete _cgi;
+    _cgi = NULL;
+  }
+  if (_method != NULL) {
+    delete _method;
+    _method = NULL;
+  }
+}
