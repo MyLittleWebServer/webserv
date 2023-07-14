@@ -94,20 +94,18 @@ void Client::doRequest() {
 }
 
 void Client::sendResponse() {
-  signal(SIGPIPE, SIG_DFL);
-  // const std::string &response = this->_method->getResponse();
   const std::string &response = _response.getResponse();
-
-  ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-
+  ssize_t n = send(_sd, response.c_str(), response.size(), 0);
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
-    signal(SIGPIPE, SIG_DFL);
     throw Client::DisconnectedDuringSendException();
   }
-  // need to make _request.clear(), _response.clear() logic
-  this->_flag = END;
-  signal(SIGPIPE, SIG_DFL);
+  if (n != static_cast<ssize_t>(response.size())) {
+    _response.setResponse(response.substr(n));
+    return;
+  }
+  _flag = END_KEEP_ALIVE;
+  if (_request.getHeaderField("connection") == "close") _flag = END_CLOSE;
   return;
 }
 
