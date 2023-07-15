@@ -29,7 +29,8 @@ enum ClientFlag {
   FILE_WRITE,
   FILE_DONE,
   RESPONSE_DONE,
-  END
+  END_KEEP_ALIVE,
+  END_CLOSE
 };
 
 class Utils;
@@ -69,6 +70,7 @@ class Client {
   void createErrorResponse(Status statusCode);
   void createSuccessResponse();
   void makeAndExecuteCgi();
+  void clear();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:

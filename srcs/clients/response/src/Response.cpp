@@ -142,3 +142,12 @@ void Response::configureErrorPages(RequestDts &dts) {
     file.close();
   }
 }
+
+void Response::clear() {
+  this->_response.clear();
+  this->_responseFlag = false;
+  this->_assembleFlag = false;
+  this->_statusCode = E_200_OK;
+  this->_body.clear();
+  this->_headerFields.clear();
+}

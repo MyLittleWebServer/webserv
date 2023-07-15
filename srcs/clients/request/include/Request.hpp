@@ -13,8 +13,13 @@ class Request : public IRequest {
   Request &operator=(const Request &src);
 
  private:
+  IRequestParser &_parser;
+  RequestDts _request_parser_dts;
+
+ private:
   bool _isParsed;
   bool _is_cgi;
+
   size_t _contentLength;
 
   std::string _request;
@@ -25,17 +30,18 @@ class Request : public IRequest {
   std::string _cgi_path;
   std::string _body;
   std::string _query_string;
+
   Status _statusCode;
-  IRequestParser &_parser;
-  RequestDts _request_parser_dts;
 
   std::list<std::string> _linesBuffer;
   std::map<std::string, std::string> _headerFields;
   std::map<std::string, std::string> _queryStringElements;
   std::map<std::string, std::string> _serverConf;
+
   IServerConfig *_matchedServer;
   ILocationConfig *_matchedLocation;
 
+ private:
   void initDts();
   void initMember();
 
@@ -61,6 +67,8 @@ class Request : public IRequest {
 
   const bool &isParsed(void) const;
   const bool &isCgi(void) const;
+
+  void clear(void);
 };
 
 std::ostream &operator<<(std::ostream &os, const Request &request);

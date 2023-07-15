@@ -33,8 +33,9 @@ Client::~Client(void) {
   std ::cout << " Client destructor called " << this->getSD() << " !"
              << std::endl;
 #endif
-  // if (_method) delete _method;
-  // if (_cgi) delete _cgi;
+  close(_sd);
+  if (_method != NULL) delete _method;
+  if (_cgi != NULL) delete _cgi;
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
@@ -93,20 +94,18 @@ void Client::doRequest() {
 }
 
 void Client::sendResponse() {
-  signal(SIGPIPE, SIG_DFL);
-  // const std::string &response = this->_method->getResponse();
   const std::string &response = _response.getResponse();
-
-  ssize_t n = send(this->_sd, response.c_str(), response.size(), 0);
-
+  ssize_t n = send(_sd, response.c_str(), response.size(), 0);
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
-    signal(SIGPIPE, SIG_DFL);
     throw Client::DisconnectedDuringSendException();
   }
-  // need to make _request.clear(), _response.clear() logic
-  this->_flag = END;
-  signal(SIGPIPE, SIG_DFL);
+  if (n != static_cast<ssize_t>(response.size())) {
+    _response.setResponse(response.substr(n));
+    return;
+  }
+  _flag = END_KEEP_ALIVE;
+  if (_request.getHeaderField("connection") == "close") _flag = END_CLOSE;
   return;
 }
 
@@ -161,4 +160,21 @@ std::ostream &operator<<(std::ostream &os, const Client &client) {
 void Client::makeAndExecuteCgi() {
   _cgi = new CGI(&_request, &_response, _sd, static_cast<void *>(this));
   _cgi->executeCGI();
+}
+
+void Client::clear() {
+  _flag = RECEIVING;
+  _recvBuff.clear();
+
+  _request.clear();
+  _response.clear();
+
+  if (_cgi != NULL) {
+    delete _cgi;
+    _cgi = NULL;
+  }
+  if (_method != NULL) {
+    delete _method;
+    _method = NULL;
+  }
 }

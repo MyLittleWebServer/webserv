@@ -6,7 +6,7 @@ Request::Request() : _parser(RequestParser::getInstance()) {
 }
 
 Request::Request(const std::string &request)
-    : _request(request), _parser(RequestParser::getInstance()) {
+    : _parser(RequestParser::getInstance()), _request(request) {
   initMember();
   initDts();
 }
@@ -14,7 +14,7 @@ Request::Request(const std::string &request)
 Request::~Request() {}
 
 Request::Request(const Request &src)
-    : _request(src._request), _parser(RequestParser::getInstance()) {
+    : _parser(RequestParser::getInstance()), _request(src._request) {
   *this = src;
 }
 
@@ -46,14 +46,33 @@ Request &Request::operator=(const Request &src) {
 
 void Request::initMember() {
   _isParsed = false;
-  _contentLength = 0;
   _is_cgi = false;
-  _matchedServer = 0;
-  _matchedLocation = 0;
+
+  _contentLength = 0;
+
+  _request.clear();
+  _method.clear();
+  _path.clear();
+  _anchor.clear();
+  _protocol.clear();
+  _cgi_path.clear();
+  _body.clear();
+  _query_string.clear();
+
+  _headerFields.clear();
+  _queryStringElements.clear();
+  _serverConf.clear();
+
+  _matchedServer = NULL;
+  _matchedLocation = NULL;
 }
 
 void Request::initDts() {
-  _request_parser_dts.statusCode = &_statusCode;
+  _request_parser_dts.isParsed = &_isParsed;
+  _request_parser_dts.is_cgi = &_is_cgi;
+
+  _request_parser_dts.contentLength = &_contentLength;
+
   _request_parser_dts.request = &_request;
   _request_parser_dts.method = &_method;
   _request_parser_dts.path = &_path;
@@ -61,26 +80,29 @@ void Request::initDts() {
   _request_parser_dts.protocol = &_protocol;
   _request_parser_dts.cgi_path = &_cgi_path;
   _request_parser_dts.body = &_body;
+  _request_parser_dts.query_string = &_query_string;
+
+  _request_parser_dts.statusCode = &_statusCode;
+
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
-  _request_parser_dts.query_string = &_query_string;
   _request_parser_dts.queryStringElements = &_queryStringElements;
   _request_parser_dts.serverConf = &_serverConf;
+
   _request_parser_dts.matchedServer = &_matchedServer;
   _request_parser_dts.matchedLocation = &_matchedLocation;
-  _request_parser_dts.isParsed = &_isParsed;
-  _request_parser_dts.is_cgi = &_is_cgi;
-  _request_parser_dts.contentLength = &_contentLength;
 }
 
 void Request::parseRequest(short port) {
+  initMember();
+  initDts();
   _parser.parseRequest(_request_parser_dts, port);
 }
 
 void Request::parseRequest(const std::string &request, short port) {
-  _request = request;
-  _request_parser_dts.request = &_request;
-  std::cout << "request: " << _request << std::endl;
+  initMember();
+  _request += request;
+  initDts();
   _parser.parseRequest(_request_parser_dts, port);
 }
 
@@ -131,6 +153,10 @@ std::ostream &operator<<(std::ostream &os, const Request &request) {
   os << request.getMethod() << request.getRequest() << request.getPath()
      << request.getProtocol() << request.getCgiPath() << request.getBody()
      << std::endl;
-
   return os;
+}
+
+void Request::clear() {
+  initMember();
+  initDts();
 }

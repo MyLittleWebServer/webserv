@@ -26,4 +26,5 @@ class IRequest {
   virtual IServerConfig *getMatchedServer(void) const = 0;
 
   virtual const std::string getHeaderField(std::string key) const = 0;
+  virtual void clear(void) = 0;
 };

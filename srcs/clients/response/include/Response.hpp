@@ -49,4 +49,5 @@ class Response : public IResponse {
   bool isParsed();
 
   void setResponse(std::string response);
+  void clear(void);
 };
