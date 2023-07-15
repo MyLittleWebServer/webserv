@@ -45,7 +45,7 @@ class Client {
   IMethod *_method;
   ICGI *_cgi;
 
-  static char _buf[RECEIVE_LEN + 1];
+  static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;
