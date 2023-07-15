@@ -96,7 +96,10 @@ void Response::putHeaderFields(void) {
 }
 
 void Response::putBody(void) {
-  if (this->_body.empty() == true) return;
+  if (this->_body.empty() == true) {
+    this->_response += "\r\n";
+    return;
+  }
   this->_response += "\r\n" + this->_body;
 }
 
