@@ -23,6 +23,7 @@ class RequestParser : public IRequestParser {
   void parseChunkedEncoding(RequestDts& dts);
 
   std::string getFirstTokenOfPath(RequestDts& dts) const;
+  bool allHeaderRecieved(RequestDts& dts);
   bool checkPathForm(RequestDts& dts);
   void setDefaultLocation(
       std::list<ILocationConfig*>::const_iterator defaultLocation,

@@ -222,7 +222,7 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
 // GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
   std::string firstToken = getFirstTokenOfPath(dts);
-  if (firstToken == "/health"){
+  if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
   }
 #ifdef DEBUG_MSG
@@ -270,7 +270,14 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+bool RequestParser::allHeaderRecieved(RequestDts &dts) {
+  size_t ret = dts.request->find("\r\n\r\n");
+  if (ret == std::string::npos) return false;
+  return true;
+}
+
 void RequestParser::parseRequest(RequestDts &dts, short port) {
+  if (!allHeaderRecieved(dts)) return;
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
