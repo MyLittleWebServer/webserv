@@ -103,7 +103,6 @@ void CGI::initEnv() {
 }
 
 void CGI::generateErrorResponse(Status status) {
-  (void)status;
   _cgi_status = CGI_END;
   _response->setStatusCode(status);
   _response->assembleResponse();
@@ -113,9 +112,36 @@ void CGI::generateErrorResponse(Status status) {
 
 void CGI::generateResponse() {
   _cgi_status = CGI_END;
-  _cgiResult.replace(_cgiResult.find("Status:"), 7, "HTTP/1.1");
-  _response->setResponse(_cgiResult);
-  _response->setResponseParsed();
+  size_t ret = _cgiResult.find("Status:");
+  if (ret != 0) {
+    generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
+    return;
+  }
+  ret = _cgiResult.find("Status: 200 OK");
+  if (ret != 0) {
+    generateErrorResponse(E_400_BAD_REQUEST);
+    return;
+  }
+  ssize_t start = _cgiResult.find("\r\n");
+  ret = _cgiResult.find("\r\n\r\n");
+  std::string header = _cgiResult.substr(start + 2, ret + 2);
+  std::string body = _cgiResult.substr(ret + 4);
+  _response->clear();
+  _response->setStatusCode(E_200_OK);
+  while (true) {
+    ret = header.find("\r\n");
+    if (ret == std::string::npos) break;
+    std::string line = header.substr(0, ret);
+    size_t colon = line.find(":");
+    if (colon == std::string::npos) break;
+    std::string key = line.substr(0, colon);
+    std::string value = line.substr(colon + 1);
+    _response->setHeaderField(key, value);
+    header = header.substr(ret + 2);
+  }
+  _response->setBody(body);
+  _response->setHeaderField("Content-Length", std::to_string(body.size()));
+  _response->assembleResponse();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 }
 
@@ -178,6 +204,8 @@ void CGI::makeChild() {
     close(_out_pipe[1]);
 
     execve(_request->getPath().c_str(), NULL, const_cast<char**>(_env.data()));
+    std::cout << "cgi: execve failed" << std::endl;
+    exit(1);
   }
   Kqueue::setFdSet(_out_pipe[0], FD_CGI);
   Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
