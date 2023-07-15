@@ -17,7 +17,7 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
-  
+
   (void)response;
   // std::map<std::string, std::string>::iterator it =
   // (dts.headerFields->begin()); std::map<std::string, std::string>::iterator
@@ -70,16 +70,20 @@ void POST::generateUrlEncoded(RequestDts& dts) {
 }
 
 void POST::generateMultipart(RequestDts& dts) {
-  size_t boundaryPos = this->_contentType.find("boundary");
-  if (boundaryPos == std::string::npos) throw(*dts.statusCode = E_400_BAD_REQUEST);
-  std::string boundaryValue = this->_contentType.substr(boundaryPos + 10);
-  if (boundaryValue == "") throw(*dts.statusCode = E_400_BAD_REQUEST);
+  std::string binBody = (*dts.body).data();
+  size_t filePos = binBody.find("filename=");
+  size_t fileEndPos = binBody.find("\r\n", filePos);
+  if (filePos == std::string::npos || fileEndPos == std::string::npos)
+    throw((*dts.statusCode) = E_400_BAD_REQUEST);
+  this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 11);
+  std::cout << "title: " << this->_title << "\n";
 
   prepareBinaryBody(dts);
 }
 
 void POST::prepareTextBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = E_403_FORBIDDEN);
+  if (access(dts.path->c_str(), F_OK) < 0)
+    throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string pathInfo = *dts.path + this->_title + ".txt";
   std::cout << "pathInfo: " << pathInfo << "\n";
   std::ofstream file(pathInfo, std::ios::out);
@@ -91,13 +95,15 @@ void POST::prepareTextBody(RequestDts& dts) {
 }
 
 void POST::prepareBinaryBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0) throw((*dts.statusCode) = E_403_FORBIDDEN);
+  if (access(dts.path->c_str(), F_OK) < 0)
+    throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string filename = *dts.path + "tmpTitle";
   std::ofstream file(filename.c_str(), std::ios::binary);
   std::string binBody = (*dts.body).data();
   size_t boundaryPos = binBody.find("boundary");
 
-  if (boundaryPos == std::string::npos) throw((*dts.statusCode) = E_400_BAD_REQUEST);
+  if (boundaryPos == std::string::npos)
+    throw((*dts.statusCode) = E_400_BAD_REQUEST);
   size_t start =
       binBody.find("\r\n\r\n", boundaryPos, binBody.find("Content-Type"));
   size_t end = binBody.rfind("------WebKitFormBoundary");
