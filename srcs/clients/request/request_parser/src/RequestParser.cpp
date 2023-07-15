@@ -270,6 +270,19 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+/**
+ * @brief allHeaderRecieved;
+ *
+ * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
+ * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
+ *
+ * @param dts HTTP 요청 데이터를 포함하는 RequestDts.
+ *
+ * @return request에 \r\n\r\n 존재여부를 반환합니다.
+ * *
+ * @author middlefitting
+ * @date 2023.07.16
+ */
 bool RequestParser::allHeaderRecieved(RequestDts &dts) {
   size_t ret = dts.request->find("\r\n\r\n");
   if (ret == std::string::npos) return false;
