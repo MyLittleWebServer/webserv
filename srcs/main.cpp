@@ -9,6 +9,7 @@ int main(int ac, char **av) {
   atexit(leakCheck);
 #endif
   try {
+    signal(SIGPIPE, SIG_IGN);
     Kqueue::init();
     ServerManager serverManager(ac, av);
     serverManager.initConfig();
