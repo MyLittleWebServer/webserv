@@ -100,6 +100,7 @@ void CGI::initEnv() {
   _env.push_back(_request_method.c_str());
   _env.push_back(_server_name.c_str());
   _env.push_back(_server_software.c_str());
+  _env.push_back(NULL);
 }
 
 void CGI::generateErrorResponse(Status status) {
