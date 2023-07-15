@@ -97,7 +97,8 @@ void EventHandler::processRequest(Client &currClient) {
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
-    if (currClient.getFlag() == RECEIVING) return;
+    if (currClient.getFlag() != REQUEST_DONE) return;
+    currClient.setFlag(METHOD_SELECT);
     Kqueue::_eventsToAdd.pop_back();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
