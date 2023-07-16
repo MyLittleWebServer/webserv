@@ -15,7 +15,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
-#define RECEIVE_LEN 1000
+#define RECEIVE_LEN 1460 * 2
 
 enum ClientFlag {
   START,
