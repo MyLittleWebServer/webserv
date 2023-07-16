@@ -18,6 +18,20 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
   return *this;
 }
 
+/**
+ * @brief splitLinesByCRLF;
+ *
+ * CRLF에 따라 라인을 구분하여 dts->linesBuffer에 저장합니다.
+ * CRLF가 연속된 이후는 dts->body에 저장합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author
+ * @author middlefitting modify 2023.07.17
+ * @date 2023.07.17
+ */
 void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   size_t pos = 0;
   size_t delimeter = dts.request->find("\r\n");
@@ -92,6 +106,20 @@ void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
   (*dts.queryStringElements)[key] = value;
 }
 
+/**
+ * @brief parseHeaderFields;
+ *
+ * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
+ * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author
+ * @author middlefitting modify 2023.07.17
+ * @date 2023.07.17
+ */
 void RequestParser::parseHeaderFields(RequestDts &dts) {
   std::list<std::string>::const_iterator lineIt = dts.linesBuffer->begin();
   std::list<std::string>::const_iterator lineEnd = dts.linesBuffer->end();
@@ -273,6 +301,19 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+/**
+ * @brief validateHeaderField;
+ *
+ * 헤더 필드 값에 공백이 존재하면 400 에러를 발생시킵니다.
+ *
+ * @param field 헤더 필드 값
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::validateHeaderField(std::string &field, RequestDts &dts) {
   std::string::size_type pos = 0;
   while (pos < field.length() && !std::isspace(field[pos])) ++pos;
@@ -285,10 +326,10 @@ void RequestParser::validateHeaderField(std::string &field, RequestDts &dts) {
  * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
  * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
  *
- * @param RequestDts HTTP 요청 데이터를 포함합니다.
+ * @param RequestDts HTTP 관련 데이터
  *
  * @return request에 \r\n\r\n 존재여부를 반환합니다.
- * *
+ *
  * @author middlefitting
  * @date 2023.07.16
  */
@@ -330,7 +371,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
  *
  * RFC 7230 3.1.1 Request Line
  *
- * @param RequestDts
+ * @param RequestDts HTTP 요청 데이터.
  * @return void
  * @author middlefitting
  * @date 2023.07.17
@@ -346,7 +387,7 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  *
  * 구현하지 못한 메서드를 수신하면 501(Not Implemented) 응답 (SHOULD)
  *
- * @param RequestDts
+ * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.17
@@ -362,7 +403,7 @@ void RequestParser::checkMethod(RequestDts &dts) {
  * 유효하지 않은 request-line을 수신하면 400(Bad Request) 응답 (SHOULD)
  * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported) 응답
  *
- * @param RequestDts
+ * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author
  * @date 2023.07.17
@@ -387,9 +428,9 @@ void RequestParser::checkProtocolVersion(RequestDts &dts) {
  *
  * request-target이 서버 URI보다 길면 414(URI Too Long) (MUST)
  *
- * @param RequestDts
+ * @param RequestDts HTTP 관련 데이터
  * @return void
- * @author
+ * @author middlefitting
  * @date 2023.07.17
  */
 void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
