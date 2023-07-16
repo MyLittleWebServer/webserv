@@ -20,3 +20,4 @@ std::string getCurrentTime();
 template <typename T>
 std::string itos(T num);
 std::string toLowerString(std::string str);
+std::string ft_trimOWS(std::string &str);

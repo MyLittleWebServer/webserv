@@ -35,3 +35,16 @@ std::string toLowerString(std::string str) {
   }
   return str;
 }
+
+std::string ft_trimOWS(std::string &str) {
+  std::string result = str;
+  size_t pos = result.find_first_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(0, pos);
+  }
+  pos = result.find_last_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(pos + 1);
+  }
+  return result;
+}
