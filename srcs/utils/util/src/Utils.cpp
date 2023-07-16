@@ -1,15 +1,4 @@
-#include <netinet/in.h>
-#include <sys/event.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#include <cstdarg>
-#include <ctime>
-#include <iostream>
-#include <sstream>
-
-#include "Kqueue.hpp"
+#include "Utils.hpp"
 
 void throwWithPerror(const std::string &msg) {
   std::cerr << msg << std::endl;
@@ -34,12 +23,6 @@ std::string getCurrentTime() {
   std::strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", timePtr);
 
   return (std::string(buffer));
-}
-
-std::string itos(int num) {
-  std::stringstream ss;
-  ss << num;
-  return (ss.str());
 }
 
 std::string toLowerString(std::string str) {
