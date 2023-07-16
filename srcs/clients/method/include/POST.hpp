@@ -5,13 +5,14 @@
 
 class POST : public IMethod {
  private:
-  // void generateFile(RequestDts& dts);
   std::string _contentType;
+  std::string _boundary;
   std::string _body;
   std::string _path;
   std::string _title;
   std::string _content;
   std::string _type;
+
   void generateResource(RequestDts& dts);
 
  public:
