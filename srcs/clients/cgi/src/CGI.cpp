@@ -141,7 +141,7 @@ void CGI::generateResponse() {
     header = header.substr(ret + 2);
   }
   _response->setBody(body);
-  _response->setHeaderField("Content-Length", std::to_string(body.size()));
+  _response->setHeaderField("Content-Length", itos(body.length()));
   _response->assembleResponse();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 }
