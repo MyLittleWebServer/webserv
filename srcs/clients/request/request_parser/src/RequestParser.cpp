@@ -315,17 +315,48 @@ void RequestParser::requestChecker(RequestDts &dts) {
   if (dts.isParsed == false) return;
 }
 
+/**
+ * @brief checkRequestLine;
+ *
+ * RFC 7230 3.1.1 Request Line
+ *
+ * @param dts RequestDts.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::checkRequestLine(RequestDts &dts) {
   checkMethod(dts);
   checkProtocolVersion(dts);
   checkRequestUriLimitLength(dts);
 }
 
+/**
+ * @brief checkMethod;
+ *
+ * 구현하지 못한 메서드를 수신하면 501(Not Implemented) 응답 (SHOULD)
+ *
+ * @param dts RequestDts.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::checkMethod(RequestDts &dts) {
   if (*dts.method != "GET" && *dts.method != "POST" && *dts.method != "DELETE")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
+/**
+ * @brief checkProtocolVersion;
+ *
+ * 유효하지 않은 request-line을 수신하면 400(Bad Request) 응답 (SHOULD)
+ * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported) 응답
+ *
+ * @param dts RequestDts.
+ * @return void
+ * @author
+ * @date 2023.07.17
+ */
 void RequestParser::checkProtocolVersion(RequestDts &dts) {
   const std::string &protocol = *dts.protocol;
   if (protocol.substr(0, 5) != "HTTP/" || protocol.size() != 8)
@@ -341,6 +372,16 @@ void RequestParser::checkProtocolVersion(RequestDts &dts) {
   }
 }
 
+/**
+ * @brief checkRequestUriLimitLength;
+ *
+ * request-target이 서버 URI보다 길면 414(URI Too Long) (MUST)
+ *
+ * @param dts RequestDts.
+ * @return void
+ * @author
+ * @date 2023.07.17
+ */
 void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
   if (dts.path->size() >
       Config::getInstance().getProxyConfig().getRequestUriLimitSize())
