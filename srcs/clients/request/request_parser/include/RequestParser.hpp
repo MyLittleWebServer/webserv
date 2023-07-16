@@ -33,10 +33,13 @@ class RequestParser : public IRequestParser {
 
  private:
   void requestChecker(RequestDts& dts);
+
+  void checkRequestLine(RequestDts& dts);
   void checkMethod(RequestDts& dts);
   void checkProtocolVersion(RequestDts& dts);
-  void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkRequestUriLimitLength(RequestDts& dts);
+
+  void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkHeaderLimitSize(RequestDts& dts);
   void checkBodyLimitLength(RequestDts& dts);
   void checkAllowedMethods(RequestDts& dts);
