@@ -102,12 +102,16 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   size_t end = 0;
 
   while (lineIt != lineEnd) {
-    pos = (*lineIt).find(": ");
+    pos = (*lineIt).find(":");
     end = (*lineIt).find("\r\n");
+    if (pos == std::string::npos || end == std::string::npos)
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
     key = toLowerString((*lineIt).substr(0, pos));
+    value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
+    value = ft_trimOWS(value);
+    validateHeaderField(key, dts);
+    validateHeaderField(value, dts);
     if (_candidateFields.find(key) != _candidateFields.end()) {
-      value = toLowerString((*lineIt).substr(pos + 2, end - pos - 2));
-      // value 검증 필요
       (*dts.headerFields)[key] = value;
     }
     ++lineIt;
@@ -269,13 +273,19 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+void RequestParser::validateHeaderField(std::string &field, RequestDts &dts) {
+  std::string::size_type pos = 0;
+  while (pos < field.length() && !std::isspace(field[pos])) ++pos;
+  if (pos != field.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+}
+
 /**
  * @brief allHeaderRecieved;
  *
  * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
  * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
  *
- * @param dts HTTP 요청 데이터를 포함하는 RequestDts.
+ * @param RequestDts HTTP 요청 데이터를 포함합니다.
  *
  * @return request에 \r\n\r\n 존재여부를 반환합니다.
  * *
@@ -320,7 +330,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
  *
  * RFC 7230 3.1.1 Request Line
  *
- * @param dts RequestDts.
+ * @param RequestDts
  * @return void
  * @author middlefitting
  * @date 2023.07.17
@@ -336,7 +346,7 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  *
  * 구현하지 못한 메서드를 수신하면 501(Not Implemented) 응답 (SHOULD)
  *
- * @param dts RequestDts.
+ * @param RequestDts
  * @return void
  * @author middlefitting
  * @date 2023.07.17
@@ -352,7 +362,7 @@ void RequestParser::checkMethod(RequestDts &dts) {
  * 유효하지 않은 request-line을 수신하면 400(Bad Request) 응답 (SHOULD)
  * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported) 응답
  *
- * @param dts RequestDts.
+ * @param RequestDts
  * @return void
  * @author
  * @date 2023.07.17
@@ -377,7 +387,7 @@ void RequestParser::checkProtocolVersion(RequestDts &dts) {
  *
  * request-target이 서버 URI보다 길면 414(URI Too Long) (MUST)
  *
- * @param dts RequestDts.
+ * @param RequestDts
  * @return void
  * @author
  * @date 2023.07.17

@@ -32,6 +32,9 @@ class RequestParser : public IRequestParser {
   void validatePath(RequestDts& dts);
 
  private:
+  void validateHeaderField(std::string& field, RequestDts& dts);
+
+ private:
   void requestChecker(RequestDts& dts);
 
   void checkRequestLine(RequestDts& dts);
