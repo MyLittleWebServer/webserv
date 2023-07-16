@@ -385,7 +385,7 @@ void RequestParser::checkProtocolVersion(RequestDts &dts) {
 void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
   if (dts.path->size() >
       Config::getInstance().getProxyConfig().getRequestUriLimitSize())
-    throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+    throw(*dts.statusCode = E_414_URI_TOO_LONG);
 }
 
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
