@@ -44,11 +44,9 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
-  while (this->_flag == RECEIVING) {
-    signal(SIGPIPE, SIG_IGN);
+  while (true) {
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
-      signal(SIGPIPE, SIG_DFL);
       if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
@@ -61,10 +59,8 @@ void Client::receiveRequest(void) {
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
 #endif
-      signal(SIGPIPE, SIG_DFL);
       break;
     }
-    signal(SIGPIPE, SIG_DFL);
   }
 }
 
