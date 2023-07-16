@@ -73,10 +73,13 @@ void POST::generateMultipart(RequestDts& dts) {
 
   size_t filePos = binBody.find("filename=");
   size_t fileEndPos = binBody.find("\r\n", filePos);
-  if (filePos == std::string::npos || fileEndPos == std::string::npos)
-    throw((*dts.statusCode) = E_400_BAD_REQUEST);
+  if (filePos == std::string::npos || fileEndPos == std::string::npos) {
+    this->_title = "Invalid File Name";
+    this->_content = "Invalid File Source";
+    prepareTextBody(dts);
+    return;
+  }
   this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 11);
-
   size_t binStart = (*dts.body).find("\r\n\r\n");
   size_t boundary2EndPos = (*dts.body).find(this->_boundary, fileEndPos);
   if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
