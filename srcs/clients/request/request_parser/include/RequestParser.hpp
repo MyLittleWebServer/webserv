@@ -32,7 +32,7 @@ class RequestParser : public IRequestParser {
   void validatePath(RequestDts& dts);
 
  private:
-  void validateHeaderKey(std::string& field, RequestDts& dts);
+  void validateHeaderKey(std::string& key, RequestDts& dts);
   void removeNotAscii(std::string& field);
 
  private:

@@ -134,8 +134,9 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     end = (*lineIt).find("\r\n");
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
-    key = toLowerString((*lineIt).substr(0, pos));
-    value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
+    key = std::string(toLowerString((*lineIt).substr(0, pos)));
+    value =
+        std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
@@ -305,9 +306,9 @@ void RequestParser::parseCgi(RequestDts &dts) {
 /**
  * @brief validateHeaderKey;
  *
- * 헤더 필드 값에 공백이 존재하면 400 에러를 발생시킵니다.
+ * 헤더 키 값에 공백이 존재하면 400 에러를 발생시킵니다.
  *
- * @param field 헤더 필드 값
+ * @param key 헤더 키 값
  * @param RequestDts HTTP 관련 데이터
  *
  * @return void
@@ -315,16 +316,17 @@ void RequestParser::parseCgi(RequestDts &dts) {
  * @author middlefitting
  * @date 2023.07.17
  */
-void RequestParser::validateHeaderKey(std::string &field, RequestDts &dts) {
+void RequestParser::validateHeaderKey(std::string &key, RequestDts &dts) {
   std::string::size_type pos = 0;
-  while (pos < field.length() && !std::isspace(field[pos])) ++pos;
-  if (pos != field.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  while (pos < key.length() && !std::isspace(key[pos])) ++pos;
+  if (pos != key.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 void RequestParser::removeNotAscii(std::string &field) {
   while (true) {
     const char *tmp = field.c_str();
     int len = field.length();
+    if (len == 0) return;
     for (int i = 0; i < len; i++) {
       if (tmp[i] < 0 || tmp[i] > 127) {
         field.erase(i, 1);
