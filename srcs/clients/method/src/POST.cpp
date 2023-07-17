@@ -129,7 +129,7 @@ std::string POST::decodeURL(std::string encoded_string) {
     ++buf_len;
   }
   char* buf = new char[buf_len];
-  bzero(buf, buf_len);
+  std::memset(buf, 0, buf_len);
   char c = 0;
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j) {
