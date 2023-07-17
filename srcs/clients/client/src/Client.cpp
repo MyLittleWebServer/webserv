@@ -14,7 +14,7 @@ Client::Client() : _flag(START), _sd(0), _method(NULL) {
 }
 
 Client::Client(const uintptr_t sd) {
-  this->_flag = RECEIVING;
+  this->_flag = START;
   this->_sd = sd;
   this->_method = NULL;
   this->_cgi = NULL;
@@ -159,7 +159,7 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _flag = RECEIVING;
+  _flag = START;
   _recvBuff.clear();
 
   _request.clear();
