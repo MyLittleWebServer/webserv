@@ -175,6 +175,7 @@ void RequestParser::parseTransferEncoding(RequestDts &dts) {
 
 void RequestParser::parseChunkedEncoding(RequestDts &dts) {
   std::string body = *dts.body;
+  dts.body->clear();
   *dts.contentLength = 0;
   size_t pos = 0;
   size_t end = 0;
@@ -376,7 +377,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   matchServerConf(port, dts);
   validatePath(dts);
   parseCgi(dts);
-  requestChecker(dts);
+  // requestChecker(dts);
 }
 
 RequestParser &RequestParser::getInstance() {
@@ -477,7 +478,7 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
  *
  * 헤더 길이가 서버 기준치를 넘으면 413(Request Entity Too Large) (MUST)
  * Body가 등장하기 이전까지의 길이를 기준으로 합니다.
- * 
+ *
  * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
