@@ -92,7 +92,6 @@ void EventHandler::processRequest(Client &currClient) {
       Kqueue::deleteEvent(this->_currentEvent->ident, EVFILT_TIMER,
                           static_cast<void *>(this->_currentEvent->udata));
     }
-    currClient.setFlag(RECEIVING);
     Kqueue::addEvent(this->_currentEvent->ident, EVFILT_TIMER,
                      EV_ADD | EV_ONESHOT, NOTE_SECONDS, 60,
                      static_cast<void *>(this->_currentEvent->udata));
