@@ -44,6 +44,7 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
+  this->_flag = RECEIVING;
   while (true) {
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
