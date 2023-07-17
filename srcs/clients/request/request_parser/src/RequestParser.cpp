@@ -138,6 +138,8 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
+    removeNotAscii(key);
+    removeNotAscii(value);
     if (_candidateFields.find(key) != _candidateFields.end()) {
       (*dts.headerFields)[key] = value;
     }
@@ -317,6 +319,20 @@ void RequestParser::validateHeaderKey(std::string &field, RequestDts &dts) {
   std::string::size_type pos = 0;
   while (pos < field.length() && !std::isspace(field[pos])) ++pos;
   if (pos != field.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+}
+
+void RequestParser::removeNotAscii(std::string &field) {
+  while (true) {
+    const char *tmp = field.c_str();
+    int len = field.length();
+    for (int i = 0; i < len; i++) {
+      if (tmp[i] < 0 || tmp[i] > 127) {
+        field.erase(i, 1);
+        break;
+      }
+      if (i == len - 1) return;
+    }
+  }
 }
 
 /**

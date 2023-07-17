@@ -33,6 +33,7 @@ class RequestParser : public IRequestParser {
 
  private:
   void validateHeaderKey(std::string& field, RequestDts& dts);
+  void removeNotAscii(std::string& field);
 
  private:
   void requestChecker(RequestDts& dts);
