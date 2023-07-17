@@ -37,7 +37,6 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   size_t delimeter = dts.request->find("\r\n");
   while (delimeter != std::string::npos) {
     std::string chunk = dts.request->substr(pos, delimeter - pos + 2);
-    std::cout << "chunk: " << chunk << std::endl;
     dts.linesBuffer->push_back(chunk);
     pos = delimeter + 2;
     delimeter = dts.request->find("\r\n", pos);
@@ -61,7 +60,6 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   std::istringstream iss(firstLine);
   dts.linesBuffer->pop_front();
   iss >> *dts.method >> *dts.path >> *dts.protocol;
-
   size_t anchorPos = dts.path->find("#");
   if (anchorPos != std::string::npos) parseAnchor(dts, anchorPos);
   size_t qMarkPos = dts.path->find("?");
@@ -72,6 +70,7 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   std::cout << "protocol: " << *dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  checkRequestUriLimitLength(dts);
 }
 
 void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
@@ -408,7 +407,6 @@ void RequestParser::requestChecker(RequestDts &dts) {
 void RequestParser::checkRequestLine(RequestDts &dts) {
   checkMethod(dts);
   checkProtocolVersion(dts);
-  checkRequestUriLimitLength(dts);
 }
 
 /**
