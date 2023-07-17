@@ -6,7 +6,7 @@
 #include "POST.hpp"
 #include "Utils.hpp"
 
-char Client::_buf[RECEIVE_LEN + 1] = {0};
+char Client::_buf[RECEIVE_LEN] = {0};
 
 Client::Client() : _flag(START), _sd(0), _method(NULL) {
   this->_method = NULL;
@@ -51,10 +51,9 @@ void Client::receiveRequest(void) {
       if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
-    Client::_buf[n] = '\0';
-    this->_recvBuff += Client::_buf;
-
-    std::memset(Client::_buf, 0, RECEIVE_LEN + 1);
+    this->_recvBuff.insert(this->_recvBuff.end(), Client::_buf,
+                           Client::_buf + n);
+    std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
       std::cout << "received data from " << this->_sd << ": " << this->_request
