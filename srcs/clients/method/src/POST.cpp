@@ -92,19 +92,29 @@ void POST::generateMultipart(RequestDts& dts) {
 }
 
 void POST::writeTextBody(RequestDts& dts) {
+  std::string filename;
   if (stat(dts.path->c_str(), &fileinfo) != 0)
     throw((*dts.statusCode) = E_403_FORBIDDEN);
-  std::string pathInfo = *dts.path + this->_title + ".txt";
-  std::cout << "pathInfo: " << pathInfo << "\n";
-  std::ofstream file(pathInfo, std::ios::out);
+  if ((*dts.path)[dts.path->length() - 1] != '/')
+    filename = *dts.path + "/" + this->_title + ".txt";
+  else
+    filename = *dts.path + this->_title + ".txt";
+  std::ofstream file(filename, std::ios::out);
+  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content << "\n";
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 }
 
 void POST::writeBinaryBody(RequestDts& dts) {
+  std::string filename;
   if (stat(dts.path->c_str(), &fileinfo) != 0)
     throw((*dts.statusCode) = E_403_FORBIDDEN);
-  std::string filename = *dts.path + this->_title;
+  if ((*dts.path)[dts.path->length() - 1] != '/')
+    filename = *dts.path + "/" + this->_title;
+  else
+    filename = *dts.path + this->_title;
   std::ofstream file(filename.c_str(), std::ios::binary);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content;
