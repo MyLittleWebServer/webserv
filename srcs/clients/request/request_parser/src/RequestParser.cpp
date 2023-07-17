@@ -473,17 +473,10 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
 }
 
 void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
-  std::map<std::string, std::string>::const_iterator lineIt =
-      dts.headerFields->begin();
-  std::map<std::string, std::string>::const_iterator lineEnd =
-      dts.headerFields->end();
-
-  while (lineIt != lineEnd) {
-    if (lineIt->first.size() >
-        Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
-      throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
-    ++lineIt;
-  }
+  size_t pos = dts.request->find("\r\n\r\n");
+  if (pos == std::string::npos) return;
+  if (pos > Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
+    throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 
 void RequestParser::checkBodyLimitLength(RequestDts &dts) {
