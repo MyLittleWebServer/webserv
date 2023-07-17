@@ -137,8 +137,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     key = toLowerString((*lineIt).substr(0, pos));
     value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
     value = ft_trimOWS(value);
-    validateHeaderField(key, dts);
-    validateHeaderField(value, dts);
+    validateHeaderKey(key, dts);
     if (_candidateFields.find(key) != _candidateFields.end()) {
       (*dts.headerFields)[key] = value;
     }
@@ -302,7 +301,7 @@ void RequestParser::parseCgi(RequestDts &dts) {
 }
 
 /**
- * @brief validateHeaderField;
+ * @brief validateHeaderKey;
  *
  * 헤더 필드 값에 공백이 존재하면 400 에러를 발생시킵니다.
  *
@@ -314,7 +313,7 @@ void RequestParser::parseCgi(RequestDts &dts) {
  * @author middlefitting
  * @date 2023.07.17
  */
-void RequestParser::validateHeaderField(std::string &field, RequestDts &dts) {
+void RequestParser::validateHeaderKey(std::string &field, RequestDts &dts) {
   std::string::size_type pos = 0;
   while (pos < field.length() && !std::isspace(field[pos])) ++pos;
   if (pos != field.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
