@@ -60,7 +60,7 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   std::cout << "content: " << this->_content << "\n";
   std::cout << "path: " << *dts.path << "\n";
 #endif
-  prepareTextBody(dts);
+  writeTextBody(dts);
 }
 
 void POST::generateMultipart(RequestDts& dts) {
@@ -76,7 +76,7 @@ void POST::generateMultipart(RequestDts& dts) {
   if (filePos == std::string::npos || fileEndPos == std::string::npos) {
     this->_title = "Invalid File Name";
     this->_content = "Invalid File Source";
-    prepareTextBody(dts);
+    writeTextBody(dts);
     return;
   }
   this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 11);
@@ -88,30 +88,29 @@ void POST::generateMultipart(RequestDts& dts) {
   this->_content.insert(this->_content.end(),
                         (*dts.body).begin() + binStart + 4,
                         (*dts.body).begin() + boundary2EndPos);
-  prepareBinaryBody(dts);
+  writeBinaryBody(dts);
 }
 
-void POST::prepareTextBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0)
+void POST::writeTextBody(RequestDts& dts) {
+  if (stat(dts.path->c_str(), &fileinfo) != 0)
     throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string pathInfo = *dts.path + this->_title + ".txt";
   std::cout << "pathInfo: " << pathInfo << "\n";
   std::ofstream file(pathInfo, std::ios::out);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content << "\n";
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 }
 
-void POST::prepareBinaryBody(RequestDts& dts) {
-  if (access(dts.path->c_str(), F_OK) < 0)
+void POST::writeBinaryBody(RequestDts& dts) {
+  if (stat(dts.path->c_str(), &fileinfo) != 0)
     throw((*dts.statusCode) = E_403_FORBIDDEN);
   std::string filename = *dts.path + this->_title;
   std::ofstream file(filename.c_str(), std::ios::binary);
-
+  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content;
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
+  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 }
 
 void POST::createSuccessResponse(IResponse& response) {
