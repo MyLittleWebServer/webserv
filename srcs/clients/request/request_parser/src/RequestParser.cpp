@@ -472,6 +472,17 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
+/**
+ * @brief checkHeaderLimitSize;
+ *
+ * 헤더 길이가 서버 기준치를 넘으면 413(Request Entity Too Large) (MUST)
+ * Body가 등장하기 이전까지의 길이를 기준으로 합니다.
+ * 
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
   size_t pos = dts.request->find("\r\n\r\n");
   if (pos == std::string::npos) return;
