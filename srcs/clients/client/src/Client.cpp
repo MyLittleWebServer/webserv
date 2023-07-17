@@ -14,7 +14,7 @@ Client::Client() : _flag(START), _sd(0), _method(NULL) {
 }
 
 Client::Client(const uintptr_t sd) {
-  this->_flag = RECEIVING;
+  this->_flag = START;
   this->_sd = sd;
   this->_method = NULL;
   this->_cgi = NULL;
@@ -44,6 +44,7 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
+  this->_flag = RECEIVING;
   while (true) {
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
@@ -159,7 +160,7 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _flag = RECEIVING;
+  _flag = START;
   _recvBuff.clear();
 
   _request.clear();
