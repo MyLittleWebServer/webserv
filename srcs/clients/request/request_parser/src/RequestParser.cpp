@@ -322,6 +322,18 @@ void RequestParser::validateHeaderKey(std::string &key, RequestDts &dts) {
   if (pos != key.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
+/**
+ * @brief removeNotAscii;
+ *
+ * 헤더 필드 값에 ASCII가 아닌 값이 존재하면 제거합니다.
+ *
+ * @param field 헤더 필드 값
+ *
+ * @return void
+ *
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::removeNotAscii(std::string &field) {
   while (true) {
     const char *tmp = field.c_str();
