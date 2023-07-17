@@ -27,7 +27,7 @@ Server::~Server(void) {}
  * 6. asyncSocket() : 서버의 소켓을 비동기 상태로 변경합니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::initServerSocket(void) {
   this->hostInit();
@@ -53,7 +53,7 @@ void Server::initServerSocket(void) {
  * @see IServerConfig::getServerName
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::hostInit(void) {
   Config &config = Config::getInstance();
@@ -83,7 +83,7 @@ void Server::hostInit(void) {
  * @exception throwWithPerror socket() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::socketInit(void) {
   this->_socket = socket(PF_INET, SOCK_STREAM, 0);
@@ -110,7 +110,7 @@ void Server::socketInit(void) {
  * @see _addr.sin_port : 포트 번호
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::addrInit(void) {
   std::memset(&_addr, 0, sizeof(_addr));
@@ -134,7 +134,7 @@ void Server::addrInit(void) {
  * @exception throwWithPerror bind() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::bindSocketWithAddr(void) {
   int enable = 1;
@@ -162,7 +162,7 @@ void Server::bindSocketWithAddr(void) {
  * @see BACKLOG : 대기 큐의 크기
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::listenSocket(void) const {
   if (listen(this->_socket, BACKLOG) == -1) throwWithPerror("listen() error");
@@ -180,7 +180,7 @@ void Server::listenSocket(void) const {
  * @see O_NONBLOCK : 디스크립터를 논블록 모드로 설정하는 플래그
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void Server::asyncSocket(void) const {
   if (fcntl(this->_socket, F_SETFL, O_NONBLOCK) == -1)

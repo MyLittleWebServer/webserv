@@ -5,7 +5,7 @@ void leakCheck() { system("leaks webserv"); }
 #endif
 
 /**
- * @brief main function
+ * @brief 프로그램 시작
  *
  * @details
  * kqueue를 초기화하고 ServerManager를 생성하여 서버를 시작합니다.
@@ -20,7 +20,7 @@ void leakCheck() { system("leaks webserv"); }
  * @return int
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 int main(int ac, char **av) {
 #ifdef LEAKS

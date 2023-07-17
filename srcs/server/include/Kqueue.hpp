@@ -48,6 +48,8 @@ typedef enum {
  * @see kevent
  * @see FD
  *
+ * @author chanhihi
+ * @date 2023.07.17
  */
 class Kqueue {
  private:

@@ -17,7 +17,7 @@
  * @param av arguments
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 ServerManager::ServerManager(int ac, char **av) {
   if (ac > 2 || ac < 1)
@@ -35,7 +35,7 @@ ServerManager::ServerManager(int ac, char **av) {
  * Config class는 Singleton으로 구현되어 있습니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void ServerManager::initConfig(void) {
   try {
@@ -74,7 +74,7 @@ void ServerManager::initConfig(void) {
  * 서버를 초기화하는 과정에서 예외가 발생하면 예외를 던집니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void ServerManager::initServer(void) {
   std::set<short>::iterator it = _listenOrganizer.begin();
@@ -115,7 +115,7 @@ void ServerManager::initServer(void) {
  * @see getPort
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void ServerManager::promptServer(void) {
   std::cout << "\n-------- [ " BOLDBLUE << "Web Server Info" << RESET
@@ -152,7 +152,7 @@ void ServerManager::promptServer(void) {
  * 서버를 시작되어 작동하는 과정에서 예외가 발생하면 예외를 던집니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void ServerManager::startServer(void) {
   try {

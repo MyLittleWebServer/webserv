@@ -7,9 +7,7 @@
 #include "Server.hpp"
 
 /**
- * @brief ServerManager class
- *
- * ServerManager는 서버를 관리하는 클래스이다.
+ * @brief 서버를 관리하는 클래스
  *
  * @details
  * Kqueue 객체 _eventQueue를 갖고있습니다.
@@ -26,7 +24,7 @@
  * ServerManager는 Server를 관리하는 클래스이다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 class ServerManager {
  private:

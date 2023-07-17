@@ -20,7 +20,7 @@
  * @param serverVector
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 EventHandler::EventHandler(const std::vector<Server *> &serverVector)
     : _errorFlag(false) {
@@ -43,7 +43,7 @@ EventHandler::~EventHandler(void) {}
  * @see checkErrorOnSocket()
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void EventHandler::checkFlags(void) {
   this->_errorFlag = false;
@@ -79,17 +79,18 @@ void EventHandler::checkErrorOnSocket() {
  * @param i
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void EventHandler::setCurrentEvent(int i) {
   this->_currentEvent = &(this->_eventList[i]);
 }
 
 /**
- * @brief clientCondtion : currentEvent의 filter를 기반으로 분기합니다.
+ * @brief currentEvent의 filter를 기반으로 분기합니다.
  *
  * @details
- * currentEvent의 udata
+ * 현재 이벤트의 udata를 Client로 캐스팅하여 currClient에 저장합니다.
+ * currClient
  *
  * filter가 EVFILT_READ라면 processRequest() 함수를 호출합니다.
  * filter가 EVFILT_WRITE라면 processResponse() 함수를 호출합니다.
@@ -104,7 +105,7 @@ void EventHandler::clientCondtion() {
     processResponse(currClient);
   } else if (this->_currentEvent->filter == EVFILT_TIMER) {
     // create timeout response
-    std::cout << "TIMEOUT OCCORRED!!!!\n";
+    std::cout << "TIMEOUT OCCURRED!!!!\n";
     processTimeOut(currClient);
   }
 }
@@ -132,7 +133,7 @@ void EventHandler::cgiCondition() {
  * @see Kqueue::getFdType()
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void EventHandler::branchCondition(void) {
   if (this->_errorFlag == true) return;
@@ -222,7 +223,7 @@ void EventHandler::processTimeOut(Client &currClient) {
  * 던집니다.
  *
  * @author chanhihi
- * @date 2021-07-05
+ * @date 2023.07.17
  */
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
