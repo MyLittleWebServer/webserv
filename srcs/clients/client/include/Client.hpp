@@ -48,6 +48,7 @@ class Client {
   Response _response;
   IMethod *_method;
   ICGI *_cgi;
+  size_t _lastSentPos;
 
   static char _buf[RECEIVE_LEN];
 

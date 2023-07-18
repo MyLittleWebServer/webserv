@@ -118,8 +118,6 @@ void Response::addBody(const std::string &str) { this->_body += str; }
 
 void Response::setBody(const std::string &str) { this->_body = str; }
 
-void Response::setResponse(std::string response) { this->_response = response; }
-
 void Response::configureErrorPages(RequestDts &dts) {
   IServerConfig &serverConfig = **dts.matchedServer;
 
