@@ -27,4 +27,5 @@ class IRequest {
 
   virtual const std::string getHeaderField(std::string key) const = 0;
   virtual void clear(void) = 0;
+  virtual void setHeaderField(std::string key, std::string value) = 0;
 };

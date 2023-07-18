@@ -125,6 +125,10 @@ void EventHandler::processRequest(Client &currClient) {
 }
 
 void EventHandler::processResponse(Client &currClient) {
+  if (currClient.getFlag() != PROCESS_RESPONSE) {
+    currClient.setResponseConnection();
+    currClient.setFlag(PROCESS_RESPONSE);
+  }
   try {
     currClient.sendResponse();
   } catch (std::exception &e) {
@@ -146,6 +150,7 @@ void EventHandler::processResponse(Client &currClient) {
 }
 
 void EventHandler::processTimeOut(Client &currClient) {
+  currClient.setConnectionClose();
   currClient.createErrorResponse(E_408_REQUEST_TIMEOUT);
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));

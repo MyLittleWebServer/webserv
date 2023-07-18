@@ -28,6 +28,7 @@ enum ClientFlag {
   REQUEST_DONE,
   METHOD_SELECT,
 
+  PROCESS_RESPONSE,
   FILE_READ,
   FILE_CGI,
   FILE_WRITE,
@@ -75,6 +76,8 @@ class Client {
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
+  void setResponseConnection();
+  void setConnectionClose();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:
