@@ -48,3 +48,14 @@ std::string ft_trimOWS(std::string &str) {
   }
   return result;
 }
+
+std::vector<std::string> ft_split(const std::string &str, char delim) {
+  std::vector<std::string> result;
+  std::istringstream iss(str);
+  std::string token;
+
+  while (std::getline(iss, token, delim)) {
+    result.push_back(token);
+  }
+  return result;
+}
