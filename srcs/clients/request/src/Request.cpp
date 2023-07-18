@@ -160,3 +160,8 @@ void Request::clear() {
   initMember();
   initDts();
 }
+
+void Request::setHeaderField(std::string key, std::string value) {
+  key = toLowerString(key).substr(0, key.length());
+  _headerFields[key] = value;
+}

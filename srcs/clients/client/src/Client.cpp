@@ -171,3 +171,15 @@ void Client::clear() {
     _method = NULL;
   }
 }
+
+void Client::setResponseConnection() {
+  if (_request.getHeaderField("connection") == "close")
+    _response.setHeaderField("connection", "close");
+  else
+    _response.setHeaderField("connection", "keep-alive");
+  _response.assembleResponse();
+}
+
+void Client::setConnectionClose() {
+  _request.setHeaderField("connection", "close");
+}

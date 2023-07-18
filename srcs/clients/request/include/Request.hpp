@@ -58,6 +58,7 @@ class Request : public IRequest {
   const std::string &getBody(void) const;
   const std::string &getQueryString(void) const;
   const std::string getHeaderField(std::string key) const;
+  void setHeaderField(std::string key, std::string value);
 
   size_t getContentLength(void) const;
   const std::map<std::string, std::string> &getQueryStringElements(void) const;
