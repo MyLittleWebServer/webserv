@@ -15,7 +15,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
-#define RECEIVE_LEN 1000
+#define RECEIVE_LEN 1460
 
 enum ClientFlag {
   START,
@@ -49,7 +49,7 @@ class Client {
   IMethod *_method;
   ICGI *_cgi;
 
-  static char _buf[RECEIVE_LEN + 1];
+  static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;

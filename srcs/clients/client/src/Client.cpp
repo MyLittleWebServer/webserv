@@ -6,7 +6,7 @@
 #include "POST.hpp"
 #include "Utils.hpp"
 
-char Client::_buf[RECEIVE_LEN + 1] = {0};
+char Client::_buf[RECEIVE_LEN] = {0};
 
 Client::Client() : _flag(START), _sd(0), _method(NULL) {
   this->_method = NULL;
@@ -14,7 +14,7 @@ Client::Client() : _flag(START), _sd(0), _method(NULL) {
 }
 
 Client::Client(const uintptr_t sd) {
-  this->_flag = RECEIVING;
+  this->_flag = START;
   this->_sd = sd;
   this->_method = NULL;
   this->_cgi = NULL;
@@ -44,16 +44,16 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
+  this->_flag = RECEIVING;
   while (true) {
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
       if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
-    Client::_buf[n] = '\0';
-    this->_recvBuff += Client::_buf;
-
-    std::memset(Client::_buf, 0, RECEIVE_LEN + 1);
+    this->_recvBuff.insert(this->_recvBuff.end(), Client::_buf,
+                           Client::_buf + n);
+    std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
       std::cout << "received data from " << this->_sd << ": " << this->_request
@@ -159,7 +159,7 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _flag = RECEIVING;
+  _flag = START;
   _recvBuff.clear();
 
   _request.clear();

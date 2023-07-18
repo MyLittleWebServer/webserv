@@ -41,7 +41,7 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
     pos = delimeter + 2;
     delimeter = dts.request->find("\r\n", pos);
     if (delimeter == pos) {
-      *dts.body = &(*dts.request)[pos + 2];
+      *dts.body = dts.request->substr(pos + 2);
       break;
     }
   }
@@ -51,6 +51,7 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   const std::string &firstLine(dts.linesBuffer->front());
   int delim_cnt = 0;
   size_t pos = firstLine.find(" ", 0);
+
   while (pos != std::string::npos) {
     delim_cnt++;
     pos = firstLine.find(" ", ++pos);
