@@ -110,6 +110,7 @@ void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
  *
  * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
  * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
+ * 중복 금지 헤더를 체크합니다.
  *
  * @param RequestDts HTTP 관련 데이터
  *
@@ -141,11 +142,20 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     removeNotAscii(key);
     removeNotAscii(value);
     if (_candidateFields.find(key) != _candidateFields.end()) {
+      validateDuplicateInvalidHeaders(key, dts);
       (*dts.headerFields)[key] = value;
     }
     ++lineIt;
   }
   dts.linesBuffer->clear();
+}
+
+void RequestParser::validateDuplicateInvalidHeaders(std::string key,
+                                                    RequestDts &dts) {
+  if (key == "content-length") {
+    if (!(*dts.headerFields)[key].empty())
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 void RequestParser::parseContent(RequestDts &dts) {

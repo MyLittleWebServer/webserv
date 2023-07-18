@@ -31,9 +31,9 @@ class RequestParser : public IRequestParser {
   void matchServerConf(short port, RequestDts& dts);
   void validatePath(RequestDts& dts);
 
-  void validateContentLengthHeader(RequestDts& dts);
-
  private:
+  void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
+  void validateContentLengthHeader(RequestDts& dts);
   void validateHeaderKey(std::string& key, RequestDts& dts);
   void removeNotAscii(std::string& field);
 
