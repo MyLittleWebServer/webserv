@@ -14,7 +14,6 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
 #ifndef DEBUG_MSG
   std::cout << " >>>>>>>>>>>>>>> POST\n";
   std::cout << "path: " << *dts.path << "\n";
-  std::cout << "body: " << *dts.body << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
@@ -71,15 +70,15 @@ void POST::generateMultipart(RequestDts& dts) {
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
   this->_boundary = binBody.substr(0, boundaryEndPos);
 
-  size_t filePos = binBody.find("filename=");
-  size_t fileEndPos = binBody.find("\r\n", filePos);
+  size_t filePos = binBody.find("filename=\"");
+  size_t fileEndPos = binBody.find('\"', filePos + 11);
   if (filePos == std::string::npos || fileEndPos == std::string::npos) {
     this->_title = "Invalid File Name";
     this->_content = "Invalid File Source";
     writeTextBody(dts);
     return;
   }
-  this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 11);
+  this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
   size_t binStart = (*dts.body).find("\r\n\r\n");
   size_t boundary2EndPos = (*dts.body).find(this->_boundary, fileEndPos);
   if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
