@@ -151,6 +151,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
 void RequestParser::parseContent(RequestDts &dts) {
   if ((*dts.headerFields)["transfer-encoding"] == "" &&
       (*dts.headerFields)["content-length"] == "") {
+    dts.body->clear();
     *dts.isParsed = true;
     return;
   } else if ((*dts.headerFields)["transfer-encoding"] != "")
@@ -169,6 +170,9 @@ void RequestParser::parseContentLength(RequestDts &dts) {
 }
 
 void RequestParser::parseTransferEncoding(RequestDts &dts) {
+  std::cout << "parseTransferEncoding" << std::endl;
+  std::cout << (*dts.headerFields)["transfer-encoding"] << std::endl;
+  std::cout << *dts.body << std::endl;
   if ((*dts.headerFields)["transfer-encoding"] == "chunked")
     return parseChunkedEncoding(dts);
 }
@@ -377,7 +381,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   matchServerConf(port, dts);
   validatePath(dts);
   parseCgi(dts);
-  // requestChecker(dts);
+  requestChecker(dts);
 }
 
 RequestParser &RequestParser::getInstance() {
