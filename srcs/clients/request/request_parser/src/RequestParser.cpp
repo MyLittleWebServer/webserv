@@ -169,6 +169,22 @@ void RequestParser::parseContentLength(RequestDts &dts) {
   }
 }
 
+/**
+ * @brief parseTransferEncoding;
+ *
+ * 클라이언트는 여러 인코딩을 사용하였을 경우 마지막에 chunked를 사용하여야
+ * 합니다. (MUST) 따라서 마지막이 chunked가 아니면 400 에러를 반환합니다.
+ * 구현되지 않은 인코딩에 대해서는 501 에러를 반환합니다.
+ * 구현된 인코딩에 대해서는 파싱을 진행합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author
+ * @author middlefitting modify 2023.07.17
+ * @date 2023.07.17
+ */
 void RequestParser::parseTransferEncoding(RequestDts &dts) {
   std::cout << "parseTransferEncoding" << std::endl;
   std::cout << (*dts.headerFields)["transfer-encoding"] << std::endl;
@@ -471,6 +487,17 @@ void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
     throw(*dts.statusCode = E_414_URI_TOO_LONG);
 }
 
+/**
+ * @brief checkContentLenghWithTransferEncoding;
+ *
+ * 발신자는 Transfer-Encoding 과 Content-Length 같이 보내면 안 된다.(MUST NOT)
+ * Transfer-Encoding 과 Content-Length이 둘 다 있으면 400 에러를 반환합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
   if ((*dts.headerFields)["content-length"] != "" &&
       (*dts.headerFields)["transfer-encoding"] != "")
