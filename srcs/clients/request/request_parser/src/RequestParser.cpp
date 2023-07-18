@@ -186,11 +186,21 @@ void RequestParser::parseContentLength(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::parseTransferEncoding(RequestDts &dts) {
-  std::cout << "parseTransferEncoding" << std::endl;
-  std::cout << (*dts.headerFields)["transfer-encoding"] << std::endl;
-  std::cout << *dts.body << std::endl;
-  if ((*dts.headerFields)["transfer-encoding"] == "chunked")
-    return parseChunkedEncoding(dts);
+  std::vector<std::string> encodings =
+      ft_split((*dts.headerFields)["transfer-encoding"], ',');
+  size_t size = encodings.size();
+
+  if (encodings[size - 1] != "chunked")
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+
+  for (size_t i = 0; i < size; ++i) {
+    encodings[i] = ft_trim(encodings[i]);
+    if (encodings[i] == "chunked") {
+      parseChunkedEncoding(dts);
+      continue;
+    }
+    throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
+  }
 }
 
 void RequestParser::parseChunkedEncoding(RequestDts &dts) {
