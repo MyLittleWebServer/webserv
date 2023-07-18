@@ -150,6 +150,21 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   dts.linesBuffer->clear();
 }
 
+/**
+ * @brief validateDuplicateInvalidHeaders;
+ *
+ * RFC 7230 3.3.2 Content-Length
+ * Content-Length 헤더 필드가 중복될 경우 400 Bad Request를 반환합니다. (MUST)
+ *
+ * @param key 헤더의 키
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author
+ * @author middlefitting modify 2023.07.17
+ * @date 2023.07.17
+ */
 void RequestParser::validateDuplicateInvalidHeaders(std::string key,
                                                     RequestDts &dts) {
   if (key == "content-length") {
