@@ -130,6 +130,7 @@ void EventHandler::processResponse(Client &currClient) {
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
     disconnectClient(&currClient);
+    return;
   };
   if (currClient.getFlag() == END_KEEP_ALIVE) {
     Kqueue::disableEvent(currClient.getSD(), EVFILT_WRITE,
