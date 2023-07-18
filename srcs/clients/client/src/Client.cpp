@@ -11,6 +11,7 @@ char Client::_buf[RECEIVE_LEN] = {0};
 Client::Client() : _flag(START), _sd(0), _method(NULL) {
   this->_method = NULL;
   this->_cgi = NULL;
+  _lastSentPos = 0;
 }
 
 Client::Client(const uintptr_t sd) {
@@ -18,6 +19,7 @@ Client::Client(const uintptr_t sd) {
   this->_sd = sd;
   this->_method = NULL;
   this->_cgi = NULL;
+  _lastSentPos = 0;
 }
 
 Client &Client::operator=(const Client &client) {
@@ -25,6 +27,7 @@ Client &Client::operator=(const Client &client) {
   this->_sd = client._sd;
   this->_request = client._request;
   this->_method = client._method;
+  this->_lastSentPos = client._lastSentPos;
   return *this;
 }
 
@@ -91,37 +94,30 @@ void Client::doRequest() {
 
 void Client::sendResponse() {
   const std::string &response = _response.getResponse();
-  ssize_t n = send(_sd, response.c_str(), response.size(), 0);
+  ssize_t n = send(_sd, response.c_str() + _lastSentPos,
+                   response.size() - _lastSentPos, 0);
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     throw Client::DisconnectedDuringSendException();
   }
-  if (n != static_cast<ssize_t>(response.size())) {
-    _response.setResponse(response.substr(n));
+  if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
+    _lastSentPos += n;
+    return;
+  }
+  if (_request.getHeaderField("connection") == "close") {
+    _flag = END_CLOSE;
     return;
   }
   _flag = END_KEEP_ALIVE;
-  if (_request.getHeaderField("connection") == "close") _flag = END_CLOSE;
-  return;
 }
 
 void Client::newHTTPMethod(void) {
-  if (this->_request.getMethod() == "GET") {
+  if (this->_request.getMethod() == "GET")
     this->_method = new GET();
-    return;
-  }
-  if (this->_request.getMethod() == "POST") {
+  else if (this->_request.getMethod() == "POST")
     this->_method = new POST();
-    return;
-  }
-  if (this->_request.getMethod() == "DELETE") {
+  else if (this->_request.getMethod() == "DELETE")
     this->_method = new DELETE();
-    return;
-  }
-  /*
-  this->_method = new DummyMethod(E_501_NOT_IMPLEMENTED);
-  throw(E_501_NOT_IMPLEMENTED);
-  */
 }
 
 IMethod *Client::getMethod() const { return this->_method; }
@@ -160,6 +156,7 @@ void Client::makeAndExecuteCgi() {
 
 void Client::clear() {
   _flag = START;
+  _lastSentPos = 0;
   _recvBuff.clear();
 
   _request.clear();
