@@ -49,6 +49,17 @@ std::string ft_trimOWS(std::string &str) {
   return result;
 }
 
+std::string ft_trim(std::string &str) {
+  std::string result = str;
+  size_t pos = 0;
+  while (pos < result.size() && std::isspace(result[pos])) pos++;
+  result.erase(0, pos);
+  pos = result.size() - 1;
+  while (pos > 0 && std::isspace(result[pos])) pos--;
+  result.erase(pos + 1);
+  return result;
+}
+
 std::vector<std::string> ft_split(const std::string &str, char delim) {
   std::vector<std::string> result;
   std::istringstream iss(str);

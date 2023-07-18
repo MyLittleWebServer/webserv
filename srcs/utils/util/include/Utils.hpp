@@ -19,6 +19,7 @@ void throwWithPerror(const std::string &msg);
 short getBoundPort(const struct kevent *_currentEvent);
 std::string getCurrentTime();
 std::string toLowerString(std::string str);
+std::string ft_trim(std::string &str);
 std::string ft_trimOWS(std::string &str);
 
 std::vector<std::string> ft_split(const std::string &str, char delim);
