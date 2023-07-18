@@ -403,6 +403,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
+  validateContentLengthHeader(dts);
   parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
@@ -422,7 +423,18 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkBodyLimitLength(dts);
   checkAllowedMethods(dts);
   checkCgiMethod(dts);
-  if (dts.isParsed == false) return;
+}
+
+void RequestParser::validateContentLengthHeader(RequestDts &dts) {
+  std::string content_length = (*dts.headerFields)["content-length"];
+  if (content_length.empty()) return;
+  if (content_length.find_first_not_of("0123456789") != std::string::npos)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (content_length.find_first_not_of("0") != std::string::npos &&
+      content_length.find_first_not_of("0") != 0)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (content_length.size() >= 10)
+    throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 
 /**
