@@ -425,6 +425,20 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkCgiMethod(dts);
 }
 
+/**
+ * @brief validateContentLengthHeader;
+ *
+ * RFC 7230 3.3.2 Content-Length
+ * Content-Length 헤더 필드의 value가 유효한지 검증합니다.
+ * 해당 헤더가 없다면 검증하지 않습니다.
+ * value가 숫자가 아니거나, 0이 아닌데 0으로 시작한다면 400 에러를 발생시킵니다.
+ * overflow 방지 차원에서 10자리 이상의 숫자는 413 에러를 발생시킵니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
 void RequestParser::validateContentLengthHeader(RequestDts &dts) {
   std::string content_length = (*dts.headerFields)["content-length"];
   if (content_length.empty()) return;
