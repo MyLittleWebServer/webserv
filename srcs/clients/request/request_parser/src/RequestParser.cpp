@@ -163,7 +163,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
  *
  * @author
  * @author middlefitting modify 2023.07.17
- * @date 2023.07.17
+ * @date 2023.07.18
  */
 void RequestParser::validateDuplicateInvalidHeaders(std::string key,
                                                     RequestDts &dts) {
@@ -215,9 +215,10 @@ void RequestParser::parseTransferEncoding(RequestDts &dts) {
       ft_split((*dts.headerFields)["transfer-encoding"], ',');
   size_t size = encodings.size();
 
-  if (encodings[size - 1] != "chunked")
+  if (encodings[size - 1] != "chunked") {
+    setConnectionClose(dts);
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-
+  }
   for (size_t i = 0; i < size; ++i) {
     encodings[i] = ft_trim(encodings[i]);
     if (encodings[i] == "chunked") {
@@ -226,6 +227,24 @@ void RequestParser::parseTransferEncoding(RequestDts &dts) {
     }
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
   }
+}
+
+/**
+ * @brief parseTransferEncoding;
+ *
+ * 특정 상황에서 connection 을 close 하기 위해 사용합니다.
+ * connection 헤더 정보를 close로 설정합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return void
+ *
+ * @author
+ * @author middlefitting modify 2023.07.17
+ * @date 2023.07.18
+ */
+void RequestParser::setConnectionClose(RequestDts &dts) {
+  (*dts.headerFields)["connection"] = "close";
 }
 
 void RequestParser::parseChunkedEncoding(RequestDts &dts) {
@@ -462,7 +481,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
  * @param RequestDts HTTP 요청 데이터.
  * @return void
  * @author middlefitting
- * @date 2023.07.17
+ * @date 2023.07.18
  */
 void RequestParser::validateContentLengthHeader(RequestDts &dts) {
   std::string content_length = (*dts.headerFields)["content-length"];

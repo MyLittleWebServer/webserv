@@ -32,6 +32,7 @@ class RequestParser : public IRequestParser {
   void validatePath(RequestDts& dts);
 
  private:
+  void setConnectionClose(RequestDts& dts);
   void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
   void validateContentLengthHeader(RequestDts& dts);
   void validateHeaderKey(std::string& key, RequestDts& dts);
