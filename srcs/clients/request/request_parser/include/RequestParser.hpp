@@ -33,6 +33,7 @@ class RequestParser : public IRequestParser {
   void checkAndParseRedirection(RequestDts& dts);
 
  private:
+  void attackGuard(RequestDts& dts);
   void setConnectionClose(RequestDts& dts);
   void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
   void validateContentLengthHeader(RequestDts& dts);
