@@ -31,7 +31,7 @@ class Response : public IResponse {
   void configureErrorPages(RequestDts &dts);
 
  public:
-  virtual void createErrorResponse(RequestDts &dts);
+  virtual void createExceptionResponse(RequestDts &dts);
   bool getResponseFlag(void) const;
   Status getStatus(void);
   const std::string &getResponse(void) const;
