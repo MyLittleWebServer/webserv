@@ -34,16 +34,18 @@ std::string &Response::getFieldValue(const std::string &key) {
   return (this->_headerFields[key]);
 }
 
-void Response::createErrorResponse(RequestDts &dts) {
+void Response::createExceptionResponse(RequestDts &dts) {
   resetResponse();
   this->_statusCode = *dts.statusCode;
-  // redirection response (300). need to replace the url with actual url
-  // if (dts.statusCode != NULL && statusInfo[*dts.statusCode].body == NULL) {
-  //   this->setHeaderField("Location", "http://example.com/redirect_url");
-  //   this->_responseFlag = true;
-  //   return;
-  // }
-  // response for status code 400 ~ 500
+  // response for 3xx
+  if (this->_statusCode >= E_301_MOVED_PERMANENTLY &&
+      this->_statusCode <= E_308_PERMANENT_REDIRECT) {
+    this->setHeaderField("Location", *dts.redirectLocation);
+    this->assembleResponse();
+    this->_responseFlag = true;
+    return;
+  }
+  // response for 4xx, 5xx
   if (*dts.matchedServer != NULL) {
     this->configureErrorPages(dts);
   } else {

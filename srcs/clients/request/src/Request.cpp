@@ -28,6 +28,7 @@ Request &Request::operator=(const Request &src) {
     this->_serverConf = src._serverConf;
     this->_matchedServer = src._matchedServer;
     this->_matchedLocation = src._matchedLocation;
+    this->_redirectLocation = src._redirectLocation;
     this->_cgi_path = src._cgi_path;
     this->_method = src._method;
     this->_request = src._request;
@@ -81,6 +82,7 @@ void Request::initDts() {
   _request_parser_dts.cgi_path = &_cgi_path;
   _request_parser_dts.body = &_body;
   _request_parser_dts.query_string = &_query_string;
+  _request_parser_dts.redirectLocation = &_redirectLocation;
 
   _request_parser_dts.statusCode = &_statusCode;
 

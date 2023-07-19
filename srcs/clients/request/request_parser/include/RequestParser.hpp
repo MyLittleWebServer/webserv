@@ -30,6 +30,7 @@ class RequestParser : public IRequestParser {
       RequestDts& dts);
   void matchServerConf(short port, RequestDts& dts);
   void validatePath(RequestDts& dts);
+  void checkAndParseRedirection(RequestDts& dts);
 
  private:
   void setConnectionClose(RequestDts& dts);

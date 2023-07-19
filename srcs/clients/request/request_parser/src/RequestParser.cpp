@@ -348,6 +348,7 @@ void RequestParser::validatePath(RequestDts &dts) {
 #endif
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
+      checkAndParseRedirection(dts);
       dts.path->erase(0, firstToken.size());
       if (dts.path->size() != 0 && (*dts.path)[0] == '/')
         dts.path->erase(0, 1);  // remove this because there is already a
@@ -365,6 +366,32 @@ void RequestParser::validatePath(RequestDts &dts) {
     ++it;
   }
   this->setDefaultLocation(defaultLocation, dts);
+}
+
+void RequestParser::checkAndParseRedirection(RequestDts &dts) {
+  unsigned short value;
+  try {
+    std::stringstream ss((*dts.matchedLocation)->getVariable("return"));
+    ss >> value >> *dts.redirectLocation;
+    std::cout << "value: " << value << " location: " << *dts.redirectLocation
+              << '\n';
+  } catch (ExceptionThrower::InvalidConfigException &e) {
+    return;
+  }
+  switch (value) {
+    case 301:
+      throw(*dts.statusCode = E_301_MOVED_PERMANENTLY);
+    case 302:
+      throw(*dts.statusCode = E_302_FOUND);
+    case 303:
+      throw(*dts.statusCode = E_303_SEE_OTHER);
+    case 304:
+      throw(*dts.statusCode = E_304_NOT_MODIFIED);
+    case 307:
+      throw(*dts.statusCode = E_307_TEMPORARY_REDIRECT);
+    case 308:
+      throw(*dts.statusCode = E_308_PERMANENT_REDIRECT);
+  }
 }
 
 void RequestParser::parseCgi(RequestDts &dts) {
