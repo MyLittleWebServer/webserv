@@ -123,6 +123,11 @@ void POST::writeBinaryBody(RequestDts& dts) {
 }
 
 void POST::createSuccessResponse(IResponse& response) {
+  response.setHeaderField("Location", "/post_body/" + _title);
+  response.setBody("File has been successfully uploaded.\r\npath: /directory/" +
+                   _title + "\r\n");
+  response.setHeaderField("Content-Type", "text/plain");
+  response.setHeaderField("Content-Length", itos(response.getBody().size()));
   response.assembleResponse();
   response.setResponseParsed();
 }
