@@ -53,7 +53,7 @@ void Request::initMember() {
   _request.clear();
   _method.clear();
   _path.clear();
-  _pathWithOutRoute.clear();
+  _originalPath.clear();
   _anchor.clear();
   _protocol.clear();
   _cgi_path.clear();
@@ -77,7 +77,7 @@ void Request::initDts() {
   _request_parser_dts.request = &_request;
   _request_parser_dts.method = &_method;
   _request_parser_dts.path = &_path;
-  _request_parser_dts.pathWithOutRoute = &_pathWithOutRoute;
+  _request_parser_dts.originalPath = &_originalPath;
   _request_parser_dts.anchor = &_anchor;
   _request_parser_dts.protocol = &_protocol;
   _request_parser_dts.cgi_path = &_cgi_path;

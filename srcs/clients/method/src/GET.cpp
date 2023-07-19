@@ -57,17 +57,15 @@ std::vector<std::string> GET::getFileList(const std::string& path,
   struct dirent* ent;
   std::vector<std::string> files;
 
-  if ((*dts.pathWithOutRoute)[(*dts.pathWithOutRoute).size() - 1] == '/')
-    (*dts.pathWithOutRoute).erase((*dts.pathWithOutRoute).size() - 1, 1);
+  if ((*dts.originalPath)[(*dts.originalPath).size() - 1] != '/')
+    *dts.originalPath += '/';
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
       if (ent->d_name[0] == '.') continue;
       if (ent->d_type == DT_DIR)
-        files.push_back((*dts.matchedLocation)->getRoute() +
-                        *dts.pathWithOutRoute + '/' + ent->d_name + '/');
+        files.push_back((*dts.originalPath + ent->d_name + '/'));
       else
-        files.push_back((*dts.matchedLocation)->getRoute() +
-                        *dts.pathWithOutRoute + '/' + ent->d_name);
+        files.push_back((*dts.originalPath + ent->d_name));
       std::cout << "name: " << ent->d_name << '\n';
     }
     closedir(dir);

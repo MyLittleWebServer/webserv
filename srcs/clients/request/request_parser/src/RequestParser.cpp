@@ -329,6 +329,7 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
 // /root//dir/test.txt
 // GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
+  *dts.originalPath = *dts.path;  // for GET file list
   std::string firstToken = getFirstTokenOfPath(dts);
   if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
@@ -349,7 +350,6 @@ void RequestParser::validatePath(RequestDts &dts) {
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
       dts.path->erase(0, firstToken.size());
-      *dts.pathWithOutRoute = *dts.path;  // for GET file list
       checkAndParseRedirection(dts);
       if (dts.path->size() != 0 && (*dts.path)[0] == '/')
         dts.path->erase(0, 1);  // remove this because there is already a
