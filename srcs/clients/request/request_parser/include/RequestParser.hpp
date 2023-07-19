@@ -45,12 +45,12 @@ class RequestParser : public IRequestParser {
   void checkMethod(RequestDts& dts);
   void checkProtocolVersion(RequestDts& dts);
   void checkRequestUriLimitLength(RequestDts& dts);
-
   void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkHeaderLimitSize(RequestDts& dts);
   void checkBodyLimitLength(RequestDts& dts);
   void checkAllowedMethods(RequestDts& dts);
   void checkCgiMethod(RequestDts& dts);
+  void checkTE(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;
