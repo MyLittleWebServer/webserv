@@ -168,7 +168,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
  */
 void RequestParser::validateDuplicateInvalidHeaders(std::string key,
                                                     RequestDts &dts) {
-  if (key == "content-length") {
+  if (key == "content-length" || key == "host") {
     if (!(*dts.headerFields)[key].empty())
       throw(*dts.statusCode = E_400_BAD_REQUEST);
   }
