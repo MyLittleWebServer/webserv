@@ -752,3 +752,21 @@ void RequestParser::checkTE(RequestDts &dts) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
+
+/**
+ * @brief checkContentType;
+ *
+ * RFC 7231 3.1.1.5 Content-Type (MAY)
+ * POST, PUT 메소드에는 Content-Type이 있어야 합니다.
+ * Content-Type이 없으면 application/octet-stream으로 간주합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.18
+ */
+void RequestParser::checkContentType(RequestDts &dts) {
+  if (!(*dts.headerFields)["content-type"].empty()) return;
+  if (*dts.method == "POST" || *dts.method == "PUT")
+    (*dts.headerFields)["content-type"] = "application/octet-stream";
+}
