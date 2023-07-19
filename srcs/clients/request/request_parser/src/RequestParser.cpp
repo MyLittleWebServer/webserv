@@ -168,7 +168,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
  */
 void RequestParser::validateDuplicateInvalidHeaders(std::string key,
                                                     RequestDts &dts) {
-  if (key == "content-length") {
+  if (key == "content-length" || key == "host") {
     if (!(*dts.headerFields)[key].empty())
       throw(*dts.statusCode = E_400_BAD_REQUEST);
   }
@@ -449,6 +449,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseRequestLine(dts);
   parseHeaderFields(dts);
   validateContentLengthHeader(dts);
+  validateHostHeader(port, dts);
   parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
@@ -472,13 +473,96 @@ void RequestParser::requestChecker(RequestDts &dts) {
 }
 
 /**
+ * @brief validateHostHeader;
+ *
+ * RFC 7230 5.4 Host
+ * Host 헤더가 없다면 400 에러를 발생시킵니다.
+ * Host 헤더에 포트가 존재하면 호스트명과 포트,
+ * 존재하지 않는다면 호스트명만 체크합니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
+void RequestParser::validateHostHeader(short port, RequestDts &dts) {
+  if ((*dts.headerFields)["host"].empty())
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  std::string hostHeader = (*dts.headerFields)["host"];
+  std::string::size_type pos = hostHeader.find(':');
+  std::string hostName;
+  if (pos == std::string::npos) {
+    hostName = hostHeader;
+    hostHeaderNameCheck(hostName, dts);
+  } else {
+    hostName = hostHeader.substr(0, pos);
+    hostHeaderNameCheck(hostName, dts);
+    hostHeaderportCheck(port, hostHeader.substr(pos + 1), dts);
+  }
+  (*dts.headerFields)["host"] = hostName;
+}
+
+/**
+ * @brief hostHeaderNameCheck;
+ *
+ * 호스트명이 올바른 형식인지 체크합니다.
+ * 호스트 명은 클라이언트가 알지 못해 비어서 오는 경우,
+ * 영문, 숫자, ., - 만 허용합니다.
+ * 올바르지 않다면 400 에러를 발생시킵니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
+void RequestParser::hostHeaderNameCheck(std::string hostHeader,
+                                        RequestDts &dts) {
+  if (ft_trim(hostHeader).empty()) return;
+  for (int i = 0; i < static_cast<int>(hostHeader.size()); i++) {
+    if (!std::isalnum(hostHeader[i]) && hostHeader[i] != '.' &&
+        hostHeader[i] != '-') {
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
+    }
+  }
+}
+
+/**
+ * @brief hostHeaderportCheck;
+ *
+ * 호스트 포트가 올바른 형식인지 체크합니다.
+ * 포트는 0 ~ 65535 사이의 숫자만 허용합니다.
+ * 숫자의 첫자리가 0인 경우를 허용하지 않습니다.
+ * 0번 포트는 일반적으로 예약된 포트로 사용하지 않습니다.
+ * 올바르지 않다면 400 에러를 발생시킵니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
+void RequestParser::hostHeaderportCheck(short port, std::string portName,
+                                        RequestDts &dts) {
+  if (portName.empty()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (portName.find_first_not_of("0123456789") != std::string::npos)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (portName.find_first_of("123456789") != 0)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (portName.size() > 5) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (std::atoi(portName.c_str()) != port)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (std::atoi(portName.c_str()) > 65535)
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+}
+
+/**
  * @brief validateContentLengthHeader;
  *
  * RFC 7230 3.3.2 Content-Length
  * Content-Length 헤더 필드의 value가 유효한지 검증합니다.
  * 해당 헤더가 없다면 검증하지 않습니다.
- * value가 숫자가 아니거나, 0이 아닌데 0으로 시작한다면 400 에러를 발생시킵니다.
- * overflow 방지 차원에서 10자리 이상의 숫자는 413 에러를 발생시킵니다.
+ * value가 숫자가 아니거나, 0이 아닌데 0으로 시작한다면 400 에러를
+ * 발생시킵니다. overflow 방지 차원에서 10자리 이상의 숫자는 413 에러를
+ * 발생시킵니다.
  *
  * @param RequestDts HTTP 요청 데이터.
  * @return void
