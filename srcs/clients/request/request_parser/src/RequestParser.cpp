@@ -471,6 +471,19 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkCgiMethod(dts);
 }
 
+/**
+ * @brief validateHostHeader;
+ *
+ * RFC 7230 5.4 Host
+ * Host 헤더가 없다면 400 에러를 발생시킵니다.
+ * Host 헤더에 포트가 존재하면 호스트명과 포트,
+ * 존재하지 않는다면 호스트명만 체크합니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
 void RequestParser::validateHostHeader(short port, RequestDts &dts) {
   if ((*dts.headerFields)["host"].empty())
     throw(*dts.statusCode = E_400_BAD_REQUEST);
@@ -488,6 +501,19 @@ void RequestParser::validateHostHeader(short port, RequestDts &dts) {
   (*dts.headerFields)["host"] = hostName;
 }
 
+/**
+ * @brief hostHeaderNameCheck;
+ *
+ * 호스트명이 올바른 형식인지 체크합니다.
+ * 호스트 명은 클라이언트가 알지 못해 비어서 오는 경우,
+ * 영문, 숫자, ., - 만 허용합니다.
+ * 올바르지 않다면 400 에러를 발생시킵니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
 void RequestParser::hostHeaderNameCheck(std::string hostHeader,
                                         RequestDts &dts) {
   if (ft_trim(hostHeader).empty()) return;
@@ -499,6 +525,20 @@ void RequestParser::hostHeaderNameCheck(std::string hostHeader,
   }
 }
 
+/**
+ * @brief hostHeaderportCheck;
+ *
+ * 호스트 포트가 올바른 형식인지 체크합니다.
+ * 포트는 0 ~ 65535 사이의 숫자만 허용합니다.
+ * 숫자의 첫자리가 0인 경우를 허용하지 않습니다.
+ * 0번 포트는 일반적으로 예약된 포트로 사용하지 않습니다.
+ * 올바르지 않다면 400 에러를 발생시킵니다.
+ *
+ * @param RequestDts HTTP 요청 데이터.
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.19
+ */
 void RequestParser::hostHeaderportCheck(short port, std::string portName,
                                         RequestDts &dts) {
   if (portName.empty()) throw(*dts.statusCode = E_400_BAD_REQUEST);
@@ -512,6 +552,7 @@ void RequestParser::hostHeaderportCheck(short port, std::string portName,
   if (std::atoi(portName.c_str()) > 65535)
     throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
+
 /**
  * @brief validateContentLengthHeader;
  *
