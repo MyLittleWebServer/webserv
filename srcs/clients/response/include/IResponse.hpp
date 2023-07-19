@@ -22,6 +22,5 @@ class IResponse {
   virtual void setResponseParsed() = 0;
   virtual bool isParsed() = 0;
 
-  virtual void setResponse(std::string response) = 0;
   virtual void clear(void) = 0;
 };

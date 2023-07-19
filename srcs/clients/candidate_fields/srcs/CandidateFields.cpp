@@ -16,6 +16,7 @@ CandidateFields::~CandidateFields() {}
 void CandidateFields::initCandidateFields() {
   _candidateFields.insert("host");
   _candidateFields.insert("accept");
+  _candidateFields.insert("transfer-encoding");
   _candidateFields.insert("accept-language");
   _candidateFields.insert("accept-encoding");
   _candidateFields.insert("accept-charset");

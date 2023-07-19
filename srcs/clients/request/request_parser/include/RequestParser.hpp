@@ -32,11 +32,21 @@ class RequestParser : public IRequestParser {
   void validatePath(RequestDts& dts);
 
  private:
+  void setConnectionClose(RequestDts& dts);
+  void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
+  void validateContentLengthHeader(RequestDts& dts);
+  void validateHeaderKey(std::string& key, RequestDts& dts);
+  void removeNotAscii(std::string& field);
+
+ private:
   void requestChecker(RequestDts& dts);
+
+  void checkRequestLine(RequestDts& dts);
   void checkMethod(RequestDts& dts);
   void checkProtocolVersion(RequestDts& dts);
-  void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkRequestUriLimitLength(RequestDts& dts);
+
+  void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkHeaderLimitSize(RequestDts& dts);
   void checkBodyLimitLength(RequestDts& dts);
   void checkAllowedMethods(RequestDts& dts);

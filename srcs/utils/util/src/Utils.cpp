@@ -1,15 +1,4 @@
-#include <netinet/in.h>
-#include <sys/event.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#include <cstdarg>
-#include <ctime>
-#include <iostream>
-#include <sstream>
-
-#include "Kqueue.hpp"
+#include "Utils.hpp"
 
 void throwWithPerror(const std::string &msg) {
   std::cerr << msg << std::endl;
@@ -36,12 +25,6 @@ std::string getCurrentTime() {
   return (std::string(buffer));
 }
 
-std::string itos(int num) {
-  std::stringstream ss;
-  ss << num;
-  return (ss.str());
-}
-
 std::string toLowerString(std::string str) {
   std::string::iterator it = str.begin();
   std::string::iterator end = str.end();
@@ -51,4 +34,39 @@ std::string toLowerString(std::string str) {
     ++it;
   }
   return str;
+}
+
+std::string ft_trimOWS(std::string &str) {
+  std::string result = str;
+  size_t pos = result.find_first_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(0, pos);
+  }
+  pos = result.find_last_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(pos + 1);
+  }
+  return result;
+}
+
+std::string ft_trim(std::string &str) {
+  std::string result = str;
+  size_t pos = 0;
+  while (pos < result.size() && std::isspace(result[pos])) pos++;
+  result.erase(0, pos);
+  pos = result.size() - 1;
+  while (pos > 0 && std::isspace(result[pos])) pos--;
+  result.erase(pos + 1);
+  return result;
+}
+
+std::vector<std::string> ft_split(const std::string &str, char delim) {
+  std::vector<std::string> result;
+  std::istringstream iss(str);
+  std::string token;
+
+  while (std::getline(iss, token, delim)) {
+    result.push_back(token);
+  }
+  return result;
 }

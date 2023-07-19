@@ -96,7 +96,10 @@ void Response::putHeaderFields(void) {
 }
 
 void Response::putBody(void) {
-  if (this->_body.empty() == true) return;
+  if (this->_body.empty() == true) {
+    this->_response += "\r\n";
+    return;
+  }
   this->_response += "\r\n" + this->_body;
 }
 
@@ -114,8 +117,6 @@ void Response::eraseHeaderField(const std::string &key) {
 void Response::addBody(const std::string &str) { this->_body += str; }
 
 void Response::setBody(const std::string &str) { this->_body = str; }
-
-void Response::setResponse(std::string response) { this->_response = response; }
 
 void Response::configureErrorPages(RequestDts &dts) {
   IServerConfig &serverConfig = **dts.matchedServer;

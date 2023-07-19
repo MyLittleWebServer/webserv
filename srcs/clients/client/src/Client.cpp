@@ -6,18 +6,20 @@
 #include "POST.hpp"
 #include "Utils.hpp"
 
-char Client::_buf[RECEIVE_LEN + 1] = {0};
+char Client::_buf[RECEIVE_LEN] = {0};
 
 Client::Client() : _flag(START), _sd(0), _method(NULL) {
   this->_method = NULL;
   this->_cgi = NULL;
+  _lastSentPos = 0;
 }
 
 Client::Client(const uintptr_t sd) {
-  this->_flag = RECEIVING;
+  this->_flag = START;
   this->_sd = sd;
   this->_method = NULL;
   this->_cgi = NULL;
+  _lastSentPos = 0;
 }
 
 Client &Client::operator=(const Client &client) {
@@ -25,6 +27,7 @@ Client &Client::operator=(const Client &client) {
   this->_sd = client._sd;
   this->_request = client._request;
   this->_method = client._method;
+  this->_lastSentPos = client._lastSentPos;
   return *this;
 }
 
@@ -44,27 +47,23 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
-  while (this->_flag == RECEIVING) {
-    signal(SIGPIPE, SIG_IGN);
+  this->_flag = RECEIVING;
+  while (true) {
     ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
-      signal(SIGPIPE, SIG_DFL);
       if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
-    Client::_buf[n] = '\0';
-    this->_recvBuff += Client::_buf;
-
-    std::memset(Client::_buf, 0, RECEIVE_LEN + 1);
+    this->_recvBuff.insert(this->_recvBuff.end(), Client::_buf,
+                           Client::_buf + n);
+    std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
       std::cout << "received data from " << this->_sd << ": " << this->_request
                 << std::endl;
 #endif
-      signal(SIGPIPE, SIG_DFL);
       break;
     }
-    signal(SIGPIPE, SIG_DFL);
   }
 }
 
@@ -95,37 +94,30 @@ void Client::doRequest() {
 
 void Client::sendResponse() {
   const std::string &response = _response.getResponse();
-  ssize_t n = send(_sd, response.c_str(), response.size(), 0);
+  ssize_t n = send(_sd, response.c_str() + _lastSentPos,
+                   response.size() - _lastSentPos, 0);
   if (n <= 0) {
     if (n == -1) throw Client::SendFailException();
     throw Client::DisconnectedDuringSendException();
   }
-  if (n != static_cast<ssize_t>(response.size())) {
-    _response.setResponse(response.substr(n));
+  if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
+    _lastSentPos += n;
+    return;
+  }
+  if (_request.getHeaderField("connection") == "close") {
+    _flag = END_CLOSE;
     return;
   }
   _flag = END_KEEP_ALIVE;
-  if (_request.getHeaderField("connection") == "close") _flag = END_CLOSE;
-  return;
 }
 
 void Client::newHTTPMethod(void) {
-  if (this->_request.getMethod() == "GET") {
+  if (this->_request.getMethod() == "GET")
     this->_method = new GET();
-    return;
-  }
-  if (this->_request.getMethod() == "POST") {
+  else if (this->_request.getMethod() == "POST")
     this->_method = new POST();
-    return;
-  }
-  if (this->_request.getMethod() == "DELETE") {
+  else if (this->_request.getMethod() == "DELETE")
     this->_method = new DELETE();
-    return;
-  }
-  /*
-  this->_method = new DummyMethod(E_501_NOT_IMPLEMENTED);
-  throw(E_501_NOT_IMPLEMENTED);
-  */
 }
 
 IMethod *Client::getMethod() const { return this->_method; }
@@ -163,7 +155,8 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _flag = RECEIVING;
+  _flag = START;
+  _lastSentPos = 0;
   _recvBuff.clear();
 
   _request.clear();
@@ -177,4 +170,16 @@ void Client::clear() {
     delete _method;
     _method = NULL;
   }
+}
+
+void Client::setResponseConnection() {
+  if (_request.getHeaderField("connection") == "close")
+    _response.setHeaderField("connection", "close");
+  else
+    _response.setHeaderField("connection", "keep-alive");
+  _response.assembleResponse();
+}
+
+void Client::setConnectionClose() {
+  _request.setHeaderField("connection", "close");
 }

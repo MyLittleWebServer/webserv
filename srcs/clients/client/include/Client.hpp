@@ -15,15 +15,20 @@
 #include "Request.hpp"
 #include "Response.hpp"
 
-#define RECEIVE_LEN 1000
+#define RECEIVE_LEN 1460
 
 enum ClientFlag {
   START,
   RECEIVING,
+
   RECEIVE_DONE,
   REQUEST_HEAD,
   REQUEST_ENTITY,
+
   REQUEST_DONE,
+  METHOD_SELECT,
+
+  PROCESS_RESPONSE,
   FILE_READ,
   FILE_CGI,
   FILE_WRITE,
@@ -44,8 +49,9 @@ class Client {
   Response _response;
   IMethod *_method;
   ICGI *_cgi;
+  size_t _lastSentPos;
 
-  static char _buf[RECEIVE_LEN + 1];
+  static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;
@@ -71,6 +77,8 @@ class Client {
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
+  void setResponseConnection();
+  void setConnectionClose();
   ClientFlag getFlag() const;
   class RecvFailException : public std::exception {
    public:
