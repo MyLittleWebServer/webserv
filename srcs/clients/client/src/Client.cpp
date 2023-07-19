@@ -67,13 +67,13 @@ void Client::receiveRequest(void) {
   }
 }
 
-void Client::createErrorResponse() {
-  _response.createErrorResponse(_request.getRequestParserDts());
+void Client::createExceptionResponse() {
+  _response.createExceptionResponse(_request.getRequestParserDts());
 }
 
-void Client::createErrorResponse(Status statusCode) {
+void Client::createExceptionResponse(Status statusCode) {
   *_request.getRequestParserDts().statusCode = statusCode;
-  _response.createErrorResponse(_request.getRequestParserDts());
+  _response.createExceptionResponse(_request.getRequestParserDts());
 }
 
 void Client::createSuccessResponse() {

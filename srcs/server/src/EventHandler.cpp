@@ -114,7 +114,7 @@ void EventHandler::processRequest(Client &currClient) {
     }
   } catch (enum Status &code) {
     if (currClient.getFlag() == RECEIVING) Kqueue::_eventsToAdd.pop_back();
-    currClient.createErrorResponse();
+    currClient.createExceptionResponse();
     enableEvent(currClient.getSD(), EVFILT_WRITE,
                 static_cast<void *>(&currClient));
   } catch (std::exception &e) {
@@ -152,7 +152,7 @@ void EventHandler::processResponse(Client &currClient) {
 
 void EventHandler::processTimeOut(Client &currClient) {
   currClient.setConnectionClose();
-  currClient.createErrorResponse(E_408_REQUEST_TIMEOUT);
+  currClient.createExceptionResponse(E_408_REQUEST_TIMEOUT);
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));
 }
