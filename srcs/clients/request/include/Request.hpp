@@ -25,6 +25,7 @@ class Request : public IRequest {
   std::string _request;
   std::string _method;
   std::string _path;
+  std::string _pathWithOutRoute;
   std::string _anchor;
   std::string _protocol;
   std::string _cgi_path;

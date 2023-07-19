@@ -349,6 +349,7 @@ void RequestParser::validatePath(RequestDts &dts) {
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
       dts.path->erase(0, firstToken.size());
+      *dts.pathWithOutRoute = *dts.path;  // for GET file list
       checkAndParseRedirection(dts);
       if (dts.path->size() != 0 && (*dts.path)[0] == '/')
         dts.path->erase(0, 1);  // remove this because there is already a
