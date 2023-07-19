@@ -66,6 +66,12 @@ void Client::receiveRequest(void) {
   }
 }
 
+void Client::removeTimeOutEventInEventsToAdd(
+    std::vector<struct kevent> &_eventsToAdd) {
+  _clientState = METHOD_SELECT;
+  _eventsToAdd.pop_back();
+}
+
 void Client::createErrorResponse() {
   _response.createErrorResponse(_request.getRequestParserDts());
 }
