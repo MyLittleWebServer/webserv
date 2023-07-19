@@ -30,7 +30,6 @@ class Request : public IRequest {
   std::string _cgi_path;
   std::string _body;
   std::string _query_string;
-  std::string _redirectLocation;
 
   Status _statusCode;
 
