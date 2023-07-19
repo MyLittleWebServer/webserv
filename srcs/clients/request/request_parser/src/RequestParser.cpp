@@ -329,6 +329,7 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
 // /root//dir/test.txt
 // GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
+  *dts.originalPath = *dts.path;  // for GET file list
   std::string firstToken = getFirstTokenOfPath(dts);
   if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
