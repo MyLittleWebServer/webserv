@@ -99,8 +99,7 @@ void EventHandler::processRequest(Client &currClient) {
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
     if (currClient.getFlag() != REQUEST_DONE) return;
-    currClient.setFlag(METHOD_SELECT);
-    Kqueue::_eventsToAdd.pop_back();
+    currClient.removeTimeOutEventInEventsToAdd(Kqueue::_eventsToAdd);
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
