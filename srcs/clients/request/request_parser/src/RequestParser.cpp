@@ -609,11 +609,12 @@ void RequestParser::checkBodyLimitLength(RequestDts &dts) {
 }
 
 void RequestParser::checkAllowedMethods(RequestDts &dts) {
-  const std::map<std::string, bool> &method_info =
+  const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
-  std::map<std::string, bool>::const_iterator it =
-      method_info.find(*dts.method);
-  if (it != method_info.end() && it->second == true) return;
+  std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
+  if ((it != methodInfo.end() && it->second == true) ||
+      (*dts.method == "DELETE" && methodInfo.at("POST") == true))
+    return;
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
