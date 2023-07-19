@@ -468,6 +468,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkBodyLimitLength(dts);
   checkAllowedMethods(dts);
   checkCgiMethod(dts);
+  checkTE(dts);
 }
 
 /**
@@ -620,4 +621,23 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
 void RequestParser::checkCgiMethod(RequestDts &dts) {
   if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+}
+
+/**
+ * @brief checkTE;
+ *
+ * chunked는 항상 구현되어야 하기 때문에 TE 헤더에서 허용되지 않습니다.
+ * TE 헤더에 chunked가 있으면 400 에러를 반환합니다.
+ * 구현되지 않은 인코딩에 대해 501 에러를 반환합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.17
+ */
+void RequestParser::checkTE(RequestDts &dts) {
+  if (ft_trim((*dts.headerFields)["te"]).empty()) return;
+  if ((*dts.headerFields)["te"] == "chunked")
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
