@@ -348,8 +348,8 @@ void RequestParser::validatePath(RequestDts &dts) {
 #endif
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
-      checkAndParseRedirection(dts);
       dts.path->erase(0, firstToken.size());
+      checkAndParseRedirection(dts);
       if (dts.path->size() != 0 && (*dts.path)[0] == '/')
         dts.path->erase(0, 1);  // remove this because there is already a
                                 // slash at the end of root path
@@ -372,9 +372,9 @@ void RequestParser::checkAndParseRedirection(RequestDts &dts) {
   unsigned short value;
   try {
     std::stringstream ss((*dts.matchedLocation)->getVariable("return"));
-    ss >> value >> *dts.redirectLocation;
-    std::cout << "value: " << value << " location: " << *dts.redirectLocation
-              << '\n';
+    std::string redirectLocation;
+    ss >> value >> redirectLocation;
+    if (redirectLocation != "/") *dts.path = redirectLocation + *dts.path;
   } catch (ExceptionThrower::InvalidConfigException &e) {
     return;
   }
