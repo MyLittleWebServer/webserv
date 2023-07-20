@@ -3,38 +3,38 @@
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
 #include "GET.hpp"
+#include "Kqueue.hpp"
 #include "POST.hpp"
 #include "Utils.hpp"
 
 char Client::_buf[RECEIVE_LEN] = {0};
 
-Client::Client() : _flag(START), _sd(0), _method(NULL) {
-  this->_method = NULL;
-  this->_cgi = NULL;
+Client::Client() : _state(START), _sd(0), _method(NULL) {
+  _method = NULL;
+  _cgi = NULL;
   _lastSentPos = 0;
 }
 
 Client::Client(const uintptr_t sd) {
-  this->_flag = START;
-  this->_sd = sd;
-  this->_method = NULL;
-  this->_cgi = NULL;
+  _state = START;
+  _sd = sd;
+  _method = NULL;
+  _cgi = NULL;
   _lastSentPos = 0;
 }
 
 Client &Client::operator=(const Client &client) {
-  this->_flag = client._flag;
-  this->_sd = client._sd;
-  this->_request = client._request;
-  this->_method = client._method;
-  this->_lastSentPos = client._lastSentPos;
+  _state = client._state;
+  _sd = client._sd;
+  _request = client._request;
+  _method = client._method;
+  _lastSentPos = client._lastSentPos;
   return *this;
 }
 
 Client::~Client(void) {
 #ifdef DEBUG_MSG
-  std ::cout << " Client destructor called " << this->getSD() << " !"
-             << std::endl;
+  std ::cout << " Client destructor called " << getSD() << " !" << std::endl;
 #endif
   close(_sd);
   if (_method != NULL) delete _method;
@@ -43,28 +43,33 @@ Client::~Client(void) {
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
   return (n < RECEIVE_LEN ||
-          recv(this->_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
+          recv(_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
 }
 
 void Client::receiveRequest(void) {
-  this->_flag = RECEIVING;
+  _state = RECEIVING;
   while (true) {
-    ssize_t n = recv(this->_sd, Client::_buf, RECEIVE_LEN, 0);
+    ssize_t n = recv(_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
       if (n == -1) throw Client::RecvFailException();
       throw Client::DisconnectedDuringRecvException();
     }
-    this->_recvBuff.insert(this->_recvBuff.end(), Client::_buf,
-                           Client::_buf + n);
+    _recvBuff.insert(_recvBuff.end(), Client::_buf, Client::_buf + n);
     std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
 #ifdef DEBUG_MSG
-      std::cout << "received data from " << this->_sd << ": " << this->_request
+      std::cout << "received data from " << _sd << ": " << _request
                 << std::endl;
 #endif
       break;
     }
   }
+}
+
+void Client::removeTimeOutEventInEventsToAdd(
+    std::vector<struct kevent> &_eventsToAdd) {
+  _state = METHOD_SELECT;
+  _eventsToAdd.pop_back();
 }
 
 void Client::createExceptionResponse() {
@@ -83,13 +88,13 @@ void Client::createSuccessResponse() {
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _flag = REQUEST_DONE;
+  if (_request.isParsed()) _state = REQUEST_DONE;
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  this->_method->doRequest(_request.getRequestParserDts(), _response);
+  _method->doRequest(_request.getRequestParserDts(), _response);
 }
 
 void Client::sendResponse() {
@@ -105,28 +110,28 @@ void Client::sendResponse() {
     return;
   }
   if (_request.getHeaderField("connection") == "close") {
-    _flag = END_CLOSE;
+    _state = END_CLOSE;
     return;
   }
-  _flag = END_KEEP_ALIVE;
+  _state = END_KEEP_ALIVE;
 }
 
 void Client::newHTTPMethod(void) {
-  if (this->_request.getMethod() == "GET")
-    this->_method = new GET();
-  else if (this->_request.getMethod() == "POST")
-    this->_method = new POST();
-  else if (this->_request.getMethod() == "DELETE")
-    this->_method = new DELETE();
+  if (_request.getMethod() == "GET")
+    _method = new GET();
+  else if (_request.getMethod() == "POST")
+    _method = new POST();
+  else if (_request.getMethod() == "DELETE")
+    _method = new DELETE();
 }
 
-IMethod *Client::getMethod() const { return this->_method; }
+IMethod *Client::getMethod() const { return _method; }
 
-ClientFlag Client::getFlag() const { return this->_flag; }
+ClientStates Client::getState() const { return _state; }
 
-void Client::setFlag(ClientFlag flag) { this->_flag = flag; }
+void Client::setState(ClientStates state) { _state = state; }
 
-uintptr_t Client::getSD() const { return this->_sd; }
+uintptr_t Client::getSD() const { return _sd; }
 
 const char *Client::RecvFailException::what() const throw() {
   return ("error occured in recv()");
@@ -155,7 +160,7 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _flag = START;
+  _state = START;
   _lastSentPos = 0;
   _recvBuff.clear();
 
@@ -178,6 +183,7 @@ void Client::setResponseConnection() {
   else
     _response.setHeaderField("connection", "keep-alive");
   _response.assembleResponse();
+  _state = PROCESS_RESPONSE;
 }
 
 void Client::setConnectionClose() {

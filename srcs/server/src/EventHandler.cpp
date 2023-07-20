@@ -88,7 +88,7 @@ void EventHandler::branchCondition(void) {
 
 void EventHandler::processRequest(Client &currClient) {
   try {
-    if (currClient.getFlag() == RECEIVING) {
+    if (currClient.getState() == RECEIVING) {
       Kqueue::deleteEvent(this->_currentEvent->ident, EVFILT_TIMER,
                           static_cast<void *>(this->_currentEvent->udata));
     }
@@ -98,9 +98,8 @@ void EventHandler::processRequest(Client &currClient) {
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
-    if (currClient.getFlag() != REQUEST_DONE) return;
-    currClient.setFlag(METHOD_SELECT);
-    Kqueue::_eventsToAdd.pop_back();
+    if (currClient.getState() != REQUEST_DONE) return;
+    currClient.removeTimeOutEventInEventsToAdd(Kqueue::_eventsToAdd);
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -113,7 +112,7 @@ void EventHandler::processRequest(Client &currClient) {
                           static_cast<void *>(&currClient));
     }
   } catch (enum Status &code) {
-    if (currClient.getFlag() == RECEIVING) Kqueue::_eventsToAdd.pop_back();
+    if (currClient.getState() == RECEIVING) Kqueue::_eventsToAdd.pop_back();
     currClient.createExceptionResponse();
     enableEvent(currClient.getSD(), EVFILT_WRITE,
                 static_cast<void *>(&currClient));
@@ -125,9 +124,8 @@ void EventHandler::processRequest(Client &currClient) {
 }
 
 void EventHandler::processResponse(Client &currClient) {
-  if (currClient.getFlag() != PROCESS_RESPONSE) {
+  if (currClient.getState() != PROCESS_RESPONSE) {
     currClient.setResponseConnection();
-    currClient.setFlag(PROCESS_RESPONSE);
   }
   try {
     currClient.sendResponse();
@@ -136,7 +134,7 @@ void EventHandler::processResponse(Client &currClient) {
     disconnectClient(&currClient);
     return;
   };
-  if (currClient.getFlag() == END_KEEP_ALIVE) {
+  if (currClient.getState() == END_KEEP_ALIVE) {
     Kqueue::disableEvent(currClient.getSD(), EVFILT_WRITE,
                          static_cast<void *>(&currClient));
     Kqueue::enableEvent(currClient.getSD(), EVFILT_READ,
@@ -144,7 +142,7 @@ void EventHandler::processResponse(Client &currClient) {
     currClient.clear();
     return;
   }
-  if (currClient.getFlag() == END_CLOSE) {
+  if (currClient.getState() == END_CLOSE) {
     disconnectClient(&currClient);
     return;
   }
