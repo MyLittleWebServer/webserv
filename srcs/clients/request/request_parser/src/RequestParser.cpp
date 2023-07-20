@@ -672,7 +672,8 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::checkMethod(RequestDts &dts) {
-  if (*dts.method != "GET" && *dts.method != "POST" && *dts.method != "DELETE")
+  if (*dts.method != "GET" && *dts.method != "POST" &&
+      *dts.method != "DELETE" && *dts.method != "HEAD")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 

@@ -3,6 +3,7 @@
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
 #include "GET.hpp"
+#include "HEAD.hpp"
 #include "Kqueue.hpp"
 #include "POST.hpp"
 #include "Utils.hpp"
@@ -123,6 +124,8 @@ void Client::newHTTPMethod(void) {
     _method = new POST();
   else if (_request.getMethod() == "DELETE")
     _method = new DELETE();
+  else if (_request.getMethod() == "HEAD")
+    _method = new HEAD();
 }
 
 IMethod *Client::getMethod() const { return _method; }
@@ -182,10 +185,17 @@ void Client::setResponseConnection() {
     _response.setHeaderField("connection", "close");
   else
     _response.setHeaderField("connection", "keep-alive");
-  _response.assembleResponse();
-  _state = PROCESS_RESPONSE;
 }
 
 void Client::setConnectionClose() {
   _request.setHeaderField("connection", "close");
+}
+
+void Client::bodyCheck() {
+  if (_request.getMethod() == "HEAD") _response.setBody("");
+}
+
+void Client::ressembleResponse() {
+  _response.assembleResponse();
+  _state = PROCESS_RESPONSE;
 }

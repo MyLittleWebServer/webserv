@@ -79,9 +79,10 @@ class Client {
   void clear();
   void setResponseConnection();
   void setConnectionClose();
+  void bodyCheck();
+  void ressembleResponse();
   void removeTimeOutEventInEventsToAdd(
       std::vector<struct kevent> &_eventsToAdd);
-
   ClientStates getState() const;
   class RecvFailException : public std::exception {
    public:
