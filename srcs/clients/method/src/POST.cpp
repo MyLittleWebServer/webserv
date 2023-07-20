@@ -71,24 +71,38 @@ void POST::generateMultipart(RequestDts& dts) {
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
   this->_boundary = binBody.substr(0, boundaryEndPos);
 
-  size_t filePos = binBody.find("filename=");
-  size_t fileEndPos = binBody.find("\r\n", filePos);
-  if (filePos == std::string::npos || fileEndPos == std::string::npos) {
-    this->_title = "Invalid File Name";
-    this->_content = "Invalid File Source";
-    writeTextBody(dts);
-    return;
+  while (true) {
+    std::string binBody = (*dts.body).data();
+    size_t filePos = binBody.find("filename=\"");
+    size_t fileEndPos = binBody.find('\"', filePos + 11);
+    if (filePos == std::string::npos || fileEndPos == std::string::npos) {
+      this->_title = "Unsupported File Name";
+      this->_content = "Unsupported File Source";
+      writeTextBody(dts);
+      return;
+    }
+    this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
+    size_t binStart = (*dts.body).find("\r\n\r\n");
+    size_t boundary2EndPos = (*dts.body).find(this->_boundary, fileEndPos);
+    if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
+      throw((*dts.statusCode) = E_400_BAD_REQUEST);
+    this->_content.insert(this->_content.end(),
+                          (*dts.body).begin() + binStart + 4,
+                          (*dts.body).begin() + boundary2EndPos);
+    writeBinaryBody(dts);
+    size_t isEOFCRLF = (*dts.body).find("\r\n", boundary2EndPos);
+    std::string isEOF =
+        (*dts.body).substr(boundary2EndPos, isEOFCRLF - boundary2EndPos);
+    if (isEOF == this->_boundary + "--") {
+      this->_title.clear();
+      this->_content.clear();
+      (*dts.body).clear();
+      return;
+    }
+    (*dts.body) = (*dts.body).substr(boundary2EndPos);
+    this->_title.clear();
+    this->_content.clear();
   }
-  this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 11);
-  size_t binStart = (*dts.body).find("\r\n\r\n");
-  size_t boundary2EndPos = (*dts.body).find(this->_boundary, fileEndPos);
-  if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
-    throw((*dts.statusCode) = E_400_BAD_REQUEST);
-
-  this->_content.insert(this->_content.end(),
-                        (*dts.body).begin() + binStart + 4,
-                        (*dts.body).begin() + boundary2EndPos);
-  writeBinaryBody(dts);
 }
 
 void POST::writeTextBody(RequestDts& dts) {
