@@ -17,7 +17,7 @@
 
 #define RECEIVE_LEN 1460
 
-enum ClientFlag {
+enum ClientStates {
   START,
   RECEIVING,
 
@@ -42,7 +42,7 @@ class Utils;
 
 class Client {
  private:
-  ClientFlag _flag;
+  ClientStates _state;
   uintptr_t _sd;
   std::string _recvBuff;
   Request _request;
@@ -68,7 +68,7 @@ class Client {
   void receiveRequest();
   void newHTTPMethod();
   void sendResponse();
-  void setFlag(ClientFlag flag);
+  void setState(ClientStates state);
   void parseRequest(short port);
   bool isCgi();
   void doRequest();
@@ -79,7 +79,10 @@ class Client {
   void clear();
   void setResponseConnection();
   void setConnectionClose();
-  ClientFlag getFlag() const;
+  void removeTimeOutEventInEventsToAdd(
+      std::vector<struct kevent> &_eventsToAdd);
+
+  ClientStates getState() const;
   class RecvFailException : public std::exception {
    public:
     const char *what() const throw();
