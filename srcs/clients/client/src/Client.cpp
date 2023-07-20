@@ -178,14 +178,15 @@ void Client::clear() {
 }
 
 void Client::setResponseConnection() {
-  if (_request.getHeaderField("connection") == "close")
-    _response.setHeaderField("connection", "close");
-  else
-    _response.setHeaderField("connection", "keep-alive");
+  if (_request.getHeaderField("connection") == "close") {
+    _response.setHeaderField("Connection", "close");
+  } else {
+    _response.setHeaderField("Connection", "keep-alive");
+  }
   _response.assembleResponse();
   _state = PROCESS_RESPONSE;
 }
 
 void Client::setConnectionClose() {
-  _request.setHeaderField("connection", "close");
+  _request.setHeaderField("Connection", "close");
 }

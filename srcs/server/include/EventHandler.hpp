@@ -17,16 +17,24 @@ class EventHandler : public Kqueue {
   struct kevent* _currentEvent;
   bool _errorFlag;
 
-  void checkErrorOnSocket(void);
   void acceptClient(void);
-  void disconnectClient(Client* client);
   void registClient(const uintptr_t clientSocket);
-  void processRequest(Client& client);
-  void processResponse(Client& client);
-  void processTimeOut(Client& client);
+  void disconnectClient(Client* client);
+
+  void checkErrorOnSocket(void);
 
   void clientCondtion();
   void cgiCondition();
+
+  void processRequest(Client& client);
+  void handleTimer(Client& client);
+  void enactRequestAndCreateResponse(Client& client);
+  void handleExceptionStatusCode(Client& client);
+
+  void processResponse(Client& client);
+  void validateConnection(Client& client);
+
+  void processTimeOut(Client& client);
 
  public:
   EventHandler(const std::vector<Server*>& serverVector);
