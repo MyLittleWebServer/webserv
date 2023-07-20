@@ -62,6 +62,7 @@ void CandidateFields::initCandidateFields() {
   _candidateFields.insert("x-correlation-id");
   _candidateFields.insert("x-csrf-token");
   _candidateFields.insert("x-device-user-agent");
+  _candidateFields.insert("te");
 }
 
 CandidateFields& CandidateFields::getInstance() {
