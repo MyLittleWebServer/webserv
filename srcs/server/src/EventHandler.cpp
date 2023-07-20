@@ -126,7 +126,6 @@ void EventHandler::processRequest(Client &currClient) {
 void EventHandler::processResponse(Client &currClient) {
   if (currClient.getState() != PROCESS_RESPONSE) {
     currClient.setResponseConnection();
-    currClient.setFlag(PROCESS_RESPONSE);
   }
   try {
     currClient.sendResponse();
