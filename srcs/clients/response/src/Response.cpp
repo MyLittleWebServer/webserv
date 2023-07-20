@@ -34,19 +34,13 @@ std::string &Response::getFieldValue(const std::string &key) {
   return (this->_headerFields[key]);
 }
 
-void Response::createExceptionResponse(RequestDts &dts) {
-  resetResponse();
-  this->_statusCode = *dts.statusCode;
-  // response for 3xx
-  if (this->_statusCode >= E_301_MOVED_PERMANENTLY &&
-      this->_statusCode <= E_308_PERMANENT_REDIRECT) {
-    if (dts.path->empty()) *dts.path = "/";
-    this->setHeaderField("Location", *dts.path);
-    this->assembleResponse();
-    this->_responseFlag = true;
-    return;
-  }
-  // response for 4xx, 5xx
+void Response::create300Response(RequestDts &dts) {
+  if (dts.path->empty()) *dts.path = "/";
+  this->setHeaderField("Location", *dts.path);
+  this->assembleResponse();
+}
+
+void Response::create400And500Response(RequestDts &dts) {
   if (*dts.matchedServer != NULL) {
     this->configureErrorPages(dts);
   } else {
@@ -55,8 +49,18 @@ void Response::createExceptionResponse(RequestDts &dts) {
   }
   this->setHeaderField("Content-Length", itos(this->_body.size()));
   this->assembleResponse();
+}
 
-  this->_responseFlag = true;
+void Response::createExceptionResponse(RequestDts &dts) {
+  resetResponse();
+  this->_statusCode = *dts.statusCode;
+  if (this->_statusCode >= E_301_MOVED_PERMANENTLY &&
+      this->_statusCode <= E_308_PERMANENT_REDIRECT) {
+    create300Response(dts);
+  } else {
+    create400And500Response(dts);
+  }
+  _responseFlag = true;
 }
 
 void Response::assembleResponseLine(void) {
