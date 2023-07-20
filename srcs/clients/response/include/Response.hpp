@@ -30,6 +30,9 @@ class Response : public IResponse {
   void putBody(void);
   void configureErrorPages(RequestDts &dts);
 
+  void create300Response(RequestDts &dts);
+  void create400And500Response(RequestDts &dts);
+
  public:
   virtual void createExceptionResponse(RequestDts &dts);
   bool getResponseFlag(void) const;
