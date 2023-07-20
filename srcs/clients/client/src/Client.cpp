@@ -42,18 +42,40 @@ Client::~Client(void) {
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
+  _state = RECEIVE_DONE;
   return (n < RECEIVE_LEN ||
           recv(_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
 }
 
+/**
+ * @brief 클라이언트가 요청을 수신합니다.
+ *
+ * @details
+ * 1. 클라이언트의 현재 상태를 RECEIVING으로 설정합니다.
+ * 2. recv를 통해 client의 정적 변수 _buf에 수신 데이터를 저장합니다.
+ * 4. recv로 받은 n의 값이 0보다 작거나 같으면 예외를 발생시킵니다.
+ *  이는 수신 중 오류가 발생했거나 클라이언트가 연결을 끊었음을 나타냅니다.
+ * 5. 수신된 데이터를 _recvBuff에 추가합니다.
+ * 6. _buf를 다시 0으로 초기화합니다.
+ * 7. 요청을 완전히 수신했는지 checkIfReceiveFinished를 사용하여 확인합니다.
+ * 만약 완전히 수신되었으면, 루프를 탈출합니다.
+ *
+ * @exception Client::RecvFailException
+ * recv 함수가 -1을 반환하면 발생하는 예외입니다. 이는 수신 중 오류가 발생했음을
+ * 나타냅니다.
+ * @exception Client::DisconnectedDuringRecvException
+ * recv 함수가 0을 반환하면 발생하는 예외입니다. 이는 클라이언트가 요청 수신 중
+ * 연결을 끊었음을 나타냅니다.
+ */
 void Client::receiveRequest(void) {
   _state = RECEIVING;
   while (true) {
     ssize_t n = recv(_sd, Client::_buf, RECEIVE_LEN, 0);
-    if (n <= 0) {
-      if (n == -1) throw Client::RecvFailException();
+    if (n == -1)
+      throw Client::RecvFailException();
+    else if (n <= 0)
       throw Client::DisconnectedDuringRecvException();
-    }
+
     _recvBuff.insert(_recvBuff.end(), Client::_buf, Client::_buf + n);
     std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
@@ -90,15 +112,32 @@ bool Client::isCgi() { return _request.isCgi(); }
 void Client::doRequest() {
   _method->doRequest(_request.getRequestParserDts(), _response);
 }
-
+/**
+ * @brief 클라이언트가 응답을 전송합니다.
+ *
+ * @details
+ * 1. Response객체로 부터 전송할 데이터의 response를 받아옵니다.
+ * 2. send를 통해 SD로 response의 데이터를 로직에 맞춰 전송합니다.
+ * 3. send 함수의 오류를 처리합니다.
+ * 4. send로 보낸 n의 값이 (response의 크기 - 마지막으로 보낸 위치)와 다르다면
+ * 현재 함수에서 탈출합니다.
+ * 5. Request의 connection 헤더 필드가 close라면 state를 END_CLOSE로 설정합니다.
+ * 6. 그렇지 않다면 state를 END_KEEP_ALIVE로 설정합니다.
+ *
+ * @exception Client::SendFailException
+ * send 함수가 -1을 반환하면 발생하는 예외입니다. 이는 전송 중 오류가 발생했음을
+ * 나타냅니다.
+ * @exception Client::DisconnectedDuringSendException
+ * send 함수가 0을 반환하면 발생하는 예외입니다. 이는 클라이언트가 응답 전송 중
+ * 연결을 끊었음을 나타냅니다.
+ */
 void Client::sendResponse() {
   const std::string &response = _response.getResponse();
   ssize_t n = send(_sd, response.c_str() + _lastSentPos,
                    response.size() - _lastSentPos, 0);
-  if (n <= 0) {
-    if (n == -1) throw Client::SendFailException();
-    throw Client::DisconnectedDuringSendException();
-  }
+  if (n == -1) throw Client::SendFailException();
+  if (n <= 0) throw Client::DisconnectedDuringSendException();
+
   if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
     _lastSentPos += n;
     return;
@@ -125,7 +164,12 @@ ClientStates Client::getState() const { return _state; }
 
 void Client::setState(ClientStates state) { _state = state; }
 
-uintptr_t Client::getSD() const { return _sd; }
+/**
+ * @brief 소켓 디스크립터를 반환합니다.
+ *
+ * @return uintptr_t
+ */
+uintptr_t Client::getSD() const { return this->_sd; }
 
 const char *Client::RecvFailException::what() const throw() {
   return ("error occured in recv()");
@@ -171,6 +215,18 @@ void Client::clear() {
   }
 }
 
+/**
+ * @brief 연결 응답을 설정합니다.
+ *
+ * @details
+ * 1. Request의 connection 헤더 필드가 close라면 Response의 connection 헤더
+ * 필드도 close로 설정합니다.
+ * 2. Request의 connection 헤더 필드가 명시 되어있지 않다면 Response의
+ * connection 헤더 필드도 keep-alive로 설정합니다.
+ * 3. Response를 조립합니다.
+ * 4. state를 PROCESS_RESPONSE로 설정합니다.
+ *
+ */
 void Client::setResponseConnection() {
   if (_request.getHeaderField("connection") == "close") {
     _response.setHeaderField("Connection", "close");
