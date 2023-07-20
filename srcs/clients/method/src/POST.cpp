@@ -14,7 +14,6 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
 #ifndef DEBUG_MSG
   std::cout << " >>>>>>>>>>>>>>> POST\n";
   std::cout << "path: " << *dts.path << "\n";
-  std::cout << "body: " << *dts.body << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";

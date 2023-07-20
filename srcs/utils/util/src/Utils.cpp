@@ -35,3 +35,38 @@ std::string toLowerString(std::string str) {
   }
   return str;
 }
+
+std::string ft_trimOWS(std::string &str) {
+  std::string result = str;
+  size_t pos = result.find_first_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(0, pos);
+  }
+  pos = result.find_last_not_of(" \t");
+  if (pos != std::string::npos) {
+    result.erase(pos + 1);
+  }
+  return result;
+}
+
+std::string ft_trim(std::string &str) {
+  std::string result = str;
+  size_t pos = 0;
+  while (pos < result.size() && std::isspace(result[pos])) pos++;
+  result.erase(0, pos);
+  pos = result.size() - 1;
+  while (pos > 0 && std::isspace(result[pos])) pos--;
+  result.erase(pos + 1);
+  return result;
+}
+
+std::vector<std::string> ft_split(const std::string &str, char delim) {
+  std::vector<std::string> result;
+  std::istringstream iss(str);
+  std::string token;
+
+  while (std::getline(iss, token, delim)) {
+    result.push_back(token);
+  }
+  return result;
+}

@@ -25,6 +25,7 @@ class Request : public IRequest {
   std::string _request;
   std::string _method;
   std::string _path;
+  std::string _originalPath;
   std::string _anchor;
   std::string _protocol;
   std::string _cgi_path;
@@ -58,6 +59,7 @@ class Request : public IRequest {
   const std::string &getBody(void) const;
   const std::string &getQueryString(void) const;
   const std::string getHeaderField(std::string key) const;
+  void setHeaderField(std::string key, std::string value);
 
   size_t getContentLength(void) const;
   const std::map<std::string, std::string> &getQueryStringElements(void) const;
