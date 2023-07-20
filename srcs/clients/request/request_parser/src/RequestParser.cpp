@@ -471,8 +471,24 @@ bool RequestParser::allHeaderRecieved(RequestDts &dts) {
   return true;
 }
 
+/**
+ * @brief parseRequest;
+ *
+ * request 파싱을 위한 전체 순서를 제어합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @param port 서버 포트 번호
+ *
+ * @return void
+ *
+ * @author middlefitting
+ * @date 2023.07.18
+ */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
-  if (!allHeaderRecieved(dts)) return;
+  if (!allHeaderRecieved(dts)) {
+    attackGuard(dts);
+    return;
+  }
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
@@ -483,6 +499,27 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   validatePath(dts);
   parseCgi(dts);
   requestChecker(dts);
+}
+
+/**
+ * @brief attackGuard;
+ *
+ * CRLF CRLF가 들어오지 않은 상황에서 클라이언트가 악의적으로 긴 데이터를 보내는
+ * 것을 방지합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ *
+ * @return request에 \r\n\r\n 존재여부를 반환합니다.
+ *
+ * @author middlefitting
+ * @date 2023.07.18
+ */
+void RequestParser::attackGuard(RequestDts &dts) {
+  IProxyConfig &proxyConfig = Config::getInstance().getProxyConfig();
+  if (dts.request->size() > (proxyConfig.getClientMaxBodySize() +
+                             proxyConfig.getRequestHeaderLimitSize() +
+                             proxyConfig.getRequestUriLimitSize()))
+    throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 
 RequestParser &RequestParser::getInstance() {
