@@ -762,9 +762,7 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
   std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
-  if ((it != methodInfo.end() && it->second == true) ||
-      (*dts.method == "DELETE" && methodInfo.at("POST") == true))
-    return;
+  if ((it != methodInfo.end() && it->second == true)) return;
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
