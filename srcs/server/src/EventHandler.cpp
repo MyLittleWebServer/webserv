@@ -194,7 +194,6 @@ void EventHandler::disconnectClient(Client *client) {
               static_cast<void *>(client));
   deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
-#endif
   delete client;
 }
 
