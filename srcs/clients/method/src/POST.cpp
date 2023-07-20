@@ -33,6 +33,20 @@ void POST::generateResource(RequestDts& dts) {
     this->generateUrlEncoded(dts);
   } else if (parsedContent == "multipart/form-data") {
     this->generateMultipart(dts);
+  } else {
+    std::string mimeType = "txt"; // default mime type as plain text
+    MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
+    Config::getInstance().getMimeTypesConfig());
+
+    try {
+      std::string mimeType = mime.getVariable(parsedContent);
+      this->_content = (*dts.body);
+      this->_title = "file";
+      writeTextBody(dts, mimeType);
+    }
+    catch (ExceptionThrower::InvalidConfigException& e) {
+      throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
+    }
   }
 }
 
@@ -59,7 +73,7 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   std::cout << "content: " << this->_content << "\n";
   std::cout << "path: " << *dts.path << "\n";
 #endif
-  writeTextBody(dts);
+  writeTextBody(dts, "txt");
 }
 
 void POST::generateMultipart(RequestDts& dts) {
@@ -77,7 +91,7 @@ void POST::generateMultipart(RequestDts& dts) {
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
       this->_title = "Unsupported File Name";
       this->_content = "Unsupported File Source";
-      writeTextBody(dts);
+      writeTextBody(dts, "txt");
       return;
     }
     this->_title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
@@ -104,20 +118,22 @@ void POST::generateMultipart(RequestDts& dts) {
   }
 }
 
-void POST::writeTextBody(RequestDts& dts) {
+void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
   std::string filename;
   if (stat(dts.path->c_str(), &fileinfo) != 0)
     throw((*dts.statusCode) = E_403_FORBIDDEN);
   if ((*dts.path)[dts.path->length() - 1] != '/')
-    filename = *dts.path + "/" + this->_title + ".txt";
+    filename = *dts.path + "/" + this->_title + "." + mimeType;
   else
-    filename = *dts.path + this->_title + ".txt";
+    filename = *dts.path + this->_title + "." + mimeType;
   std::ofstream file(filename, std::ios::out);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file << this->_content << "\n";
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  this->_title.clear();
+  this->_content.clear();
 }
 
 void POST::writeBinaryBody(RequestDts& dts) {
