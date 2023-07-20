@@ -30,12 +30,18 @@ class RequestParser : public IRequestParser {
       RequestDts& dts);
   void matchServerConf(short port, RequestDts& dts);
   void validatePath(RequestDts& dts);
+  void checkAndParseRedirection(RequestDts& dts);
 
  private:
+  void attackGuard(RequestDts& dts);
   void setConnectionClose(RequestDts& dts);
   void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
   void validateContentLengthHeader(RequestDts& dts);
   void validateHeaderKey(std::string& key, RequestDts& dts);
+  void validateHostHeader(short port, RequestDts& dts);
+  void hostHeaderNameCheck(std::string hostName, RequestDts& dts);
+  void hostHeaderportCheck(short port, std::string portName, RequestDts& dts);
+
   void removeNotAscii(std::string& field);
 
  private:
@@ -45,12 +51,12 @@ class RequestParser : public IRequestParser {
   void checkMethod(RequestDts& dts);
   void checkProtocolVersion(RequestDts& dts);
   void checkRequestUriLimitLength(RequestDts& dts);
-
   void checkContentLenghWithTransferEncoding(RequestDts& dts);
   void checkHeaderLimitSize(RequestDts& dts);
   void checkBodyLimitLength(RequestDts& dts);
   void checkAllowedMethods(RequestDts& dts);
   void checkCgiMethod(RequestDts& dts);
+  void checkTE(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;

@@ -15,6 +15,7 @@ typedef struct RequestDts {
   std::string* request;
   std::string* method;
   std::string* path;
+  std::string* originalPath;
   std::string* anchor;
   std::string* protocol;
   std::string* cgi_path;

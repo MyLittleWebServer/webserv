@@ -75,6 +75,17 @@
       });
     </script>
 
+    <form action="/directory" method="GET" id="myForm">
+      <input type="submit" value="Browse Files">
+    </form>
+
+    <script>
+      document.getElementById('myForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        window.location.href = this.action;
+      });
+    </script>
+
     <div class="button-wrapper">
       <h3> ChatGPT </h3>
       <h4> 사랑니를 뺀 주정뱅이 친구에게 해줄 수 있는 최고의 말과 니가 해야하는 행동에 대해서 말해줘 </h4>

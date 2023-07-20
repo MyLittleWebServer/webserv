@@ -72,8 +72,8 @@ class Client {
   void parseRequest(short port);
   bool isCgi();
   void doRequest();
-  void createErrorResponse();
-  void createErrorResponse(Status statusCode);
+  void createExceptionResponse();
+  void createExceptionResponse(Status statusCode);
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
