@@ -42,7 +42,7 @@ class Utils;
 
 class Client {
  private:
-  ClientStates _clientState;
+  ClientStates _state;
   uintptr_t _sd;
   std::string _recvBuff;
   Request _request;
@@ -68,12 +68,12 @@ class Client {
   void receiveRequest();
   void newHTTPMethod();
   void sendResponse();
-  void setFlag(ClientStates flag);
+  void setState(ClientStates state);
   void parseRequest(short port);
   bool isCgi();
   void doRequest();
-  void createErrorResponse();
-  void createErrorResponse(Status statusCode);
+  void createExceptionResponse();
+  void createExceptionResponse(Status statusCode);
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
@@ -82,7 +82,7 @@ class Client {
   void removeTimeOutEventInEventsToAdd(
       std::vector<struct kevent> &_eventsToAdd);
 
-  ClientStates getFlag() const;
+  ClientStates getState() const;
   class RecvFailException : public std::exception {
    public:
     const char *what() const throw();

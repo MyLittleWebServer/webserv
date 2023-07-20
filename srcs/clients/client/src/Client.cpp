@@ -9,14 +9,14 @@
 
 char Client::_buf[RECEIVE_LEN] = {0};
 
-Client::Client() : _clientState(START), _sd(0), _method(NULL) {
+Client::Client() : _state(START), _sd(0), _method(NULL) {
   _method = NULL;
   _cgi = NULL;
   _lastSentPos = 0;
 }
 
 Client::Client(const uintptr_t sd) {
-  _clientState = START;
+  _state = START;
   _sd = sd;
   _method = NULL;
   _cgi = NULL;
@@ -24,7 +24,7 @@ Client::Client(const uintptr_t sd) {
 }
 
 Client &Client::operator=(const Client &client) {
-  _clientState = client._clientState;
+  _state = client._state;
   _sd = client._sd;
   _request = client._request;
   _method = client._method;
@@ -47,7 +47,7 @@ bool Client::checkIfReceiveFinished(ssize_t n) {
 }
 
 void Client::receiveRequest(void) {
-  _clientState = RECEIVING;
+  _state = RECEIVING;
   while (true) {
     ssize_t n = recv(_sd, Client::_buf, RECEIVE_LEN, 0);
     if (n <= 0) {
@@ -68,17 +68,17 @@ void Client::receiveRequest(void) {
 
 void Client::removeTimeOutEventInEventsToAdd(
     std::vector<struct kevent> &_eventsToAdd) {
-  _clientState = METHOD_SELECT;
+  _state = METHOD_SELECT;
   _eventsToAdd.pop_back();
 }
 
-void Client::createErrorResponse() {
-  _response.createErrorResponse(_request.getRequestParserDts());
+void Client::createExceptionResponse() {
+  _response.createExceptionResponse(_request.getRequestParserDts());
 }
 
-void Client::createErrorResponse(Status statusCode) {
+void Client::createExceptionResponse(Status statusCode) {
   *_request.getRequestParserDts().statusCode = statusCode;
-  _response.createErrorResponse(_request.getRequestParserDts());
+  _response.createExceptionResponse(_request.getRequestParserDts());
 }
 
 void Client::createSuccessResponse() {
@@ -88,7 +88,7 @@ void Client::createSuccessResponse() {
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _clientState = REQUEST_DONE;
+  if (_request.isParsed()) _state = REQUEST_DONE;
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
@@ -110,10 +110,10 @@ void Client::sendResponse() {
     return;
   }
   if (_request.getHeaderField("connection") == "close") {
-    _clientState = END_CLOSE;
+    _state = END_CLOSE;
     return;
   }
-  _clientState = END_KEEP_ALIVE;
+  _state = END_KEEP_ALIVE;
 }
 
 void Client::newHTTPMethod(void) {
@@ -127,9 +127,9 @@ void Client::newHTTPMethod(void) {
 
 IMethod *Client::getMethod() const { return _method; }
 
-ClientStates Client::getFlag() const { return _clientState; }
+ClientStates Client::getState() const { return _state; }
 
-void Client::setFlag(ClientStates flag) { _clientState = flag; }
+void Client::setState(ClientStates state) { _state = state; }
 
 uintptr_t Client::getSD() const { return _sd; }
 
@@ -160,7 +160,7 @@ void Client::makeAndExecuteCgi() {
 }
 
 void Client::clear() {
-  _clientState = START;
+  _state = START;
   _lastSentPos = 0;
   _recvBuff.clear();
 
@@ -183,6 +183,7 @@ void Client::setResponseConnection() {
   else
     _response.setHeaderField("connection", "keep-alive");
   _response.assembleResponse();
+  _state = PROCESS_RESPONSE;
 }
 
 void Client::setConnectionClose() {
