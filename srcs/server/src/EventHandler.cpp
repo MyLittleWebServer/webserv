@@ -123,8 +123,7 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getFlag() == RECEIVING) {
       return;
     }
-    currClient.setFlag(METHOD_SELECT);
-    Kqueue::_eventsToAdd.pop_back();
+    currClient.removeTimeOutEventInEventsToAdd(Kqueue::_eventsToAdd);
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -159,7 +158,7 @@ void EventHandler::enactRequestAndCreateResponse(Client &currClient) {
 }
 
 void EventHandler::handleExceptionStatusCode(Client &currClient) {
-  if (currClient.getFlag() == RECEIVING) {
+  if (currClient.getState() == RECEIVING) {
     Kqueue::_eventsToAdd.pop_back();
   }
   currClient.createExceptionResponse();
@@ -168,7 +167,7 @@ void EventHandler::handleExceptionStatusCode(Client &currClient) {
 }
 
 void EventHandler::processResponse(Client &currClient) {
-  if (currClient.getFlag() != PROCESS_RESPONSE) {
+  if (currClient.getState() != PROCESS_RESPONSE) {
     currClient.setResponseConnection();
   }
   try {
@@ -182,13 +181,13 @@ void EventHandler::processResponse(Client &currClient) {
 }
 
 void EventHandler::validateConnection(Client &currClient) {
-  if (currClient.getFlag() == END_KEEP_ALIVE) {
+  if (currClient.getState() == END_KEEP_ALIVE) {
     Kqueue::disableEvent(currClient.getSD(), EVFILT_WRITE,
                          static_cast<void *>(&currClient));
     Kqueue::enableEvent(currClient.getSD(), EVFILT_READ,
                         static_cast<void *>(&currClient));
     currClient.clear();
-  } else if (currClient.getFlag() == END_CLOSE) {
+  } else if (currClient.getState() == END_CLOSE) {
     disconnectClient(&currClient);
   }
 }
