@@ -40,6 +40,7 @@ void Response::createExceptionResponse(RequestDts &dts) {
   // response for 3xx
   if (this->_statusCode >= E_301_MOVED_PERMANENTLY &&
       this->_statusCode <= E_308_PERMANENT_REDIRECT) {
+    if (dts.path->empty()) *dts.path = "/";
     this->setHeaderField("Location", *dts.path);
     this->assembleResponse();
     this->_responseFlag = true;
