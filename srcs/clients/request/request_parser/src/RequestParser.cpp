@@ -528,6 +528,7 @@ RequestParser &RequestParser::getInstance() {
 }
 
 void RequestParser::requestChecker(RequestDts &dts) {
+  checkContentRangeHeader(dts);
   checkRequestLine(dts);
   checkContentLenghWithTransferEncoding(dts);
   checkHeaderLimitSize(dts);
@@ -789,4 +790,20 @@ void RequestParser::checkTE(RequestDts &dts) {
   if ((*dts.headerFields)["te"] == "chunked")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
+}
+
+/**
+ * @brief checkContentRangeHeader;
+ *
+ * RFC 7231 4.3.4 PUT MUST
+ * Content-Range가 PUT 요청에 사용되었을 때 400 응답을 보냅니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
+void RequestParser::checkContentRangeHeader(RequestDts &dts) {
+  if (ft_trim((*dts.headerFields)["content-range"]).empty()) return;
+  if (*dts.method == "PUT") throw(*dts.statusCode = E_400_BAD_REQUEST);
 }

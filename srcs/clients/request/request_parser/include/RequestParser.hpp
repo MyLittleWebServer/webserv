@@ -57,6 +57,7 @@ class RequestParser : public IRequestParser {
   void checkAllowedMethods(RequestDts& dts);
   void checkCgiMethod(RequestDts& dts);
   void checkTE(RequestDts& dts);
+  void checkContentRangeHeader(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;
