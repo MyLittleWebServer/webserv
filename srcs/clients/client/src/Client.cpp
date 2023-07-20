@@ -42,6 +42,7 @@ Client::~Client(void) {
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
+  _state = RECEIVE_DONE;
   return (n < RECEIVE_LEN ||
           recv(_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
 }
@@ -89,7 +90,6 @@ void Client::receiveRequest(void) {
 
 void Client::removeTimeOutEventInEventsToAdd(
     std::vector<struct kevent> &_eventsToAdd) {
-  _state = METHOD_SELECT;
   _eventsToAdd.pop_back();
 }
 
@@ -229,17 +229,19 @@ void Client::clear() {
  * 2. Request의 connection 헤더 필드가 명시 되어있지 않다면 Response의
  * connection 헤더 필드도 keep-alive로 설정합니다.
  * 3. Response를 조립합니다.
+ * 4. state를 PROCESS_RESPONSE로 설정합니다.
  *
  */
 void Client::setResponseConnection() {
-  if (_request.getHeaderField("connection") == "close")
-    _response.setHeaderField("connection", "close");
-  else
-    _response.setHeaderField("connection", "keep-alive");
+  if (_request.getHeaderField("connection") == "close") {
+    _response.setHeaderField("Connection", "close");
+  } else {
+    _response.setHeaderField("Connection", "keep-alive");
+  }
   _response.assembleResponse();
   _state = PROCESS_RESPONSE;
 }
 
 void Client::setConnectionClose() {
-  _request.setHeaderField("connection", "close");
+  _request.setHeaderField("Connection", "close");
 }
