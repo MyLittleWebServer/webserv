@@ -21,16 +21,28 @@
    @section Program Webserv
    - Config : 설정 파일 내용을 관리하는 정보성 클래스
    - Server : 서버를 정보를 담고있는 클래스
-   - Client : 클라이언트를 정보를 담고있는 클래스
-   - Request : 클라이언트의 요청을 파싱하는 클래스
+   - Client : 클라이언트를 정보를 담당하는 클래스
+   - Request : 클라이언트의 요청을 담당하는 클래스
+   - Response : 서버의 응답을 담당하는 클래스
 
-   @section  INOUTPUT    입출력자료
-   - INPUT           :   없음.
-   - OUTPUT      :   Hello World 화면출력.
-   @section  CREATEINFO      Created Info
+
+   @section  INOUTPUT    Web Server Info
+   -------- [ Web Server Info ] --------
+
+  socket: 4   | host: chanheki  | port: 3000
+
+  socket: 5   | host: jincpark   | port: 3000
+
+  socket: 6   | host: sechung   | port: 3030
+
+  socket: 7   | host: jang-cho   | port: 3030
+
+    -------- [ TOCA TOCA TOCA ] --------
+
+   @section  CREATEINFO      Docs Created Info
    - @author chanhihi
    - @date 2023-7-17
-   @section  MODIFYINFO      Modified Info
+   @section  MODIFYINFO      Docs Modified Info
    - 수정자/수정일   : 수정내역
    - chanhihi/2023-7-17 : 최초작성
    */
