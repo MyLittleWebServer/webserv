@@ -68,19 +68,19 @@ void EventHandler::acceptClient() {
 
 void EventHandler::registClient(const uintptr_t clientSocket) {
   Client *newClient = new Client(clientSocket);
-  Kqueue::addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-                   static_cast<void *>(newClient));
-  Kqueue::addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
-                   static_cast<void *>(newClient));
-  Kqueue::setFdSet(clientSocket, FD_CLIENT);
+  addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+           static_cast<void *>(newClient));
+  addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
+           static_cast<void *>(newClient));
+  setFdSet(clientSocket, FD_CLIENT);
 }
 
 void EventHandler::disconnectClient(Client *client) {
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
-                      static_cast<void *>(client));
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
-                      static_cast<void *>(client));
-  Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
+  deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
+              static_cast<void *>(client));
+  deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
+              static_cast<void *>(client));
+  deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
 
   std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
   delete client;
@@ -116,14 +116,16 @@ void EventHandler::cgiCondition() {
 
 void EventHandler::processRequest(Client &currClient) {
   try {
-    handleTimer(currClient);
+    if (currClient.getState() == START) {
+      registTimerEvent();
+    }
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
-    if (currClient.getFlag() == RECEIVING) {
+    if (currClient.getState() == RECEIVING) {
       return;
     }
-    currClient.removeTimeOutEventInEventsToAdd(Kqueue::_eventsToAdd);
+    deleteTimerEvent();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -138,30 +140,33 @@ void EventHandler::processRequest(Client &currClient) {
   }
 }
 
-void EventHandler::handleTimer(Client &currClient) {
-  if (currClient.getFlag() == RECEIVING) {
-    Kqueue::deleteEvent(_currentEvent->ident, EVFILT_TIMER,
-                        static_cast<void *>(_currentEvent->udata));
-  }
-  Kqueue::addEvent(_currentEvent->ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT,
-                   NOTE_SECONDS, 60, static_cast<void *>(_currentEvent->udata));
+void EventHandler::registTimerEvent() {
+  registEvent(_currentEvent->ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT,
+              NOTE_SECONDS, 60, static_cast<void *>(_currentEvent->udata));
+}
+
+void EventHandler::deleteTimerEvent() {
+  deleteEvent(_currentEvent->ident, EVFILT_TIMER,
+              static_cast<void *>(_currentEvent->udata));
 }
 
 void EventHandler::enactRequestAndCreateResponse(Client &currClient) {
   currClient.newHTTPMethod();
   currClient.doRequest();
   currClient.createSuccessResponse();
-  Kqueue::disableEvent(currClient.getSD(), EVFILT_READ,
-                       static_cast<void *>(&currClient));
-  Kqueue::enableEvent(currClient.getSD(), EVFILT_WRITE,
-                      static_cast<void *>(&currClient));
+  disableEvent(currClient.getSD(), EVFILT_READ,
+               static_cast<void *>(&currClient));
+  enableEvent(currClient.getSD(), EVFILT_WRITE,
+              static_cast<void *>(&currClient));
 }
 
 void EventHandler::handleExceptionStatusCode(Client &currClient) {
   if (currClient.getState() == RECEIVING) {
-    Kqueue::_eventsToAdd.pop_back();
+    deleteTimerEvent();
   }
   currClient.createExceptionResponse();
+  disableEvent(currClient.getSD(), EVFILT_READ,
+               static_cast<void *>(&currClient));
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));
 }
@@ -182,10 +187,10 @@ void EventHandler::processResponse(Client &currClient) {
 
 void EventHandler::validateConnection(Client &currClient) {
   if (currClient.getState() == END_KEEP_ALIVE) {
-    Kqueue::disableEvent(currClient.getSD(), EVFILT_WRITE,
-                         static_cast<void *>(&currClient));
-    Kqueue::enableEvent(currClient.getSD(), EVFILT_READ,
-                        static_cast<void *>(&currClient));
+    disableEvent(currClient.getSD(), EVFILT_WRITE,
+                 static_cast<void *>(&currClient));
+    enableEvent(currClient.getSD(), EVFILT_READ,
+                static_cast<void *>(&currClient));
     currClient.clear();
   } else if (currClient.getState() == END_CLOSE) {
     disconnectClient(&currClient);
@@ -195,6 +200,8 @@ void EventHandler::validateConnection(Client &currClient) {
 void EventHandler::processTimeOut(Client &currClient) {
   currClient.setConnectionClose();
   currClient.createExceptionResponse(E_408_REQUEST_TIMEOUT);
+  disableEvent(currClient.getSD(), EVFILT_WRITE,
+               static_cast<void *>(&currClient));
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));
 }
