@@ -80,7 +80,8 @@ sources1 +=	GET.cpp \
 						POST.cpp \
 						DELETE.cpp \
 						PUT.cpp \
-						DummyMethod.cpp
+						DummyMethod.cpp \
+						HEAD.cpp
 
 # ---- CGI ---- #
 
