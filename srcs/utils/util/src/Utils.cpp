@@ -50,6 +50,7 @@ std::string ft_trimOWS(std::string &str) {
 }
 
 std::string ft_trim(std::string &str) {
+  if (str.empty()) return str;
   std::string result = str;
   size_t pos = 0;
   while (pos < result.size() && std::isspace(result[pos])) pos++;
