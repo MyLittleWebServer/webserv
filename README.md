@@ -1,5 +1,5 @@
 ## 🌐 Webserv
-<img width="100" height="100" src="tests/html/asset/index.ico/apple-icon.png">
+<img width="100" height="100" style="transform: scaleX(-1);" src="tests/html/asset/index.ico/apple-icon.png">
 
 #### My little web server
 
