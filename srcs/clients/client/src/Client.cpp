@@ -42,7 +42,6 @@ Client::~Client(void) {
 }
 
 bool Client::checkIfReceiveFinished(ssize_t n) {
-  _state = RECEIVE_DONE;
   return (n < RECEIVE_LEN ||
           recv(_sd, Client::_buf, RECEIVE_LEN, MSG_PEEK) == -1);
 }
