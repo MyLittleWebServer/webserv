@@ -1,18 +1,41 @@
+/**
+ * @file Status.cpp
+ * @brief HTTP 응답 코드와 메세지를 정의한 소스파일입니다.
+ * @details
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "Status.hpp"
 
 #include <string>
 
+/**
+ * @brief HTTP 응답 코드와 메세지를 저장하는 구조체입니다.
+ *
+ * @details
+ * 1. message : 응답 메세지
+ * 2. code : 응답 코드
+ * 3. contentLength : 응답 바디의 길이
+ * 4. body : 응답 바디
+ *
+ * @see https://developer.mozilla.org/ko/docs/Web/HTTP/Status
+ *
+ * @author chanhihi
+ * @date 2021-07-20
+ */
 msgArray statusInfo[] = {
-    msgArray("OK", "200", 0, NULL),
-    msgArray("Created", "201", 0, NULL),
+    msgArray("OK", "200", 0, ""),
+    msgArray("Created", "201", 0, ""),
     msgArray("Accepted", "202", 16, "Your request is being processed."),
-    msgArray("No Content", "204", 0, NULL),
-    msgArray("Moved Permanently", "301", 0, NULL),
-    msgArray("Found", "302", 0, NULL),
-    msgArray("See Other", "303", 0, NULL),
-    msgArray("Not Modified", "304", 0, NULL),
-    msgArray("Temporary Redirect", "307", 0, NULL),
-    msgArray("Permanent Redirect", "308", 0, NULL),
+    msgArray("No Content", "204", 0, ""),
+    msgArray("Moved Permanently", "301", 0, ""),
+    msgArray("Found", "302", 0, ""),
+    msgArray("See Other", "303", 0, ""),
+    msgArray("Not Modified", "304", 0, ""),
+    msgArray("Temporary Redirect", "307", 0, ""),
+    msgArray("Permanent Redirect", "308", 0, ""),
     msgArray("Bad Request", "400", 11, "Invalid request."),
     msgArray("Unauthorized", "401", 12, "Authentication Required."),
     msgArray("Forbidden", "403", 9, "Access forbidden."),
