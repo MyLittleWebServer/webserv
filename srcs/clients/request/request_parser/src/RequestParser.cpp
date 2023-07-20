@@ -477,6 +477,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseHeaderFields(dts);
   validateContentLengthHeader(dts);
   validateHostHeader(port, dts);
+  ValidateContentEncoding(dts);
   parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
@@ -495,6 +496,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkHeaderLimitSize(dts);
   checkBodyLimitLength(dts);
   checkAllowedMethods(dts);
+  checkContentType(dts);
   checkCgiMethod(dts);
   checkTE(dts);
 }
@@ -769,4 +771,20 @@ void RequestParser::checkContentType(RequestDts &dts) {
   if (!(*dts.headerFields)["content-type"].empty()) return;
   if (*dts.method == "POST" || *dts.method == "PUT")
     (*dts.headerFields)["content-type"] = "application/octet-stream";
+}
+
+/**
+ * @brief ValidateContentEncoding;
+ *
+ * RFC 7231 3.1.2.2 Content Encoding (MAY)
+ * 서버는 인코딩을 지원하지 않기 때문에 해당 헤더가 존재시 415를 반환합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.20
+ */
+void RequestParser::ValidateContentEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["content-encoding"].empty()) return;
+  throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
 }
