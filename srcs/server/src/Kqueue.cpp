@@ -10,8 +10,7 @@ std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>();
 struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {};
 
 Kqueue::Kqueue(void) {
-  if ((this->_kq = kqueue()) == -1)
-    throwWithPerror("kqueue() error\n" + std::string(strerror(errno)));
+  if ((this->_kq = kqueue()) == -1) throwWithErrorMessage("kqueue error");
 }
 
 Kqueue::~Kqueue() {}
@@ -41,9 +40,7 @@ void Kqueue::disableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_DISABLE, 0, 0, udata);
   int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1)
-    throwWithPerror("kevent() error on disableEvent()\n" +
-                    std::string(strerror(errno)));
+  if (ret == -1) throwWithErrorMessage("kevent error on disableEvent");
 }
 
 void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
@@ -51,26 +48,21 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
   int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1)
-    throwWithPerror("kevent() error on enableEvent()\n" +
-                    std::string(strerror(errno)));
+  if (ret == -1) throwWithErrorMessage("kevent error on enableEvent");
 }
 
-void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void *udata) {
+void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1)
-    throwWithPerror("kevent() error on deleteEvent\n" +
-                    std::string(strerror(errno)));
+  if (ret == -1) throwWithErrorMessage("kevent error on deleteEvent");
 }
 
 int Kqueue::newEvents() {
   int new_events = kevent(_kq, &_eventsToAdd[0], _eventsToAdd.size(),
                           _eventList, CONCURRENT_EVENTS, NULL);
-  if (new_events == -1)
-    throwWithPerror("kevent() error\n" + std::string(strerror(errno)));
+  if (new_events == -1) throwWithErrorMessage("kevent error on newEvents");
   _eventsToAdd.clear();
   return (new_events);
 }

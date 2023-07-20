@@ -17,6 +17,6 @@ int main(int ac, char **av) {
     serverManager.promptServer();
     serverManager.startServer();
   } catch (...) {
-    std::cout << "fatal error" << std::endl;
+    return (errno);
   }
 }

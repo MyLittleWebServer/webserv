@@ -4,7 +4,7 @@
 
 ServerManager::ServerManager(int ac, char **av) {
   if (ac > 2 || ac < 1)
-    throwWithPerror("Usage: ./webserv [config_file]");
+    throwWithErrorMessage("Usage: ./webserv [config_file]");
   else if (ac == 2)
     Config::getInstance(av[1]);
   else

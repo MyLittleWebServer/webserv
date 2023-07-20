@@ -35,7 +35,7 @@ void EventHandler::checkFlags(void) {
 void EventHandler::checkErrorOnSocket() {
   if (_serverSocketSet.find(this->_currentEvent->ident) !=
       this->_serverSocketSet.end())
-    throwWithPerror("server socket error");
+    throwWithErrorMessage("server socket error");
   std::cout << " client socket error" << std::endl;
   disconnectClient(static_cast<Client *>(this->_currentEvent->udata));
 }
@@ -158,7 +158,7 @@ void EventHandler::processTimeOut(Client &currClient) {
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
   if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1)
-    throwWithPerror("accept() error\n" + std::string(strerror(errno)));
+    throwWithErrorMessage("accept error");
   std::cout << "accept ... : " << clientSocket << std::endl;
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
   registClient(clientSocket);

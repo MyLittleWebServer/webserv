@@ -1,8 +1,20 @@
 #include "Utils.hpp"
 
-void throwWithPerror(const std::string &msg) {
-  std::cerr << msg << std::endl;
-  throw(EXIT_FAILURE);
+/**
+ * @brief 에러 메세지를 출력하고 프로그램을 종료합니다.
+ *
+ * @details
+ * 1. 에러 메세지를 출력합니다.
+ * 2. main의 catch(...)블록으로 이동합니다.
+ *
+ * @param message
+ *
+ * @author chanhihi
+ * @date 2023-07-21
+ */
+void throwWithErrorMessage(const std::string &message) {
+  std::cerr << message << " : " << strerror(errno) << std::endl;
+  throw(errno);
 }
 
 short getBoundPort(const struct kevent *_currentEvent) {

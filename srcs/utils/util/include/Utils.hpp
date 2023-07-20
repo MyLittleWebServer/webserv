@@ -15,7 +15,7 @@
 #include "Utils.tpp"
 #include "vector"
 
-void throwWithPerror(const std::string &msg);
+void throwWithErrorMessage(const std::string &message);
 short getBoundPort(const struct kevent *_currentEvent);
 std::string getCurrentTime();
 std::string toLowerString(std::string str);
