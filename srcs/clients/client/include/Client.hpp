@@ -21,11 +21,9 @@ enum ClientStates {
   START,
   RECEIVING,
 
-  RECEIVE_DONE,
   REQUEST_HEAD,
   REQUEST_ENTITY,
 
-  REQUEST_DONE,
   METHOD_SELECT,
 
   PROCESS_RESPONSE,
@@ -79,8 +77,6 @@ class Client {
   void clear();
   void setResponseConnection();
   void setConnectionClose();
-  void removeTimeOutEventInEventsToAdd(
-      std::vector<struct kevent> &_eventsToAdd);
 
   ClientStates getState() const;
   class RecvFailException : public std::exception {

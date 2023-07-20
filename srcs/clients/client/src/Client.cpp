@@ -66,12 +66,6 @@ void Client::receiveRequest(void) {
   }
 }
 
-void Client::removeTimeOutEventInEventsToAdd(
-    std::vector<struct kevent> &_eventsToAdd) {
-  _state = METHOD_SELECT;
-  _eventsToAdd.pop_back();
-}
-
 void Client::createExceptionResponse() {
   _response.createExceptionResponse(_request.getRequestParserDts());
 }
@@ -88,7 +82,7 @@ void Client::createSuccessResponse() {
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _state = REQUEST_DONE;
+  if (_request.isParsed()) _state = METHOD_SELECT;
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
