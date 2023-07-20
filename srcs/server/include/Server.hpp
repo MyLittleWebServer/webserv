@@ -18,7 +18,7 @@
  *
  * @see _addr : Socket address, internet style의 서버의 주소를
  * 담고있습니다.
- * @see _socket : 서버의 소켓을 담고있습니다.
+ * @see _socket : 서버의 소켓(FD)을 담고있습니다.
  * @see _port : 서버의 포트를 담고있습니다.
  * @see _host : 서버의 호스트를 담고있습니다.
  *

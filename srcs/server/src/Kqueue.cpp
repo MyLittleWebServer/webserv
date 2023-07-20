@@ -1,3 +1,11 @@
+/**
+ * @file Kqueue.cpp
+ * @brief FD, kevent를 관리하는 소스파일입니다.
+ * @author TocaTocaToca
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "Kqueue.hpp"
 
 fd_set Kqueue::_server_fds;

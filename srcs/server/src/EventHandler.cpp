@@ -1,3 +1,10 @@
+/**
+ * @file EventHandler.cpp
+ * @brief 서버의 이벤트를 처리하는 소스파일입니다.
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
 
 #include "EventHandler.hpp"
 
@@ -18,6 +25,8 @@
  * serverVector의 Server 객체를 삭제합니다.
  *
  * @param serverVector
+ *
+ * @return EventHandler
  *
  * @author chanhihi
  * @date 2023.07.17
@@ -94,7 +103,7 @@ void EventHandler::setCurrentEvent(int i) {
  * filter가 EVFILT_TIMER라면 processTimeOut() 함수를 호출합니다.
  *
  */
-void EventHandler::clientCondtion() {
+void EventHandler::clientCondition() {
   Client &currClient = *(static_cast<Client *>(this->_currentEvent->udata));
   if (this->_currentEvent->filter == EVFILT_READ) {
     processRequest(currClient);
@@ -121,11 +130,11 @@ void EventHandler::cgiCondition() {
  *
  * @details
  * ident가 서버소켓이라면 acceptClient() 함수를 호출합니다.
- * ident가 클라이언트 소켓이라면 clientCondtion() 함수를 호출합니다.
+ * ident가 클라이언트 소켓이라면 clientCondition() 함수를 호출합니다.
  * ident가 CGI 소켓이라면 cgiCondition() 함수를 호출합니다.
  *
  * @see acceptClient()
- * @see clientCondtion()
+ * @see clientCondition()
  * @see cgiCondition()
  * @see Kqueue::getFdType()
  *
@@ -141,7 +150,7 @@ void EventHandler::branchCondition(void) {
       break;
     }
     case FD_CLIENT: {
-      clientCondtion();
+      clientCondition();
       break;
     }
     case FD_CGI:
@@ -152,6 +161,37 @@ void EventHandler::branchCondition(void) {
   }
 }
 
+/**
+ * @brief READ Event로 들어온 Request를 처리합니다.
+ *
+ * @details
+ * 클라이언트로부터 READ Event를 수신할 때 호출됩니다.
+ * 1. 현재 클라이언트의 상태가 RECEIVING이라면, 클라이언트의 kqueue에서 타임아웃
+ * 이벤트를 제거합니다.
+ * 2. 클라이언트 요청 후에 등록 될 요청타임아웃 이벤트를 eventsToAdd에
+ * 등록합니다.
+ * 3. 클라이언트로부터 요청을 수신합니다.
+ * 4. 클라이언트의 요청을 현재이벤트의 Port기준으로 파싱합니다.
+ * 5. 클라이언트의 상태가 REQUEST_DONE이라면 eventsToAdd에서 타임아웃 이벤트를
+ * 제거합니다.
+ * 6. 클라이언트의 상태가 CGI라면 makeAndExecuteCgi() 함수를 호출합니다.
+ * 7. 클라이언트의 상태가 CGI가 아니라면 어느 Method인지 선택합니다.
+ * 8. 클라이언트는 Request를 처리합니다.
+ * 9. 클라이언트는 성공 응답을 생성합니다.
+ * 10. 해당 클라이언트의 SD를 통해서 READ 이벤트를 비활성화하고, WRITE 이벤트를
+ * 활성화 합니다.
+ *
+ * @see GET
+ * @see POST
+ * @see PUT
+ * @see DELETE
+ *
+ * @param currClient
+ *
+ * @exception code : status code가 catch되면 예외 응답을 생성합니다.
+ * @exception std::exception : status code가 아닌 예외가 발생하면 클라이언트를
+ * 연결을 끊습니다.
+ */
 void EventHandler::processRequest(Client &currClient) {
   try {
     if (currClient.getState() == RECEIVING) {
@@ -189,6 +229,16 @@ void EventHandler::processRequest(Client &currClient) {
   };
 }
 
+/**
+ * @brief WRITE Event로 들어온 Response를 처리합니다.
+ *
+ * @details
+ * 클라이언트로부터 WRITE Event를 수신할 때 호출됩니다.
+ * 1. 현재 클라이언트의 상태가 PROCESS_RESPONSE가 아니라면,
+ * 클라이언트의 setResponseConnection 함수를 호출합니다.
+ * 2. 클라이언트 응답을 전송합니다.
+ * @param currClient
+ */
 void EventHandler::processResponse(Client &currClient) {
   if (currClient.getState() != PROCESS_RESPONSE) {
     currClient.setResponseConnection();

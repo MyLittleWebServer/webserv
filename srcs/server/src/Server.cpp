@@ -1,3 +1,11 @@
+/**
+ * @file Server.cpp
+ * @brief 서버를 정의하는 소스파일입니다.
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "Server.hpp"
 
 #include <arpa/inet.h>

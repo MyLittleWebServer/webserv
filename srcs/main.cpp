@@ -1,3 +1,12 @@
+/**
+ * @file main.cpp
+ * @brief 프로그램의 시작점입니다.
+ * @details
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "ServerManager.hpp"
 
 #ifdef LEAKS
@@ -35,7 +44,7 @@ int main(int ac, char **av) {
     serverManager.promptServer();
     serverManager.startServer();
   } catch (...) {
-    std::cout << "Fatal Error" << std::endl;
+    return (errno);
   }
   return 0;
 }

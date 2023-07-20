@@ -34,6 +34,7 @@ class Client;
  * @see kevent
  * @see FD
  *
+ * @author chanhihi
  * @date 2023.07.17
  */
 class EventHandler : public Kqueue {
@@ -50,7 +51,7 @@ class EventHandler : public Kqueue {
   void processResponse(Client& client);
   void processTimeOut(Client& client);
 
-  void clientCondtion();
+  void clientCondition();
   void cgiCondition();
 
  public:

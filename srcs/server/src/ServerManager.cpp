@@ -1,3 +1,18 @@
+/**
+ * @file ServerManager.cpp
+ * @brief 서버들을 관리하는 소스파일입니다.
+ * @details
+ * ServerManager는 다음과 같은 역할을 합니다.
+ * 1. Config를 초기화합니다.
+ * 2. Server를 초기화합니다.
+ * 3. Server의 정보를 출력합니다.
+ * 4. Server를 시작합니다.
+ *
+ * @author TocaTocaToca
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "ServerManager.hpp"
 
 #include "Color.hpp"
