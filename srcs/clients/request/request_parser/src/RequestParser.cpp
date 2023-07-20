@@ -674,7 +674,8 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  */
 void RequestParser::checkMethod(RequestDts &dts) {
   if (*dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "DELETE" && *dts.method != "HEAD")
+      *dts.method != "DELETE" && *dts.method != "HEAD" &&
+      *dts.method != "OPTIONS")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 

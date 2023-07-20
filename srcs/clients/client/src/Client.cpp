@@ -5,6 +5,7 @@
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
+#include "OPTIONS.hpp"
 #include "POST.hpp"
 #include "Utils.hpp"
 
@@ -126,6 +127,8 @@ void Client::newHTTPMethod(void) {
     _method = new DELETE();
   else if (_request.getMethod() == "HEAD")
     _method = new HEAD();
+  else if (_request.getMethod() == "OPTIONS")
+    _method = new OPTIONS();
 }
 
 IMethod *Client::getMethod() const { return _method; }

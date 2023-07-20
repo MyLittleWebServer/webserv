@@ -81,7 +81,8 @@ sources1 +=	GET.cpp \
 						DELETE.cpp \
 						PUT.cpp \
 						DummyMethod.cpp \
-						HEAD.cpp
+						HEAD.cpp \
+						OPTIONS.cpp
 
 # ---- CGI ---- #
 
