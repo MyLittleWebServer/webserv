@@ -58,6 +58,7 @@ class RequestParser : public IRequestParser {
   void checkAllowedMethods(RequestDts& dts);
   void checkCgiMethod(RequestDts& dts);
   void checkTE(RequestDts& dts);
+  void checkContentRangeHeader(RequestDts& dts);
   void checkContentType(RequestDts& dts);
 
  private:

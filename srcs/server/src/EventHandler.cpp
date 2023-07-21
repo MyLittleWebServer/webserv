@@ -364,7 +364,9 @@ void EventHandler::handleExceptionStatusCode(Client &currClient) {
  */
 void EventHandler::processResponse(Client &currClient) {
   if (currClient.getState() != PROCESS_RESPONSE) {
+    currClient.bodyCheck();
     currClient.setResponseConnection();
+    currClient.reassembleResponse();
   }
   try {
     currClient.sendResponse();

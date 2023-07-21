@@ -529,6 +529,7 @@ RequestParser &RequestParser::getInstance() {
 }
 
 void RequestParser::requestChecker(RequestDts &dts) {
+  checkContentRangeHeader(dts);
   checkRequestLine(dts);
   checkContentLenghWithTransferEncoding(dts);
   checkHeaderLimitSize(dts);
@@ -674,7 +675,9 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::checkMethod(RequestDts &dts) {
-  if (*dts.method != "GET" && *dts.method != "POST" && *dts.method != "DELETE")
+  if (*dts.method != "GET" && *dts.method != "POST" &&
+      *dts.method != "DELETE" && *dts.method != "HEAD" &&
+      *dts.method != "OPTIONS")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -764,9 +767,7 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
   std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
-  if ((it != methodInfo.end() && it->second == true) ||
-      (*dts.method == "DELETE" && methodInfo.at("POST") == true))
-    return;
+  if ((it != methodInfo.end() && it->second == true)) return;
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
@@ -792,6 +793,22 @@ void RequestParser::checkTE(RequestDts &dts) {
   if ((*dts.headerFields)["te"] == "chunked")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
+}
+
+/**
+ * @brief checkContentRangeHeader;
+ *
+ * RFC 7231 4.3.4 PUT MUST
+ * Content-Range가 PUT 요청에 사용되었을 때 400 응답을 보냅니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
+void RequestParser::checkContentRangeHeader(RequestDts &dts) {
+  if (ft_trim((*dts.headerFields)["content-range"]).empty()) return;
+  if (*dts.method == "PUT") throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**

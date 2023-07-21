@@ -3,7 +3,9 @@
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
 #include "GET.hpp"
+#include "HEAD.hpp"
 #include "Kqueue.hpp"
+#include "OPTIONS.hpp"
 #include "POST.hpp"
 #include "Utils.hpp"
 
@@ -155,6 +157,10 @@ void Client::newHTTPMethod(void) {
     _method = new POST();
   else if (_request.getMethod() == "DELETE")
     _method = new DELETE();
+  else if (_request.getMethod() == "HEAD")
+    _method = new HEAD();
+  else if (_request.getMethod() == "OPTIONS")
+    _method = new OPTIONS();
 }
 
 IMethod *Client::getMethod() const { return _method; }
@@ -222,20 +228,58 @@ void Client::clear() {
  * 필드도 close로 설정합니다.
  * 2. Request의 connection 헤더 필드가 명시 되어있지 않다면 Response의
  * connection 헤더 필드도 keep-alive로 설정합니다.
- * 3. Response를 조립합니다.
- * 4. state를 PROCESS_RESPONSE로 설정합니다.
  *
  */
 void Client::setResponseConnection() {
-  if (_request.getHeaderField("connection") == "close") {
-    _response.setHeaderField("Connection", "close");
-  } else {
-    _response.setHeaderField("Connection", "keep-alive");
-  }
-  _response.assembleResponse();
-  _state = PROCESS_RESPONSE;
+  if (_request.getHeaderField("connection") == "close")
+    _response.setHeaderField("connection", "close");
+  else
+    _response.setHeaderField("connection", "keep-alive");
 }
 
+/**
+ * @brief setConnectionClose;
+ *
+ * Connection을 close로 설정하여 서버 스스로 강제로 소켓 연결을
+ * 끊습니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
 void Client::setConnectionClose() {
-  _request.setHeaderField("Connection", "close");
+  _request.setHeaderField("connection", "close");
+}
+
+/**
+ * @brief bodyCheck;
+ *
+ * Method가 HEAD 라면 BODY를 제거합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
+void Client::bodyCheck() {
+  if (_request.getMethod() == "HEAD") _response.setBody("");
+}
+
+/**
+ * @brief ressembleResponse;
+ *
+ * Response를 조립합니다.
+ * state를 PROCESS_RESPONSE로 변경합니다.
+ * 최종적으로 마지막 파서를 거쳐 Response를 보낼 준비가 돠었다는 것을
+ * 의미합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
+void Client::reassembleResponse() {
+  _response.assembleResponse();
+  _state = PROCESS_RESPONSE;
 }
