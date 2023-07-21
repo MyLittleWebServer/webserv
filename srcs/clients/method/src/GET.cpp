@@ -160,6 +160,6 @@ void GET::getContentType(const std::string& path, IResponse& response) {
     response.setHeaderField("Content-Type", config.getVariable(extension));
     return;
   } catch (ExceptionThrower::InvalidConfigException& e) {
-    _contentType = "application/octet-stream";
+    response.setHeaderField("Content-Type", "application/octet-stream");
   }
 }
