@@ -1,8 +1,12 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 #include "IMimeTypesConfig.hpp"
+#include "Utils.hpp"
+
+typedef std::vector<std::string> t_vector_string;
 
 /**
  * @brief MimeTypes 설정 파일 정보를 제공하는 클래스
@@ -12,7 +16,7 @@
 class MimeTypesConfig : public IMimeTypesConfig {
  private:
  public:
-  std::map<std::string, std::string> _data;
+  std::map<std::string, t_vector_string> _data;
   MimeTypesConfig();
   virtual ~MimeTypesConfig();
   MimeTypesConfig(const MimeTypesConfig& src);
