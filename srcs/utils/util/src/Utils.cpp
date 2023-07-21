@@ -16,13 +16,15 @@
  * @details
  * 1. 에러 메세지를 출력합니다.
  * 2. main의 catch(...)블록으로 이동합니다.
- * 3. 프로그램을 종료합니다.
+ *
  * @param message
+ *
+ * @author chanhihi
+ * @date 2023-07-21
  */
-void throwWithPerror(const std::string &message) {
-  std::cerr << message << std::endl;
-  throw(EXIT_FAILURE);
-}
+void throwWithErrorMessage(const std::string &message) {
+  std::cerr << message << " : " << strerror(errno) << std::endl;
+  throw(errno);
 
 /**
  * @brief 현재 이벤트의 포트를 반환합니다.

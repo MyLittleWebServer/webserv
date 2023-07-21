@@ -95,7 +95,7 @@ void Server::hostInit(void) {
  */
 void Server::socketInit(void) {
   this->_socket = socket(PF_INET, SOCK_STREAM, 0);
-  if (this->_socket == -1) throwWithPerror("socket() error");
+  if (this->_socket == -1) throwWithErrorMessage("socket error");
 }
 
 /**
@@ -148,11 +148,11 @@ void Server::bindSocketWithAddr(void) {
   int enable = 1;
   if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &enable,
                  sizeof(int)) < 0) {
-    throwWithPerror("setsockopt(SO_REUSEADDR) failed");
+    throwWithErrorMessage("setsockopt(SO_REUSEADDR) failed");
   }
 
   if (bind(this->_socket, (struct sockaddr *)&_addr, sizeof(_addr)) == -1)
-    throwWithPerror("bind() error");
+    throwWithErrorMessage("bind error");
 }
 
 /**
@@ -173,7 +173,8 @@ void Server::bindSocketWithAddr(void) {
  * @date 2023.07.17
  */
 void Server::listenSocket(void) const {
-  if (listen(this->_socket, BACKLOG) == -1) throwWithPerror("listen() error");
+  if (listen(this->_socket, BACKLOG) == -1)
+    throwWithErrorMessage("listen error");
 }
 
 /**
