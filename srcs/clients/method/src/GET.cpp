@@ -159,15 +159,7 @@ void GET::getContentType(const std::string& path, IResponse& response) {
     std::cout << "extension::" << extension << std::endl;
     response.setHeaderField("Content-Type", config.getVariable(extension));
     return;
-  } catch (std::exception& e) {
-    std::cout << "find :: ";
-    std::map<std::string, std::string>::iterator it;
-    for (it = config._data.begin(); it != config._data.end(); ++it) {
-      if (it->first.find(extension) != std::string::npos) {
-        std::cout << it->second << std::endl;
-        _contentType = it->second;
-      }
-    }
-    _contentType = "text/plain";
+  } catch (ExceptionThrower::InvalidConfigException& e) {
+    _contentType = "application/octet-stream";
   }
 }

@@ -15,8 +15,9 @@ typedef std::vector<std::string> t_vector_string;
  */
 class MimeTypesConfig : public IMimeTypesConfig {
  private:
- public:
   std::map<std::string, t_vector_string> _data;
+
+ public:
   MimeTypesConfig();
   virtual ~MimeTypesConfig();
   MimeTypesConfig(const MimeTypesConfig& src);
