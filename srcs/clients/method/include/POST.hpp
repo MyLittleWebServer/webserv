@@ -24,7 +24,7 @@ class POST : public IMethod {
   void createSuccessResponse(IResponse& response);
   void generateUrlEncoded(RequestDts& dts);
   void generateMultipart(RequestDts& dts);
-  void writeTextBody(RequestDts& dts);
+  void writeTextBody(RequestDts& dts, std::string mimeType);
   void writeBinaryBody(RequestDts& dts);
 
   std::string decodeURL(std::string encoded_string);
