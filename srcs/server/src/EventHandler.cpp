@@ -326,7 +326,7 @@ void EventHandler::processRequest(Client &currClient) {
 
 void EventHandler::registTimerEvent() {
   registEvent(_currentEvent->ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT,
-              NOTE_SECONDS, 3, static_cast<void *>(_currentEvent->udata));
+              NOTE_SECONDS, 60, static_cast<void *>(_currentEvent->udata));
 }
 
 void EventHandler::deleteTimerEvent() {

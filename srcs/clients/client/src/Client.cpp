@@ -112,11 +112,11 @@ void Client::parseRequest(short port) {
   if (_request.isExpect100()) {
     _state = EXPECT_CONTINUE;
     std::string temp = std::string(toLowerString(_recvBuff));
-    size_t pos = _recvBuff.find("expect: 100-continue\r\n");
+    size_t pos = temp.find("expect");
+    size_t end = temp.find("\r\n", pos);
     if (pos == std::string::npos) return;
-    std::cout << "pos: " << pos << std::endl;
-    std::cout << _recvBuff.substr(pos, 23) << std::endl;
-    _recvBuff.erase(pos, 23);
+    if (end == std::string::npos) return;
+    _recvBuff.erase(pos, end - pos + 2);
   }
 }
 
