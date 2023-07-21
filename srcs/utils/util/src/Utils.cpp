@@ -143,6 +143,7 @@ std::vector<std::string> ft_split(const std::string &str, char delim) {
   std::string token;
 
   while (std::getline(iss, token, delim)) {
+    if (token.empty()) continue;
     result.push_back(token);
   }
   return result;
