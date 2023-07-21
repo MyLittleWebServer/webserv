@@ -298,6 +298,14 @@ void EventHandler::processRequest(Client &currClient) {
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent));
+    if (currClient.getState() == EXPECT_CONTINUE) {
+      currClient.createContinueResponse();
+      enableEvent(currClient.getSD(), EVFILT_WRITE,
+                  static_cast<void *>(&currClient));
+      disableEvent(currClient.getSD(), EVFILT_READ,
+                   static_cast<void *>(&currClient));
+      return;
+    }
     if (currClient.getState() == RECEIVING) {
       return;
     }
@@ -318,7 +326,7 @@ void EventHandler::processRequest(Client &currClient) {
 
 void EventHandler::registTimerEvent() {
   registEvent(_currentEvent->ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT,
-              NOTE_SECONDS, 60, static_cast<void *>(_currentEvent->udata));
+              NOTE_SECONDS, 3, static_cast<void *>(_currentEvent->udata));
 }
 
 void EventHandler::deleteTimerEvent() {

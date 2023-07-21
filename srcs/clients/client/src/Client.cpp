@@ -105,7 +105,19 @@ void Client::createSuccessResponse() {
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _state = METHOD_SELECT;
+  if (_request.isParsed()) {
+    _state = METHOD_SELECT;
+    return;
+  }
+  if (_request.isExpect100()) {
+    _state = EXPECT_CONTINUE;
+    std::string temp = std::string(toLowerString(_recvBuff));
+    size_t pos = _recvBuff.find("expect: 100-continue\r\n");
+    if (pos == std::string::npos) return;
+    std::cout << "pos: " << pos << std::endl;
+    std::cout << _recvBuff.substr(pos, 23) << std::endl;
+    _recvBuff.erase(pos, 23);
+  }
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
@@ -141,6 +153,10 @@ void Client::sendResponse() {
 
   if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
     _lastSentPos += n;
+    return;
+  }
+  if (_state == EXPECT_CONTINUE) {
+    _state = RECEIVING;
     return;
   }
   if (_request.getHeaderField("connection") == "close") {
@@ -282,4 +298,11 @@ void Client::bodyCheck() {
 void Client::reassembleResponse() {
   _response.assembleResponse();
   _state = PROCESS_RESPONSE;
+}
+
+void Client::createContinueResponse() {
+  _response.setStatusCode(E_100_CONTINUE);
+  _response.setBody("");
+  _response.assembleResponse();
+  _response.setResponseParsed();
 }

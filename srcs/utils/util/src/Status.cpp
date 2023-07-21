@@ -26,6 +26,7 @@
  * @date 2021-07-20
  */
 msgArray statusInfo[] = {
+    msgArray("Continue", "100", 0, ""),
     msgArray("OK", "200", 0, ""),
     msgArray("Created", "201", 0, ""),
     msgArray("Accepted", "202", 16, "Your request is being processed."),
@@ -47,6 +48,7 @@ msgArray statusInfo[] = {
              "Request Entity Too Large."),
     msgArray("URI Too Long", "414", 0, "NULL"),
     msgArray("Unsupported Media Type", "415", 24, "Unsupported Media Type."),
+    msgArray("Expection Failed", "417", 16, "Expection Failed"),
     msgArray("Internal Server Error", "500", 21, "Internal Server Error"),
     msgArray("Not_Implemented", "501", 19, "Not Implemented Yet."),
     msgArray("Bad Gateway", "502", 11, "Bad Gateway"),

@@ -538,6 +538,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkContentType(dts);
   checkCgiMethod(dts);
   checkTE(dts);
+  checkExpectHeader(dts);
 }
 
 /**
@@ -843,4 +844,11 @@ void RequestParser::checkContentType(RequestDts &dts) {
 void RequestParser::ValidateContentEncoding(RequestDts &dts) {
   if ((*dts.headerFields)["content-encoding"].empty()) return;
   throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
+}
+
+void RequestParser::checkExpectHeader(RequestDts &dts) {
+  if ((*dts.headerFields)["expect"].empty()) return;
+  if ((*dts.headerFields)["expect"] != "100-continue")
+    throw(*dts.statusCode = E_417_EXPECTION_FAILED);
+  *dts.is_expect_100 = true;
 }
