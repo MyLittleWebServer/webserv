@@ -42,7 +42,7 @@ enum ClientStates {
   RECEIVING,
   EXPECT_CONTINUE,
   METHOD_SELECT,
-
+  EXPECT_CONTINUE_PROCESS_RESPONSE,
   PROCESS_RESPONSE,
   RESPONSE_DONE,
   END_KEEP_ALIVE,
@@ -100,6 +100,7 @@ class Client {
   void bodyCheck();
   void reassembleResponse();
   void createContinueResponse();
+  void contentNegotiation();
   void removeTimeOutEventInEventsToAdd(
       std::vector<struct kevent> &_eventsToAdd);
   ClientStates getState() const;

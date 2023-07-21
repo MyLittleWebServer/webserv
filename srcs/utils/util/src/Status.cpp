@@ -42,6 +42,7 @@ msgArray statusInfo[] = {
     msgArray("Forbidden", "403", 9, "Access forbidden."),
     msgArray("Not Found", "404", 9, "Not Found"),
     msgArray("Method Not Allowed", "405", 19, "Method Not Allowed."),
+    msgArray("Not Acceptable", "406", 14, "Not Acceptable"),
     msgArray("Request Timeout", "408", 18, "Request Timeout."),
     msgArray("Conflict", "409", 18, "Resource conflict."),
     msgArray("Request Entity Too Large", "413", 27,

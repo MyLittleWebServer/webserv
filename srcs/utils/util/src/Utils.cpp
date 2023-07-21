@@ -148,3 +148,12 @@ std::vector<std::string> ft_split(const std::string &str, char delim) {
   }
   return result;
 }
+
+size_t find_index(std::vector<std::string> &vec, std::string &str) {
+  size_t i = 0;
+  while (i < vec.size()) {
+    if (vec[i] == str) return i;
+    i++;
+  }
+  return std::string::npos;
+}

@@ -155,7 +155,7 @@ void Client::sendResponse() {
     _lastSentPos += n;
     return;
   }
-  if (_state == EXPECT_CONTINUE) {
+  if (_state == EXPECT_CONTINUE_PROCESS_RESPONSE) {
     _state = RECEIVING;
     return;
   }
@@ -296,7 +296,12 @@ void Client::bodyCheck() {
  * @date 2023.07.21
  */
 void Client::reassembleResponse() {
+  _response.setHeaderField("Date", getCurrentTime());
   _response.assembleResponse();
+  if (_state == EXPECT_CONTINUE) {
+    _state = EXPECT_CONTINUE_PROCESS_RESPONSE;
+    return;
+  }
   _state = PROCESS_RESPONSE;
 }
 
@@ -305,4 +310,37 @@ void Client::createContinueResponse() {
   _response.setBody("");
   _response.assembleResponse();
   _response.setResponseParsed();
+}
+
+void Client::contentNegotiation() {
+  Status statusCode = _response.getStatus();
+  if (statusCode != E_100_CONTINUE && statusCode != E_200_OK) return;
+  std::string accept = _request.getHeaderField("accept");
+  std::string accept_charset = _request.getHeaderField("accept-charset");
+  if (accept.empty() && accept_charset.empty()) return;
+
+  std::string content_type = _response.getFieldValue("Content-Type");
+  if (content_type.empty()) return;
+  std::vector<std::string> types = ft_split(content_type, ';');
+  std::string type = ft_trim(types[0]);
+  std::string charset;
+  charset.clear();
+  if (types.size() > 1) {
+    std::string charset = ft_trim(types[1]);
+  }
+
+  std::vector<std::string> accept_types = ft_split(accept, ',');
+  std::vector<std::string> accept_charsets = ft_split(accept_charset, ',');
+  std::string all_type = "*/*";
+  if ((!accept.empty() && find_index(accept_types, type) == std::string::npos &&
+       find_index(accept_types, all_type) == std::string::npos) ||
+      (!accept_charset.empty() &&
+       find_index(accept_charsets, charset) == std::string::npos &&
+       find_index(accept_charsets, all_type) == std::string::npos)) {
+    _response.clear();
+    _response.setStatusCode(E_406_NOT_ACCEPTABLE);
+    _response.setHeaderField("Content-Type", content_type);
+    _response.setBody("");
+    _response.assembleResponse();
+  }
 }
