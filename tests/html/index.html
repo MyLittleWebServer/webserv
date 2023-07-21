@@ -26,23 +26,32 @@
   <meta name="theme-color" content="#ffffff">
   <title>Hello, World!</title>
   <link href='http://www.openhiun.com/hangul/nanumbarungothic.css' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" type="text/css" href="/asset/index.css">
+  <link rel="stylesheet" type="text/css" href="/asset/css/index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+</head>
+
+<body>
+  <div class="navbar">
+    <a href="#home">Home</a>
+    <a href="./gaepo.html">About</a>
+    <a href="./login.html">Login</a>
+  </div>
+
   <div class="wrapper">
     <img class="image1 inner-image rotate-image" src="/asset/teamlogo.png" alt="Rotating Image" />
     <img class="image2 inner-image" src="/asset/marin03.jpg" alt="marin03" />
   </div>
-</head>
 
-<body>
+  <div style="padding:20px;margin-top:30px;height:1500px;">
+
   <div class="text-wrapper">
     <h1>:3000/html/index.html</h1>
-    <!-- <img class="image2 inner-image" src="/asset/marin03.png" alt="marin03_p" /> -->
     <img class="text-inner-image" src="/asset/index.ico/favicon-96x96.png" alt="marin-favi" />
   </div>
 
   <div class="button-wrapper">
-    <a>
-      <h2>Team Comment.</h2>
+      <h2>Team Author.</h2>
       <p> "Hello, World!" </p>
       <ul style="list-style-type: none; padding-left: 0.2rem;">
         <li> 🥴 "Happy drunkard" </li>
@@ -50,7 +59,6 @@
         <li> 🥊 "StarGym boxer" </li>
         <li> 😊 "daiski" </li>
       </ul>
-    </a>
 
     <a2>
       <h2>GuiltyMice</h2>
@@ -70,12 +78,26 @@
     <script>
       document.querySelector('#file-input').addEventListener('change', function () {
         if (this.value) {
-          document.querySelector('#upload-form').submit();
+          const form = document.querySelector('#upload-form');
+          const formData = new FormData(form);
+
+          fetch('/post_body', {
+            method: 'POST',
+            body: formData,
+            enctype: "multipart/form-data",
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            window.location.href = '/directory';
+          })
+          .catch(error => console.error('Error:', error));
         }
       });
     </script>
 
-    <form action="/directory" method="GET" id="myForm">
+    <!-- <form action="/directory" method="GET" id="myForm">
       <input type="submit" value="Browse Files">
     </form>
 
@@ -84,13 +106,13 @@
         event.preventDefault();
         window.location.href = this.action;
       });
-    </script>
+    </script> -->
 
-    <div class="button-wrapper">
-      <h3> ChatGPT </h3>
+    <div class="text-plain">
+      <h3> ChatGPT에게 한 질문 </h3>
       <h4> 사랑니를 뺀 주정뱅이 친구에게 해줄 수 있는 최고의 말과 니가 해야하는 행동에 대해서 말해줘 </h4>
-      <h4> ChatGPT </h4>
 
+      <h4> ChatGPT의 답 </h4>
       <p>
         먼저, 당신의 친구가 사랑니를 뽑은 후에 많은 불편함과 아픔을 겪고 있을 것이므로 다음과 같은 말로 위로해주는 것이 좋을 것입니다
         <br>
@@ -99,27 +121,36 @@
         "너무 힘들지 않기를 바라. 필요한 거 있으면 언제든 말해."
         <br>
         "휴식을 충분히 취하는게 중요해. 편하게 쉬도록 해."
-      </p>
-      <p>
-        또한 다음과 같이 행동하면 친구에게 도움이 될 수 있습니다:
-
+        <br>
+        <br>
+        또한 다음과 같이 행동하면 친구에게 도움이 될 수 있습니다 
+        <br>
+        <br>
         간단한 식사 준비: 사랑니를 뽑은 후에는 부드럽고 잘게 부숴진 음식을 섭취하는 것이 좋습니다. 친구를 위해 죽이나 스무디 같은
-        부드러운
-        음식을 준비해 보세요. 약 시간 확인: 친구가 약을 정해진 시간에 복용하는지 확인해주세요. 친구가 아픔으로 인해 집중력이 떨어진 상황에서는 이러한 작은 부분을 놓칠 수 있습니다. 적절한 휴식을 보장:
-        아픔과 불편함을 겪는 중에는 휴식이 중요합니다. 친구가 충분히 쉴 수 있는 환경을 제공하는 것이 중요합니다. 필요한 물품을 가져다 주기: 냉찜질팩, 치약, 입가락 등 친구가 필요로 하는 물품을
-        준비해주는 것도 도움이 될 수 있습니다. 기억해야 할 중요한 것은, 친구가 편안하게 쉬고 회복할 수 있는 환경을 제공하는 것이 중요하다는 것입니다. 당신의 친구는 이 힘든 시기를 잘 극복할 수 있을
-        것이며, 당신의 도움이 큰 도움이 될 것입니다. </p>
+        부드러운 음식을 준비해 보세요.
+        <br>
+        약 시간 확인: 친구가 약을 정해진 시간에 복용하는지 확인해주세요. 친구가 아픔으로 인해 집중력이 떨어진 상황에서는 이러한 작은 부분을 놓칠 수 있습니다. 
+        <br>
+        적절한 휴식을 보장: 아픔과 불편함을 겪는 중에는 휴식이 중요합니다. 친구가 충분히 쉴 수 있는 환경을 제공하는 것이 중요합니다. 
+        <br>
+        필요한 물품을 가져다 주기: 냉찜질팩, 치약, 입가락 등 친구가 필요로 하는 물품을 준비해주는 것도 도움이 될 수 있습니다. 기억해야 할 중요한 것은, 친구가 편안하게 쉬고 회복할 수 있는 환경을 제공하는 것이 중요하다는 것입니다. 
+        
+        <br>
+        당신의 친구는 이 힘든 시기를 잘 극복할 수 있을 것이며, 당신의 도움이 큰 도움이 될 것입니다. 
+      </p>
     </div>
   </div>
 
   <div class="footer-basic">
     <footer>
-      <a href="https://www.naver.com/" target="_blank" class="button">Naver</a>
-      <a href="https://www.google.com/" target="_blank" class="button">Google</a>
-      <a href="https://www.youtube.com/" target="_blank" class="button">Youtube</a>
-      <a href="https://www.facebook.com/" target="_blank" class="button">Facebook</a>
-      <p class="copyright">Happy Drunkard © 2023</p>
+      <div class="social"><a href="https://github.com/CHANhihi"><i class="icon ion-social-instagram"></i></a><a href="https://www.instagram.com/reel/Culm5Q6J6yP/?img_index=1"><i
+            class="icon ion-social-snapchat"></i></a><a href="https://github.com/42Box/macOS"><i class="icon ion-social-twitter"></i></a><a
+          href="https://42library.kr/"><i class="icon ion-social-facebook"></i></a></div>
+      <p class="copyright">Happy drunkard © 2023</p>
     </footer>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.bundle.min.js"></script>
   </div>
 </body>
 

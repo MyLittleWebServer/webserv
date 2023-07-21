@@ -494,6 +494,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseHeaderFields(dts);
   validateContentLengthHeader(dts);
   validateHostHeader(port, dts);
+  ValidateContentEncoding(dts);
   parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
@@ -528,11 +529,13 @@ RequestParser &RequestParser::getInstance() {
 }
 
 void RequestParser::requestChecker(RequestDts &dts) {
+  checkContentRangeHeader(dts);
   checkRequestLine(dts);
   checkContentLenghWithTransferEncoding(dts);
   checkHeaderLimitSize(dts);
   checkBodyLimitLength(dts);
   checkAllowedMethods(dts);
+  checkContentType(dts);
   checkCgiMethod(dts);
   checkTE(dts);
 }
@@ -672,7 +675,9 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::checkMethod(RequestDts &dts) {
-  if (*dts.method != "GET" && *dts.method != "POST" && *dts.method != "DELETE")
+  if (*dts.method != "GET" && *dts.method != "POST" &&
+      *dts.method != "DELETE" && *dts.method != "HEAD" &&
+      *dts.method != "OPTIONS")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -762,9 +767,7 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
   std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
-  if ((it != methodInfo.end() && it->second == true) ||
-      (*dts.method == "DELETE" && methodInfo.at("POST") == true))
-    return;
+  if ((it != methodInfo.end() && it->second == true)) return;
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
@@ -790,4 +793,54 @@ void RequestParser::checkTE(RequestDts &dts) {
   if ((*dts.headerFields)["te"] == "chunked")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
+}
+
+/**
+ * @brief checkContentRangeHeader;
+ *
+ * RFC 7231 4.3.4 PUT MUST
+ * Content-Range가 PUT 요청에 사용되었을 때 400 응답을 보냅니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.21
+ */
+void RequestParser::checkContentRangeHeader(RequestDts &dts) {
+  if (ft_trim((*dts.headerFields)["content-range"]).empty()) return;
+  if (*dts.method == "PUT") throw(*dts.statusCode = E_400_BAD_REQUEST);
+}
+
+/**
+ * @brief checkContentType;
+ *
+ * RFC 7231 3.1.1.5 Content-Type (MAY)
+ * POST, PUT 메소드에는 Content-Type이 있어야 합니다.
+ * Content-Type이 없으면 application/octet-stream으로 간주합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.18
+ */
+void RequestParser::checkContentType(RequestDts &dts) {
+  if (!(*dts.headerFields)["content-type"].empty()) return;
+  if (*dts.method == "POST" || *dts.method == "PUT")
+    (*dts.headerFields)["content-type"] = "application/octet-stream";
+}
+
+/**
+ * @brief ValidateContentEncoding;
+ *
+ * RFC 7231 3.1.2.2 Content Encoding (MAY)
+ * 서버는 인코딩을 지원하지 않기 때문에 해당 헤더가 존재시 415를 반환합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.20
+ */
+void RequestParser::ValidateContentEncoding(RequestDts &dts) {
+  if ((*dts.headerFields)["content-encoding"].empty()) return;
+  throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
 }

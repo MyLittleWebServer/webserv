@@ -1,7 +1,30 @@
+/**
+ * @file Status.cpp
+ * @brief HTTP 응답 코드와 메세지를 정의한 소스파일입니다.
+ * @details
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "Status.hpp"
 
 #include <string>
 
+/**
+ * @brief HTTP 응답 코드와 메세지를 저장하는 구조체입니다.
+ *
+ * @details
+ * 1. message : 응답 메세지
+ * 2. code : 응답 코드
+ * 3. contentLength : 응답 바디의 길이
+ * 4. body : 응답 바디
+ *
+ * @see https://developer.mozilla.org/ko/docs/Web/HTTP/Status
+ *
+ * @author chanhihi
+ * @date 2021-07-20
+ */
 msgArray statusInfo[] = {
     msgArray("OK", "200", 0, ""),
     msgArray("Created", "201", 0, ""),
