@@ -14,8 +14,13 @@ footer {
   text-align: center;
 }
 
+.copyright {
+  font-size: 1.5rem;
+}
+
 .footer-basic {
   padding: 0.3rem;
+  font-size: 3rem;
   background-color: rgba(75, 76, 77, 0.2);
 }
 
@@ -87,6 +92,18 @@ h1 {
   flex-direction: column;
 }
 
+.text-plain {
+  margin-top: 1rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin-left: 2rem; 
+  margin-right: 2rem;
+}
+
 .button-choose-file {
   cursor: pointer;
 }
@@ -102,4 +119,31 @@ h1 {
 .upload-form-style {
   margin-top: 1rem;
   display: flex;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  overflow: hidden;
+  background-color: #333;
+  position: fixed; /* Add this */
+  top: 0;
+  width: 100%;
+}
+
+.navbar a {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  background: #ddd;
+  color: black;
 }
