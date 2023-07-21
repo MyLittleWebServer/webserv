@@ -17,7 +17,6 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"] << "\n";
 #endif
-  (void)response;
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
   response.setStatusCode(E_201_CREATED);
