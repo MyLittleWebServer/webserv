@@ -848,7 +848,13 @@ void RequestParser::ValidateContentEncoding(RequestDts &dts) {
 
 void RequestParser::checkExpectHeader(RequestDts &dts) {
   if ((*dts.headerFields)["expect"].empty()) return;
+  if (*dts.protocol == "HTTP/1.0") return;
+
   if ((*dts.headerFields)["expect"] != "100-continue")
     throw(*dts.statusCode = E_417_EXPECTION_FAILED);
+  if (((*dts.headerFields)["content-length"].empty() &&
+       (*dts.headerFields)["transfer-encoding"].empty()) ||
+      (*dts.headerFields)["content-length"] == "0")
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
   *dts.is_expect_100 = true;
 }
