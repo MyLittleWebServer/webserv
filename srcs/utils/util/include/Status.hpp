@@ -1,5 +1,24 @@
+/**
+ * @file Status.hpp
+ * @author chanhihi
+ * @brief HTTP 응답 코드와 메세지를 정의한 헤더파일입니다.
+ * @version 0.1
+ * @date 2023-07-20
+ *
+ * @copyright Copyright (c) 2023
+ */
 #pragma once
 
+/**
+ * @brief HTTP 응답 코드와 메세지를 저장하는 구조체입니다.
+ *
+ * @details
+ * 1. message : 응답 메세지
+ * 2. code : 응답 코드
+ * 3. contentLength : 응답 바디의 길이
+ * 4. body : 응답 바디
+ * 5. dummy : 구조체의 크기를 맞추기 위한 dummy
+ */
 struct msgArray {
   const char *message;
   const char *code;
@@ -10,6 +29,21 @@ struct msgArray {
       : message(msg), code(c), contentLength(l), body(body) {}
 };
 
+/**
+ * @brief HTTP 응답 코드를 정의한 enum입니다.
+ *
+ * @details
+ * 1xx : Informational
+ * 2xx : Success
+ * 3xx : Redirection
+ * 4xx : Client Error
+ * 5xx : Server Error
+ *
+ * @see https://developer.mozilla.org/ko/docs/Web/HTTP/Status
+ *
+ * @author chanhihi
+ * @date 2021-07-20
+ */
 enum Status {
   E_200_OK,
   E_201_CREATED,

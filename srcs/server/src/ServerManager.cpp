@@ -1,7 +1,39 @@
+/**
+ * @file ServerManager.cpp
+ * @brief 서버들을 관리하는 소스파일입니다.
+ * @details
+ * ServerManager는 다음과 같은 역할을 합니다.
+ * 1. Config를 초기화합니다.
+ * 2. Server를 초기화합니다.
+ * 3. Server의 정보를 출력합니다.
+ * 4. Server를 시작합니다.
+ *
+ * @author TocaTocaToca
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
+
 #include "ServerManager.hpp"
 
 #include "Color.hpp"
 
+/**
+ * @brief ServerManager 함수는 ServerManager를 생성합니다.
+ *
+ * @details
+ * webserv 프로그램을 시작합니다.
+ * webserv를 실행할 때 ./webserv config 파일이 들어있으면 해당 config파일에
+ * 맞춰서 getInstance를 호출합니다. 만약 ./webserv로 그냥 실행 한다면
+ * config/default.conf를 인자로 getInstance를 호출합니다.
+ *
+ * @exception Usage: ./webserv [config_file] : 인자가 2개 이상이거나 0개 이하
+ *
+ * @param ac number of arguments
+ * @param av arguments
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
 ServerManager::ServerManager(int ac, char **av) {
   if (ac > 2 || ac < 1)
     throwWithPerror("Usage: ./webserv [config_file]");
@@ -11,6 +43,15 @@ ServerManager::ServerManager(int ac, char **av) {
     Config::getInstance("config/default.conf");
 }
 
+/**
+ * @brief initConfig 함수는 Config를 초기화합니다.
+ *
+ * @details
+ * Config class는 Singleton으로 구현되어 있습니다.
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
 void ServerManager::initConfig(void) {
   try {
     Config &config = Config::getInstance();
@@ -26,25 +67,108 @@ void ServerManager::initConfig(void) {
   }
 }
 
+/**
+ * @brief initServer 함수는 _listenOrganizer에 저장된 포트를 기반으로 서버를
+ * 초기화합니다.
+ *
+ * @details
+ * 서버를 초기화하는 과정은 다음과 같습니다.
+ * 1. Server 객체를 생성합니다.
+ * 2. Server 객체의 initServerSocket() 함수를 호출합니다.
+ * 3. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
+ *    이벤트 큐에 추가합니다.
+ * 4. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
+ *    Kqueue 클래스의 setFdSet() 함수를 호출하여 FD_SERVER 타입으로 설정합니다.
+ * 5. Server 객체를 _serverVector에 저장합니다.
+ *
+ * @see Server
+ * @see Kqueue
+ * @see EventHandler
+ *
+ * @exception std::exception
+ * 서버를 초기화하는 과정에서 예외가 발생하면 예외를 던집니다.
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
 void ServerManager::initServer(void) {
   std::set<short>::iterator it = _listenOrganizer.begin();
   try {
     while (it != _listenOrganizer.end()) {
       Server *server = new Server(*it);
       server->initServerSocket();
+#ifdef DEBUG_MSG
       std::cout << "server: " << server->getPort();
+#endif
       _eventQueue.addEvent(server->getSocket());
       Kqueue::setFdSet(server->getSocket(), FD_SERVER);
       _serverVector.push_back(server);
+#ifdef DEBUG_MSG
       std::cout << ":" << server->getSocket() << std::endl;
+#endif
       ++it;
     }
+#ifdef DEBUG_MSG
     std::cout << "Server initialized" << std::endl;
+#endif
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
 }
 
+/**
+ * @brief promptServer 함수는 서버의 정보를 출력합니다.
+ *
+ * @details
+ * initServer() 함수에서 생성되어 _serverVector에 들어있는 서버의 정보를
+ * 출력합니다.
+ *
+ * @see initServer
+ * @see Server
+ * @see getSocket
+ * @see getHost
+ * @see getPort
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
+void ServerManager::promptServer(void) {
+  std::cout << "\n-------- [ " BOLDBLUE << "Web Server Info" << RESET
+            << " ] --------\n"
+            << std::endl;
+
+  std::vector<Server *>::const_iterator it = this->_serverVector.begin();
+  for (; it != this->_serverVector.end(); ++it) {
+    std::cout << "socket: " << BOLDGREEN << (*it)->getSocket() << RESET;
+    std::cout << "   | host: " << BOLDGREEN << (*it)->getHost() << RESET;
+    std::cout << "   | port: " << BOLDGREEN << (*it)->getPort() << RESET
+              << std::endl
+              << std::endl;
+  }
+  std::cout << "------------------------------------" << std::endl;
+}
+
+/**
+ * @brief startServer 함수는 _serverVector에 저장된 서버들을 시작합니다.
+ *
+ * @details
+ * EventHandler 객체를 생성합니다.
+ * EventHandler 객체의 setCurrentEvent() 함수를 호출하여 현재 이벤트를
+ * 설정합니다. EventHandler 객체의 checkFlags() 함수를 호출하여 현재 이벤트의
+ * 플래그를 확인합니다. EventHandler 객체의 branchCondition() 함수를 호출하여
+ * 현재 이벤트의 플래그에 따라 분기합니다.
+ *
+ * @see EventHandler
+ * @see setCurrentEvent
+ * @see checkFlags
+ * @see branchCondition
+ *
+ * @exception std::exception
+ * 서버를 시작되어 작동하는 과정에서 예외가 발생하면 예외를 던집니다.
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
 void ServerManager::startServer(void) {
   try {
     std::cout << "Server started" << std::endl;
@@ -60,20 +184,4 @@ void ServerManager::startServer(void) {
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
-}
-
-void ServerManager::promptServer(void) {
-  std::cout << "\n-------- [ " BOLDBLUE << "Web Server Info" << RESET
-            << " ] --------\n"
-            << std::endl;
-
-  std::vector<Server *>::const_iterator it = this->_serverVector.begin();
-  for (; it != this->_serverVector.end(); ++it) {
-    std::cout << "socket: " << BOLDGREEN << (*it)->getSocket() << RESET;
-    std::cout << "   | host: " << BOLDGREEN << (*it)->getHost() << RESET;
-    std::cout << "   | port: " << BOLDGREEN << (*it)->getPort() << RESET
-              << std::endl
-              << std::endl;
-  }
-  std::cout << "------------------------------------" << std::endl;
 }

@@ -1,3 +1,11 @@
+/**
+ * @file Color.hpp
+ * @brief 색상을 출력하기 위한 헤더파일입니다.
+ * @details 프롬프트 색상 코드 집합입니다.
+ * @author chanhihi
+ * @date 2023-07-20
+ * @copyright Copyright (c) 2023
+ */
 #pragma once
 
 #define RED "\033[31m"

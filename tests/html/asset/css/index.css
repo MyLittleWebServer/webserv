@@ -1,0 +1,149 @@
+@import url(http://www.openhiun.com/hangul/nanumbarungothic.css);
+
+head,
+body {
+  font-family: "Nanum Barun Gothic", Arial;
+}
+
+li {
+  margin: 0.5rem;
+}
+
+footer {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.copyright {
+  font-size: 1.5rem;
+}
+
+.footer-basic {
+  padding: 0.3rem;
+  font-size: 3rem;
+  background-color: rgba(75, 76, 77, 0.2);
+}
+
+.rotate-image {
+  animation: rotate_image 13s ease infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes rotate_image {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40vh;
+}
+
+.text-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.inner-image {
+  margin: 0 10px;
+}
+
+.image1,
+.image2 {
+  position: absolute;
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.image1 {
+  z-index: 2;
+}
+
+.image2 {
+  z-index: 1;
+  height: 25vh;
+}
+
+h1 {
+  position: relative;
+  z-index: 2;
+}
+
+.text-inner-image {
+  position: absolute;
+  z-index: 1;
+  height: 5vh;
+}
+
+.button-wrapper {
+  margin-top: 1rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-plain {
+  margin-top: 1rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin-left: 2rem; 
+  margin-right: 2rem;
+}
+
+.button-choose-file {
+  cursor: pointer;
+}
+
+.custom-file-upload {
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.upload-form-style {
+  margin-top: 1rem;
+  display: flex;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  overflow: hidden;
+  background-color: #333;
+  position: fixed; /* Add this */
+  top: 0;
+  width: 100%;
+}
+
+.navbar a {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  background: #ddd;
+  color: black;
+}
