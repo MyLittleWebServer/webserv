@@ -387,6 +387,10 @@ void EventHandler::processResponse(Client &currClient) {
 }
 
 void EventHandler::validateConnection(Client &currClient) {
+  if (currClient.getState() == RECEIVING) {
+    enableEvent(currClient.getSD(), EVFILT_READ,
+                static_cast<void *>(&currClient));
+  }
   if (currClient.getState() == END_KEEP_ALIVE) {
     disableEvent(currClient.getSD(), EVFILT_WRITE,
                  static_cast<void *>(&currClient));
