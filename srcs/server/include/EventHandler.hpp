@@ -53,7 +53,8 @@ class EventHandler : public Kqueue {
   void cgiCondition();
 
   void processRequest(Client& client);
-  void handleTimer(Client& client);
+  void registTimerEvent();
+  void deleteTimerEvent();
   void enactRequestAndCreateResponse(Client& client);
   void handleExceptionStatusCode(Client& client);
 

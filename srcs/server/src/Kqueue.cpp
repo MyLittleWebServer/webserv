@@ -75,6 +75,17 @@ void Kqueue::addEvent(uintptr_t ident) {
   Kqueue::_eventsToAdd.push_back(temp_event);
 }
 
+void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
+                         uint32_t fflags, intptr_t data, void* udata) {
+  struct kevent temp_event;
+
+  EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
+  int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
+  if (ret == -1)
+    throwWithPerror("kevent() error on registEvent()\n" +
+                    std::string(strerror(errno)));
+}
+
 /**
  * @brief disableEvent function
  *
