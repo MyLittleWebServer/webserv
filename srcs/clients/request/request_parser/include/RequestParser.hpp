@@ -39,6 +39,7 @@ class RequestParser : public IRequestParser {
   void validateContentLengthHeader(RequestDts& dts);
   void validateHeaderKey(std::string& key, RequestDts& dts);
   void validateHostHeader(short port, RequestDts& dts);
+  void ValidateContentEncoding(RequestDts& dts);
   void hostHeaderNameCheck(std::string hostName, RequestDts& dts);
   void hostHeaderportCheck(short port, std::string portName, RequestDts& dts);
 
@@ -57,6 +58,7 @@ class RequestParser : public IRequestParser {
   void checkAllowedMethods(RequestDts& dts);
   void checkCgiMethod(RequestDts& dts);
   void checkTE(RequestDts& dts);
+  void checkContentType(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;
