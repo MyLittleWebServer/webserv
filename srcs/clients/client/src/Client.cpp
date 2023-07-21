@@ -279,7 +279,7 @@ void Client::bodyCheck() {
  * @author middlefitting
  * @date 2023.07.21
  */
-void Client::ressembleResponse() {
+void Client::reassembleResponse() {
   _response.assembleResponse();
   _state = PROCESS_RESPONSE;
 }

@@ -98,7 +98,7 @@ class Client {
   void setResponseConnection();
   void setConnectionClose();
   void bodyCheck();
-  void ressembleResponse();
+  void reassembleResponse();
   void removeTimeOutEventInEventsToAdd(
       std::vector<struct kevent> &_eventsToAdd);
   ClientStates getState() const;
