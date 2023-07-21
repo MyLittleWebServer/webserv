@@ -270,13 +270,14 @@ void EventHandler::cgiCondition() {
  * 등록합니다.
  * 3. 클라이언트로부터 요청을 수신합니다.
  * 4. 클라이언트의 요청을 현재이벤트의 Port기준으로 파싱합니다.
- * 5. 클라이언트의 상태가 REQUEST_DONE이라면 eventsToAdd에서 타임아웃 이벤트를
+ * 5. 클라이언트의 상태가 EXPECT_CONTINUE라면 100 Continue 응답을 생성합니다.
+ * 6. 클라이언트의 상태가 REQUEST_DONE이라면 eventsToAdd에서 타임아웃 이벤트를
  * 제거합니다.
- * 6. 클라이언트의 상태가 CGI라면 makeAndExecuteCgi() 함수를 호출합니다.
- * 7. 클라이언트의 상태가 CGI가 아니라면 어느 Method인지 선택합니다.
- * 8. 클라이언트는 Request를 처리합니다.
- * 9. 클라이언트는 성공 응답을 생성합니다.
- * 10. 해당 클라이언트의 SD를 통해서 READ 이벤트를 비활성화하고, WRITE 이벤트를
+ * 7. 클라이언트의 상태가 CGI라면 makeAndExecuteCgi() 함수를 호출합니다.
+ * 8. 클라이언트의 상태가 CGI가 아니라면 어느 Method인지 선택합니다.
+ * 9. 클라이언트는 Request를 처리합니다.
+ * 10. 클라이언트는 성공 응답을 생성합니다.
+ * 11. 해당 클라이언트의 SD를 통해서 READ 이벤트를 비활성화하고, WRITE 이벤트를
  * 활성화 합니다.
  *
  * @see GET
@@ -361,7 +362,7 @@ void EventHandler::handleExceptionStatusCode(Client &currClient) {
  * @details
  * 클라이언트로부터 WRITE Event를 수신할 때 호출됩니다.
  * 1. 현재 클라이언트의 상태가 PROCESS_RESPONSE가 아니라면,
- * 클라이언트의 setResponseConnection 함수를 호출합니다.
+ * 클라이언트의 메소드 호출을 통해 최종 상태를 결정합니다.
  * 2. 클라이언트 응답을 전송합니다.
  * 3. 전송중 에러가 발생하면 현재 클라이언트의 연결을 끊습니다.
  * 4. 클라이언트의 상태가 END_KEEP_ALIVE라면 클라이언트의 WRITE 이벤트를
