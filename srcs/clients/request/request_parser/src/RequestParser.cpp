@@ -847,7 +847,7 @@ void RequestParser::ValidateContentEncoding(RequestDts &dts) {
 }
 
 /**
- * @brief ValidateContentEncoding;
+ * @brief checkExpectHeader;
  *
  * RFC 7231 5.1.1 Expect (MUST)
  * expect 헤더의 존재에 따라 *dts.is_expect_100 상태를 true로 변경합니다.

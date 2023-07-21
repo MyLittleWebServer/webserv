@@ -259,7 +259,6 @@ void Client::setResponseConnection() {
  * Connection을 close로 설정하여 서버 스스로 강제로 소켓 연결을
  * 끊습니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
@@ -273,7 +272,6 @@ void Client::setConnectionClose() {
  *
  * Method가 HEAD 라면 BODY를 제거합니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
@@ -283,14 +281,13 @@ void Client::bodyCheck() {
 }
 
 /**
- * @brief ressembleResponse;
+ * @brief reassembleResponse;
  *
  * Response를 조립합니다.
  * state를 PROCESS_RESPONSE로 변경합니다.
  * 최종적으로 마지막 파서를 거쳐 Response를 보낼 준비가 돠었다는 것을
  * 의미합니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
@@ -305,6 +302,17 @@ void Client::reassembleResponse() {
   _state = PROCESS_RESPONSE;
 }
 
+/**
+ * @brief createContinueResponse;
+ *
+ * Response를 조립합니다.
+ * 중간 응답인 100 continue를 생성합니다.
+ * setResponseParsed 함수를 호출하여 write 이벤트를 호출합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
 void Client::createContinueResponse() {
   _response.setStatusCode(E_100_CONTINUE);
   _response.setBody("");
@@ -312,6 +320,20 @@ void Client::createContinueResponse() {
   _response.setResponseParsed();
 }
 
+/**
+ * @brief contentNegotiation;
+ *
+ * content 협상을 수행합니다.
+ * _status 가 100, 200 이 아니라면 return 합니다.
+ * Accept 헤더 필드와 Accept-Charset 헤더 필드를 확인합니다.
+ * 둘다 비어있다면 return 합니다.
+ * 서버가 반환하려는 자료형이 클라이언트가 수용 가능한 자료형에 없을 경우에는
+ * 406 에러를 반환합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
 void Client::contentNegotiation() {
   Status statusCode = _response.getStatus();
   if (statusCode != E_100_CONTINUE && statusCode != E_200_OK) return;
