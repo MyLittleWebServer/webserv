@@ -149,6 +149,13 @@ std::vector<std::string> ft_split(const std::string &str, char delim) {
   return result;
 }
 
+/**
+ * @brief 벡터에서 값으로 인덱스를 찾아 반환합니다.
+ *
+ * @param vec
+ * @param str
+ * @return size_t
+ */
 size_t find_index(std::vector<std::string> &vec, std::string &str) {
   size_t i = 0;
   while (i < vec.size()) {
