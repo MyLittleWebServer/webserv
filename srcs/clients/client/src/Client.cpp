@@ -368,6 +368,23 @@ void Client::contentNegotiation() {
 }
 
 /**
+ * @brief methodNotAllowCheck;
+ *
+ * RFC 7231 6.5.5 405 Method Not Allowed (MUST)
+ * 응답이 405 Method Not Allowed 일 경우, Allow 헤더 필드를 추가합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::methodNotAllowCheck() {
+  if (_response.getStatus() != E_405_METHOD_NOT_ALLOWED) return;
+  std::string allow_methods = (*_request.getRequestParserDts().matchedLocation)
+                                  ->getVariable("allow_method");
+  _response.setHeaderField("Allow", allow_methods);
+}
+
+/**
  * @brief responseFinalCheck;
  *
  * 클라이언트에 응답을 보내기 직전, 응답을 최종적으로 확인합니다.
@@ -379,6 +396,7 @@ void Client::contentNegotiation() {
  */
 void Client::responseFinalCheck() {
   contentNegotiation();
+  methodNotAllowCheck();
   headMethodBodyCheck();
   setResponseConnection();
   reassembleResponse();

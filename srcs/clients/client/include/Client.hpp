@@ -79,6 +79,7 @@ class Client {
   void headMethodBodyCheck();
   void setResponseConnection();
   void reassembleResponse();
+  void methodNotAllowCheck();
 
  public:
   Client();
