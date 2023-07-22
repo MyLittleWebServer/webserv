@@ -39,6 +39,8 @@ Request &Request::operator=(const Request &src) {
     this->_isParsed = src._isParsed;
     this->_contentLength = src._contentLength;
     this->_is_cgi = src._is_cgi;
+    this->_originalPath = src._originalPath;
+    this->_is_expect_100 = src._is_expect_100;
   }
   initDts();
   return *this;
@@ -47,6 +49,7 @@ Request &Request::operator=(const Request &src) {
 void Request::initMember() {
   _isParsed = false;
   _is_cgi = false;
+  _is_expect_100 = false;
 
   _contentLength = 0;
 
@@ -93,6 +96,7 @@ void Request::initDts() {
 
   _request_parser_dts.matchedServer = &_matchedServer;
   _request_parser_dts.matchedLocation = &_matchedLocation;
+  _request_parser_dts.is_expect_100 = &_is_expect_100;
 }
 
 void Request::parseRequest(short port) {
@@ -167,3 +171,5 @@ void Request::setHeaderField(std::string key, std::string value) {
   key = toLowerString(key).substr(0, key.length());
   _headerFields[key] = value;
 }
+
+const bool &Request::isExpect100() const { return _is_expect_100; }

@@ -60,6 +60,7 @@ class RequestParser : public IRequestParser {
   void checkTE(RequestDts& dts);
   void checkContentRangeHeader(RequestDts& dts);
   void checkContentType(RequestDts& dts);
+  void checkExpectHeader(RequestDts& dts);
 
  private:
   const std::set<std::string>& _candidateFields;

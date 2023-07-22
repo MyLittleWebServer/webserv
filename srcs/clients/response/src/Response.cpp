@@ -68,7 +68,6 @@ void Response::assembleResponseLine(void) {
   _response += statusInfo[_statusCode].message;
   _response += "\r\n";
   std::cout << _response << std::endl;
-  std::cout << _response << std::endl;
 }
 
 void Response::resetResponse(void) {
