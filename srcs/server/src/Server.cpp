@@ -88,7 +88,7 @@ void Server::hostInit(void) {
  * @see PF_INET : IPv4 인터넷 프로토콜
  * @see SOCK_STREAM : TCP
  *
- * @exception throwWithPerror socket() 함수가 실패하면 예외를 던집니다.
+ * @exception throwWithErrorMessage socket() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
  * @date 2023.07.17
@@ -138,8 +138,9 @@ void Server::addrInit(void) {
  * @see SO_REUSEADDR : TIME_WAIT 상태의 포트를 재사용하는 옵션
  * @see bind : 소켓에 주소를 할당하는 함수
  *
- * @exception throwWithPerror setsockopt() 함수가 실패하면 예외를 던집니다.
- * @exception throwWithPerror bind() 함수가 실패하면 예외를 던집니다.
+ * @exception throwWithErrorMessage setsockopt() 함수가 실패하면 예외를
+ * 던집니다.
+ * @exception throwWithErrorMessage bind() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
  * @date 2023.07.17
@@ -193,7 +194,7 @@ void Server::listenSocket(void) const {
  */
 void Server::asyncSocket(void) const {
   if (fcntl(this->_socket, F_SETFL, O_NONBLOCK) == -1)
-    throwWithPerror("fcntl() error");
+    throwWithErrorMessage("fcntl() error");
 }
 
 /**
