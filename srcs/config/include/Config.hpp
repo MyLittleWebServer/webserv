@@ -51,5 +51,5 @@ class Config : public IConfig {
   virtual IRootConfig& getRootConfig();
   virtual IProxyConfig& getProxyConfig();
   virtual IMimeTypesConfig& getMimeTypesConfig();
-  virtual std::list<IServerConfig*> getServerConfigs();
+  virtual std::list<IServerConfig*>& getServerConfigs();
 };

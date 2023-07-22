@@ -14,5 +14,5 @@ class IConfig {
   virtual IRootConfig& getRootConfig() = 0;
   virtual IProxyConfig& getProxyConfig() = 0;
   virtual IMimeTypesConfig& getMimeTypesConfig() = 0;
-  virtual std::list<IServerConfig*> getServerConfigs() = 0;
+  virtual std::list<IServerConfig*>& getServerConfigs() = 0;
 };
