@@ -74,6 +74,12 @@ class Client {
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;
 
+ private:
+  void contentNegotiation();
+  void bodyCheck();
+  void setResponseConnection();
+  void reassembleResponse();
+
  public:
   Client();
   Client(const uintptr_t sd);
@@ -95,14 +101,11 @@ class Client {
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
-  void setResponseConnection();
   void setConnectionClose();
-  void bodyCheck();
-  void reassembleResponse();
   void createContinueResponse();
-  void contentNegotiation();
-  void removeTimeOutEventInEventsToAdd(
-      std::vector<struct kevent> &_eventsToAdd);
+  void responseFinalCheck();
+  // void removeTimeOutEventInEventsToAdd(
+  //     std::vector<struct kevent> &_eventsToAdd);
   ClientStates getState() const;
   class RecvFailException : public std::exception {
    public:

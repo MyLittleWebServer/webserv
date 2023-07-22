@@ -374,10 +374,7 @@ void EventHandler::handleExceptionStatusCode(Client &currClient) {
 void EventHandler::processResponse(Client &currClient) {
   if (currClient.getState() != PROCESS_RESPONSE &&
       currClient.getState() != EXPECT_CONTINUE_PROCESS_RESPONSE) {
-    currClient.contentNegotiation();
-    currClient.bodyCheck();
-    currClient.setResponseConnection();
-    currClient.reassembleResponse();
+    currClient.responseFinalCheck();
   }
   try {
     currClient.sendResponse();

@@ -268,15 +268,15 @@ void Client::setConnectionClose() {
 }
 
 /**
- * @brief bodyCheck;
+ * @brief headMethodBodyCheck;
  *
- * Method가 HEAD 라면 BODY를 제거합니다.
+ * Method가 HEAD 라면 body를 제거합니다.
  *
  * @return void
  * @author middlefitting
  * @date 2023.07.21
  */
-void Client::bodyCheck() {
+void Client::headMethodBodyCheck() {
   if (_request.getMethod() == "HEAD") _response.setBody("");
 }
 
@@ -365,4 +365,21 @@ void Client::contentNegotiation() {
     _response.setBody("");
     _response.assembleResponse();
   }
+}
+
+/**
+ * @brief responseFinalCheck;
+ *
+ * 클라이언트에 응답을 보내기 직전, 응답을 최종적으로 확인합니다.
+ * RFC 내용에 따라 필요한 HTTP 1.1 구성 요소들을 추가하거나 제거합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::responseFinalCheck() {
+  contentNegotiation();
+  headMethodBodyCheck();
+  setResponseConnection();
+  reassembleResponse();
 }
