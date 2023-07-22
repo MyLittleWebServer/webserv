@@ -69,3 +69,10 @@ ExceptionThrower::FileAcccessFailedException::FileAcccessFailedException()
 const char* ExceptionThrower::FileAcccessFailedException::what() const throw() {
   return std::runtime_error::what();
 }
+
+ExceptionThrower::CGIBodyToLongException::CGIBodyToLongException()
+    : std::runtime_error(CGI_BODY_TOO_LONG) {}
+
+const char* ExceptionThrower::CGIBodyToLongException::what() const throw() {
+  return std::runtime_error::what();
+}

@@ -159,6 +159,9 @@ void CGI::setPipeNonblock() {
 }
 
 void CGI::execute() {
+  if (_body.size() >= 65536) {
+    throw ExceptionThrower::CGIBodyToLongException();
+  }
   if (access(_request->getPath().c_str(), R_OK) == -1) {
     throw ExceptionThrower::FileAcccessFailedException();
   }
@@ -184,6 +187,8 @@ void CGI::executeCGI() {
     generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
   } catch (ExceptionThrower::FileAcccessFailedException& e) {
     generateErrorResponse(E_404_NOT_FOUND);
+  } catch (ExceptionThrower::CGIBodyToLongException& e) {
+    generateErrorResponse(E_413_REQUEST_ENTITY_TOO_LARGE);
   }
 }
 

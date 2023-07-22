@@ -68,4 +68,11 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class CGIBodyToLongException : public std::runtime_error {
+   public:
+    CGIBodyToLongException();
+
+    virtual const char* what() const throw();
+  };
 };

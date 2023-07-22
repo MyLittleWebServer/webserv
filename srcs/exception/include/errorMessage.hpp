@@ -20,3 +20,5 @@ static const std::string CGI_NOT_FINISHED = "Cgi is not finished yet";
 static const std::string CGI_PIPE_FAILED = "Cannot create pipe for cgi";
 
 static const std::string FILE_ACCESS_FAILED = "File access failed";
+
+static const std::string CGI_BODY_TOO_LONG = "Cgi body is too long. Max 64KB";
