@@ -170,6 +170,63 @@ ClientStates Client::getState() const { return _state; }
 void Client::setState(ClientStates state) { _state = state; }
 
 /**
+ * @brief initTimeOut;
+ *
+ * 클라이언트가 바인딩 된 서버 포트로 Config에서 매치된 서버를 찾아 타임아웃
+ * 관련 멤버 변수를 초기화합니다.
+ *
+ * @param serverPort
+ * @return void
+ * @author Clearsu
+ * @date 2023.07.23
+ */
+void Client::initTimeOut(short serverPort) {
+  std::list<IServerConfig *> &serverConfigs =
+      Config::getInstance().getServerConfigs();
+  std::list<IServerConfig *>::const_iterator it = serverConfigs.begin();
+  std::list<IServerConfig *>::const_iterator end = serverConfigs.end();
+
+  for (; it != end; ++it) {
+    if (serverPort == (*it)->getListen()) {
+      initTimeOutLimitAndUnit((*it)->getKeepAliveTimeOut(),
+                              _keepAliveTimeOutLimit, _keepAliveTimeOutUnit);
+      initTimeOutLimitAndUnit((*it)->getRequestTimeOut(), _requestTimeOutLimit,
+                              _requestTimeOutUnit);
+      return;
+    }
+  }
+}
+
+/**
+ * @brief  initTimeOutLimitAndUnit;
+ *
+ * 타임아웃 시간 제한과 단위를 초기화합니다.
+ *
+ * @param str
+ * @param limit
+ * @param unit
+ * @return void
+ * @author Clearsu
+ * @date 2023.07.23
+ */
+void Client::initTimeOutLimitAndUnit(const std::string &str, int &limit,
+                                     int &unit) {
+  std::stringstream timeOutStr(str);
+  std::string unitStr;
+  timeOutStr >> limit >> unitStr;
+  if (unitStr == "s") {
+    unit = NOTE_SECONDS;
+  } else {
+    unit = 0;  // miliseconds
+  }
+}
+
+int Client::getKeepAliveTimeOutLimit() const { return _keepAliveTimeOutLimit; }
+int Client::getKeepAliveTimeOutUnit() const { return _keepAliveTimeOutUnit; }
+int Client::getRequestTimeOutLimit() const { return _requestTimeOutLimit; }
+int Client::getRequestTimeOutUnit() const { return _requestTimeOutUnit; }
+
+/**
  * @brief 소켓 디스크립터를 반환합니다.
  *
  * @return uintptr_t

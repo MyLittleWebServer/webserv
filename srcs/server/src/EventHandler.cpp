@@ -175,6 +175,21 @@ void EventHandler::registClient(const uintptr_t clientSocket) {
   addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
            static_cast<void *>(newClient));
   setFdSet(clientSocket, FD_CLIENT);
+  newClient->initTimeOut(getBoundPort(clientSocket));
+  setKeepAliveTimeOutTimer(*newClient);
+}
+
+void EventHandler::setKeepAliveTimeOutTimer(Client &client) {
+  registEvent(client.getSD(), EVFILT_TIMER, EV_ADD | EV_ONESHOT,
+              client.getKeepAliveTimeOutUnit(),
+              client.getKeepAliveTimeOutLimit(), static_cast<void *>(&client));
+}
+
+void EventHandler::setRequestTimeOutTimer(Client &client) {
+  deleteTimerEvent();
+  registEvent(client.getSD(), EVFILT_TIMER, EV_ADD | EV_ONESHOT,
+              client.getRequestTimeOutUnit(), client.getRequestTimeOutLimit(),
+              static_cast<void *>(&client));
 }
 
 /**
@@ -227,7 +242,8 @@ void EventHandler::checkErrorOnSocket() {
  *
  * filter가 EVFILT_READ라면 processRequest() 함수를 호출합니다.
  * filter가 EVFILT_WRITE라면 processResponse() 함수를 호출합니다.
- * filter가 EVFILT_TIMER라면 processTimeOut() 함수를 호출합니다.
+ * filter가 EVFILT_TIMER라면 processRequestTimeOut() 함수 혹은
+ * processKeepAliveTimeOut() 함수를 호출합니다.
  *
  */
 void EventHandler::clientCondition() {
@@ -292,11 +308,11 @@ void EventHandler::cgiCondition() {
 void EventHandler::processRequest(Client &currClient) {
   try {
     if (currClient.getState() == START) {
-      registTimerEvent();
+      setRequestTimeOutTimer(currClient);
     }
     std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
-    currClient.parseRequest(getBoundPort(_currentEvent));
+    currClient.parseRequest(getBoundPort(_currentEvent->ident));
     if (currClient.getState() == RECEIVING) {
       return;
     }
@@ -313,11 +329,6 @@ void EventHandler::processRequest(Client &currClient) {
     std::cerr << e.what() << '\n';
     return;
   }
-}
-
-void EventHandler::registTimerEvent() {
-  registEvent(_currentEvent->ident, EVFILT_TIMER, EV_ADD | EV_ONESHOT,
-              NOTE_SECONDS, 60, static_cast<void *>(_currentEvent->udata));
 }
 
 void EventHandler::deleteTimerEvent() {
@@ -384,12 +395,25 @@ void EventHandler::validateConnection(Client &currClient) {
     enableEvent(currClient.getSD(), EVFILT_READ,
                 static_cast<void *>(&currClient));
     currClient.clear();
+    setKeepAliveTimeOutTimer(currClient);
   } else if (currClient.getState() == END_CLOSE) {
     disconnectClient(&currClient);
   }
 }
 
 void EventHandler::processTimeOut(Client &currClient) {
+  if (currClient.getState() == START) {
+    processKeepAliveTimeOut(currClient);
+  } else {
+    processRequestTimeOut(currClient);
+  }
+}
+
+void EventHandler::processKeepAliveTimeOut(Client &currClient) {
+  disconnectClient(&currClient);
+}
+
+void EventHandler::processRequestTimeOut(Client &currClient) {
   currClient.setConnectionClose();
   currClient.createExceptionResponse(E_408_REQUEST_TIMEOUT);
   disableEvent(currClient.getSD(), EVFILT_WRITE,

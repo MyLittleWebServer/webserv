@@ -69,6 +69,11 @@ class Client {
   ICGI *_cgi;
   size_t _lastSentPos;
 
+  int _keepAliveTimeOutLimit;
+  int _keepAliveTimeOutUnit;
+  int _requestTimeOutLimit;
+  int _requestTimeOutUnit;
+
   static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
@@ -99,9 +104,16 @@ class Client {
   void setConnectionClose();
   void bodyCheck();
   void reassembleResponse();
-  void removeTimeOutEventInEventsToAdd(
-      std::vector<struct kevent> &_eventsToAdd);
+
   ClientStates getState() const;
+
+  void initTimeOut(short serverPort);
+  void initTimeOutLimitAndUnit(const std::string &str, int &limit, int &unit);
+  int getKeepAliveTimeOutLimit() const;
+  int getKeepAliveTimeOutUnit() const;
+  int getRequestTimeOutLimit() const;
+  int getRequestTimeOutUnit() const;
+
   class RecvFailException : public std::exception {
    public:
     const char *what() const throw();
