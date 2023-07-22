@@ -25,6 +25,7 @@
 void throwWithErrorMessage(const std::string &message) {
   std::cerr << message << " : " << strerror(errno) << std::endl;
   throw(errno);
+}
 
 /**
  * @brief 현재 이벤트의 포트를 반환합니다.

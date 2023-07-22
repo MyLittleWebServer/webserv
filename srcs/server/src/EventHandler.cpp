@@ -93,7 +93,7 @@ void EventHandler::checkFlags(void) {
  * @details
  * ident가 서버소켓이라면 acceptClient() 함수를 호출합니다.
  * ident가 클라이언트 소켓이라면 clientCondition() 함수를 호출합니다.
- * ident가 CGI 소켓이라면 cgiCondition() 함수를 호출합니다.
+ * ident가 CGI pipe fd라면 cgiCondition() 함수를 호출합니다.
  *
  * @see acceptClient()
  * @see clientCondition()
@@ -142,9 +142,8 @@ void EventHandler::branchCondition(void) {
  */
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
-  if ((clientSocket = accept(_currentEvent->ident, NULL, NULL)) == -1) {
-    throwWithPerror("accept() error\n" + std::string(strerror(errno)));
-  }
+  if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1)
+    throwWithErrorMessage("accept error");
   std::cout << "accept ... : " << clientSocket << std::endl;
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
   registClient(clientSocket);
@@ -397,33 +396,4 @@ void EventHandler::processTimeOut(Client &currClient) {
                static_cast<void *>(&currClient));
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));
-}
-
-void EventHandler::acceptClient() {
-  uintptr_t clientSocket;
-  if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1)
-    throwWithErrorMessage("accept error");
-  std::cout << "accept ... : " << clientSocket << std::endl;
-  fcntl(clientSocket, F_SETFL, O_NONBLOCK);
-  registClient(clientSocket);
-}
-
-void EventHandler::registClient(const uintptr_t clientSocket) {
-  Client *newClient = new Client(clientSocket);
-  Kqueue::addEvent(clientSocket, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-                   static_cast<void *>(newClient));
-  Kqueue::addEvent(clientSocket, EVFILT_WRITE, EV_ADD | EV_DISABLE, 0, 0,
-                   static_cast<void *>(newClient));
-  Kqueue::setFdSet(clientSocket, FD_CLIENT);
-}
-
-void EventHandler::disconnectClient(Client *client) {
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
-                      static_cast<void *>(client));
-  Kqueue::deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
-                      static_cast<void *>(client));
-  Kqueue::deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
-
-  std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
-  delete client;
 }
