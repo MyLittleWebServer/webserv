@@ -24,7 +24,7 @@
 #include "vector"
 
 void throwWithErrorMessage(const std::string &message);
-short getBoundPort(const struct kevent *_currentEvent);
+short getBoundPort(const uintptr_t ident);
 std::string getCurrentTime();
 std::string toLowerString(std::string str);
 std::string ft_trim(std::string &str);
