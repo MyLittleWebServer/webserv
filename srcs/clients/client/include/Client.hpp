@@ -76,7 +76,7 @@ class Client {
 
  private:
   void contentNegotiation();
-  void bodyCheck();
+  void headMethodBodyCheck();
   void setResponseConnection();
   void reassembleResponse();
 
