@@ -40,7 +40,7 @@ void POST::generateResource(RequestDts& dts) {
   } else if (parsedContent == "multipart/form-data") {
     generateMultipart(dts);
   } else {
-    std::string mimeType = "txt";  // default mime type as plain text
+    std::string mimeType = "bin";
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
         Config::getInstance().getMimeTypesConfig());
     try {
@@ -204,24 +204,17 @@ std::string POST::decodeURL(std::string encoded_string) {
 }
 
 std::string POST::makeRandomFileName(RequestDts& dts) {
-  const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-  std::string filename;
-  unsigned int buf[8];
-  char concat_str[9];
-  int i;
-  int urandFd;
+  (void)dts;
+  std::string charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::string result;
+  std::srand(std::time(0));
 
-  std::memset(concat_str, 0, sizeof(concat_str));
-  urandFd = open("/dev/urandom", O_RDONLY);
-  if (urandFd == -1) {
-    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
-  }
-  read(urandFd, buf, sizeof(buf));
-  i = 0;
-  while (i < 8) {
-    concat_str[i] = charset[buf[i] % 36];
-    i++;
-  }
-  filename = std::string(concat_str);
-  return filename;
+  for (int i = 0; i < 8; ++i)
+    result.push_back(charset[std::rand() % charset.size()]);
+
+  if (access(result.c_str(), F_OK) == 0)
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+
+  return result;
 }
