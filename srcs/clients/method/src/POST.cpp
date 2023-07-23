@@ -29,17 +29,22 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
 }
 
 void POST::generateResource(RequestDts& dts) {
+  std::string parsedContent;
   _contentType = (*dts.headerFields)["content-type"].c_str();
-  if (_contentType == "application/x-www-form-urlencoded") {
+  parsedContent = _contentType;
+  if (_contentType.find(';') != std::string::npos) {
+    parsedContent = _contentType.substr(0, _contentType.find(';'));
+  }
+  if (parsedContent == "application/x-www-form-urlencoded") {
     generateUrlEncoded(dts);
-  } else if (_contentType == "multipart/form-data") {
+  } else if (parsedContent == "multipart/form-data") {
     generateMultipart(dts);
   } else {
     std::string mimeType = "txt";  // default mime type as plain text
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
         Config::getInstance().getMimeTypesConfig());
     try {
-      std::string mimeType = mime.getVariable(_contentType);
+      std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
