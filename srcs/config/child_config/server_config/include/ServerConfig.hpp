@@ -21,6 +21,8 @@ class ServerConfig : public IServerConfig {
   static const std::string ACCESS_LOG;
   static const std::string ROOT;
   static const std::string CGI;
+  static const std::string KEEPALIVE_TIMEOUT;
+  static const std::string REQUEST_TIMEOUT;
 
  public:
   ServerConfig();
@@ -40,4 +42,6 @@ class ServerConfig : public IServerConfig {
   const std::string& getAccessLog();
   const std::string& getRoot();
   const std::string& getCgi();
+  const virtual std::string& getRequestTimeOut();
+  const virtual std::string& getKeepAliveTimeOut();
 };

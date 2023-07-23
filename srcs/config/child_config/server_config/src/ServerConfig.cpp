@@ -7,6 +7,8 @@ const std::string ServerConfig::ERROR_PAGE =
 const std::string ServerConfig::ACCESS_LOG = "logs/domain1.access.log  main";
 const std::string ServerConfig::ROOT = "html";
 const std::string ServerConfig::CGI = ".bla";
+const std::string ServerConfig::KEEPALIVE_TIMEOUT = "75s";
+const std::string ServerConfig::REQUEST_TIMEOUT = "60s";
 
 ServerConfig::ServerConfig() {
   _data.insert(std::pair<std::string, std::string>("server_name", SERVER_NAME));
@@ -15,6 +17,10 @@ ServerConfig::ServerConfig() {
   _data.insert(std::pair<std::string, std::string>("access_log", ACCESS_LOG));
   _data.insert(std::pair<std::string, std::string>("root", ROOT));
   _data.insert(std::pair<std::string, std::string>("cgi", CGI));
+  _data.insert(std::pair<std::string, std::string>("keepalive_timeout",
+                                                   KEEPALIVE_TIMEOUT));
+  _data.insert(
+      std::pair<std::string, std::string>("request_timeout", REQUEST_TIMEOUT));
 }
 
 ServerConfig::~ServerConfig() {
@@ -80,6 +86,14 @@ const std::string& ServerConfig::getErrorPage() {
 
 const std::string& ServerConfig::getAccessLog() {
   return getVariable("access_log");
+}
+
+const std::string& ServerConfig::getRequestTimeOut() {
+  return getVariable("request_timeout");
+}
+
+const std::string& ServerConfig::getKeepAliveTimeOut() {
+  return getVariable("keepalive_timeout");
 }
 
 const std::string& ServerConfig::getRoot() { return getVariable("root"); }
