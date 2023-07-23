@@ -23,31 +23,25 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
 #endif
-  _randName = makeRandomFileName(dts);
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
   response.setStatusCode(E_201_CREATED);
 }
 
 void POST::generateResource(RequestDts& dts) {
-  std::string parsedContent;
   _contentType = (*dts.headerFields)["content-type"].c_str();
-  if (_contentType.find(';') != std::string::npos) {
-    parsedContent = _contentType.substr(0, _contentType.find(';'));
-  }
-  if (parsedContent == "application/x-www-form-urlencoded") {
+  if (_contentType == "application/x-www-form-urlencoded") {
     generateUrlEncoded(dts);
-  } else if (parsedContent == "multipart/form-data") {
+  } else if (_contentType == "multipart/form-data") {
     generateMultipart(dts);
   } else {
     std::string mimeType = "txt";  // default mime type as plain text
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
         Config::getInstance().getMimeTypesConfig());
-
     try {
-      std::string mimeType = mime.getVariable(parsedContent);
+      std::string mimeType = mime.getVariable(_contentType);
       _content = (*dts.body);
-      _title = _randName;
+      _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
     } catch (ExceptionThrower::InvalidConfigException& e) {
       throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
@@ -69,7 +63,7 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   }
   _title = decodedBody.substr(equalPos1 + 1, andPos - equalPos1 - 1);
   if (_title == "") {
-    _title = _randName;
+    _title = makeRandomFileName(dts);
   }
   size_t equalPos2 = decodedBody.find('=', andPos + 1);
   _content = decodedBody.substr(equalPos2 + 1);
@@ -94,12 +88,15 @@ void POST::generateMultipart(RequestDts& dts) {
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
-      _title = _randName;
-      _content = _randName + "is DummySource";
+      _title = makeRandomFileName(dts);
+      _content = "DummySource";
       writeTextBody(dts, "txt");
       return;
     }
     _title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
+    if (_title == "") {
+      _title = makeRandomFileName(dts);
+    }
     size_t binStart = (*dts.body).find("\r\n\r\n");
     size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
     if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
