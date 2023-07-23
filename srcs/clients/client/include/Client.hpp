@@ -40,9 +40,9 @@
 enum ClientStates {
   START,
   RECEIVING,
-
+  EXPECT_CONTINUE,
   METHOD_SELECT,
-
+  EXPECT_CONTINUE_PROCESS_RESPONSE,
   PROCESS_RESPONSE,
   RESPONSE_DONE,
   END_KEEP_ALIVE,
@@ -79,6 +79,13 @@ class Client {
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;
 
+ private:
+  void contentNegotiation();
+  void headMethodBodyCheck();
+  void setResponseConnection();
+  void reassembleResponse();
+  void methodNotAllowCheck();
+
  public:
   Client();
   Client(const uintptr_t sd);
@@ -100,10 +107,9 @@ class Client {
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
-  void setResponseConnection();
   void setConnectionClose();
-  void bodyCheck();
-  void reassembleResponse();
+  void createContinueResponse();
+  void responseFinalCheck();
 
   ClientStates getState() const;
 

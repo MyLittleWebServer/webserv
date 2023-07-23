@@ -26,6 +26,7 @@
  * @date 2021-07-20
  */
 msgArray statusInfo[] = {
+    msgArray("Continue", "100", 0, ""),
     msgArray("OK", "200", 0, ""),
     msgArray("Created", "201", 0, ""),
     msgArray("Accepted", "202", 16, "Your request is being processed."),
@@ -41,12 +42,14 @@ msgArray statusInfo[] = {
     msgArray("Forbidden", "403", 9, "Access forbidden."),
     msgArray("Not Found", "404", 9, "Not Found"),
     msgArray("Method Not Allowed", "405", 19, "Method Not Allowed."),
+    msgArray("Not Acceptable", "406", 14, "Not Acceptable"),
     msgArray("Request Timeout", "408", 18, "Request Timeout."),
     msgArray("Conflict", "409", 18, "Resource conflict."),
     msgArray("Request Entity Too Large", "413", 27,
              "Request Entity Too Large."),
     msgArray("URI Too Long", "414", 0, "NULL"),
     msgArray("Unsupported Media Type", "415", 24, "Unsupported Media Type."),
+    msgArray("Expection Failed", "417", 16, "Expection Failed"),
     msgArray("Internal Server Error", "500", 21, "Internal Server Error"),
     msgArray("Not_Implemented", "501", 19, "Not Implemented Yet."),
     msgArray("Bad Gateway", "502", 11, "Bad Gateway"),

@@ -28,4 +28,8 @@ class IRequest {
   virtual const std::string getHeaderField(std::string key) const = 0;
   virtual void clear(void) = 0;
   virtual void setHeaderField(std::string key, std::string value) = 0;
+
+  virtual const bool &isParsed(void) const = 0;
+  virtual const bool &isCgi(void) const = 0;
+  virtual const bool &isExpect100(void) const = 0;
 };

@@ -538,6 +538,7 @@ void RequestParser::requestChecker(RequestDts &dts) {
   checkContentType(dts);
   checkCgiMethod(dts);
   checkTE(dts);
+  checkExpectHeader(dts);
 }
 
 /**
@@ -843,4 +844,29 @@ void RequestParser::checkContentType(RequestDts &dts) {
 void RequestParser::ValidateContentEncoding(RequestDts &dts) {
   if ((*dts.headerFields)["content-encoding"].empty()) return;
   throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
+}
+
+/**
+ * @brief checkExpectHeader;
+ *
+ * RFC 7231 5.1.1 Expect (MUST)
+ * expect 헤더의 존재에 따라 *dts.is_expect_100 상태를 true로 변경합니다.
+ * content 가 존재하지 않을 경우 잘못된 요청으로 판단하고 400 에러를 반환합니다.
+ *
+ * @param RequestDts HTTP 관련 데이터
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.20
+ */
+void RequestParser::checkExpectHeader(RequestDts &dts) {
+  if ((*dts.headerFields)["expect"].empty()) return;
+  if (*dts.protocol == "HTTP/1.0") return;
+
+  if ((*dts.headerFields)["expect"] != "100-continue")
+    throw(*dts.statusCode = E_417_EXPECTION_FAILED);
+  if (((*dts.headerFields)["content-length"].empty() &&
+       (*dts.headerFields)["transfer-encoding"].empty()) ||
+      (*dts.headerFields)["content-length"] == "0")
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  *dts.is_expect_100 = true;
 }
