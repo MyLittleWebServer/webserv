@@ -204,7 +204,6 @@ std::string POST::decodeURL(std::string encoded_string) {
 }
 
 std::string POST::makeRandomFileName(RequestDts& dts) {
-  (void)dts;
   std::string charset =
       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::string result;
