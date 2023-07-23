@@ -1,8 +1,13 @@
 #include "POST.hpp"
 
-#include <unistd.h>
+#include <fcntl.h>
 
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include "Utils.hpp"
 
@@ -15,15 +20,22 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << " >>>>>>>>>>>>>>> POST\n";
   std::cout << "path: " << *dts.path << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
-  std::cout << "content-length: " << (*dts.headerFields)["content-length"] << "\n";
+  std::cout << "content-length: " << (*dts.headerFields)["content-length"]
+            << "\n";
 #endif
+
+  srand(static_cast<unsigned int>(time(0)));
+  std::string randFileName = POST::makeRandomNameFile(dts);
+  std::cout << "Generated random filename: " << randFileName << std::endl;
+
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
   response.setStatusCode(E_201_CREATED);
 }
 
 void POST::generateResource(RequestDts& dts) {
-  std::string parsedContent = _contentType = (*dts.headerFields)["content-type"].c_str();
+  std::string parsedContent = _contentType =
+      (*dts.headerFields)["content-type"].c_str();
   if (_contentType.find(';') != std::string::npos) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
@@ -32,17 +44,16 @@ void POST::generateResource(RequestDts& dts) {
   } else if (parsedContent == "multipart/form-data") {
     generateMultipart(dts);
   } else {
-    std::string mimeType = "txt"; // default mime type as plain text
+    std::string mimeType = "txt";  // default mime type as plain text
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
-    Config::getInstance().getMimeTypesConfig());
+        Config::getInstance().getMimeTypesConfig());
 
     try {
       std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
       _title = "file";
       writeTextBody(dts, mimeType);
-    }
-    catch (ExceptionThrower::InvalidConfigException& e) {
+    } catch (ExceptionThrower::InvalidConfigException& e) {
       throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
@@ -94,9 +105,8 @@ void POST::generateMultipart(RequestDts& dts) {
     size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
     if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    _content.insert(_content.end(),
-                          (*dts.body).begin() + binStart + 4,
-                          (*dts.body).begin() + boundary2EndPos);
+    _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
+                    (*dts.body).begin() + boundary2EndPos);
     writeBinaryBody(dts);
     size_t isEOFCRLF = (*dts.body).find("\r\n", boundary2EndPos);
     std::string isEOF =
@@ -190,4 +200,46 @@ std::string POST::decodeURL(std::string encoded_string) {
 
   delete[] buf;
   return decoded_string;
+}
+
+std::string POST::makeRandomName(int urandFd) {
+  const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
+  std::string filename;
+  unsigned int buf[8];
+  char concat_str[9];
+  int i;
+
+  std::memset(concat_str, 0, sizeof(concat_str));
+  while (true) {
+    read(urandFd, buf, sizeof(buf));
+    i = 0;
+    while (i < 8) {
+      concat_str[i] = charset[buf[i] % 36];
+      i++;
+    }
+    filename = std::string(concat_str);
+    if (access(filename.c_str(), F_OK) != 0) {
+      return filename;
+    }
+  }
+}
+
+std::string POST::makeRandomNameFile(RequestDts& dts) {
+  std::string filename;
+  int urandFd;
+  int tempFd;
+
+  urandFd = open("/dev/urandom", O_RDONLY);
+  if (urandFd == -1) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
+  filename = makeRandomName(urandFd);
+  close(urandFd);
+
+  tempFd = open(filename.c_str(), O_WRONLY | O_CREAT, 0644);
+  if (tempFd == -1) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
+  close(tempFd);
+  return filename;
 }

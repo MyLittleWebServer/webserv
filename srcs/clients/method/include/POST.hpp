@@ -29,6 +29,9 @@ class POST : public IMethod {
 
   std::string decodeURL(std::string encoded_string);
 
+  std::string makeRandomNameFile(RequestDts& dts);
+  std::string makeRandomName(int urandFd);
+
   // std::string validateContentType();
 };
 
