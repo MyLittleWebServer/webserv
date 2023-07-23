@@ -213,7 +213,7 @@ std::string POST::makeRandomFileName(RequestDts& dts) {
     result.push_back(charset[std::rand() % charset.size()]);
 
   if (access(result.c_str(), F_OK) == 0)
-    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+    throw((*dts.statusCode) = E_409_CONFLICT);
 
   return result;
 }
