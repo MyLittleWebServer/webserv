@@ -23,19 +23,15 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
 #endif
-
-  srand(static_cast<unsigned int>(time(0)));
-  std::string randFileName = POST::makeRandomNameFile(dts);
-  std::cout << "Generated random filename: " << randFileName << std::endl;
-
+  _randName = makeRandomFileName(dts);
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
   response.setStatusCode(E_201_CREATED);
 }
 
 void POST::generateResource(RequestDts& dts) {
-  std::string parsedContent = _contentType =
-      (*dts.headerFields)["content-type"].c_str();
+  std::string parsedContent;
+  _contentType = (*dts.headerFields)["content-type"].c_str();
   if (_contentType.find(';') != std::string::npos) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
@@ -51,7 +47,7 @@ void POST::generateResource(RequestDts& dts) {
     try {
       std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
-      _title = "file";
+      _title = _randName;
       writeTextBody(dts, mimeType);
     } catch (ExceptionThrower::InvalidConfigException& e) {
       throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
@@ -72,6 +68,9 @@ void POST::generateUrlEncoded(RequestDts& dts) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   }
   _title = decodedBody.substr(equalPos1 + 1, andPos - equalPos1 - 1);
+  if (_title == "") {
+    _title = _randName;
+  }
   size_t equalPos2 = decodedBody.find('=', andPos + 1);
   _content = decodedBody.substr(equalPos2 + 1);
 #ifdef DEBUG_MSG
@@ -95,8 +94,8 @@ void POST::generateMultipart(RequestDts& dts) {
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
-      _title = "Unsupported File Name";
-      _content = "Unsupported File Source";
+      _title = _randName;
+      _content = _randName + "is DummySource";
       writeTextBody(dts, "txt");
       return;
     }
@@ -202,44 +201,25 @@ std::string POST::decodeURL(std::string encoded_string) {
   return decoded_string;
 }
 
-std::string POST::makeRandomName(int urandFd) {
+std::string POST::makeRandomFileName(RequestDts& dts) {
   const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
   std::string filename;
   unsigned int buf[8];
   char concat_str[9];
   int i;
+  int urandFd;
 
   std::memset(concat_str, 0, sizeof(concat_str));
-  while (true) {
-    read(urandFd, buf, sizeof(buf));
-    i = 0;
-    while (i < 8) {
-      concat_str[i] = charset[buf[i] % 36];
-      i++;
-    }
-    filename = std::string(concat_str);
-    if (access(filename.c_str(), F_OK) != 0) {
-      return filename;
-    }
-  }
-}
-
-std::string POST::makeRandomNameFile(RequestDts& dts) {
-  std::string filename;
-  int urandFd;
-  int tempFd;
-
   urandFd = open("/dev/urandom", O_RDONLY);
   if (urandFd == -1) {
     throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
   }
-  filename = makeRandomName(urandFd);
-  close(urandFd);
-
-  tempFd = open(filename.c_str(), O_WRONLY | O_CREAT, 0644);
-  if (tempFd == -1) {
-    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  read(urandFd, buf, sizeof(buf));
+  i = 0;
+  while (i < 8) {
+    concat_str[i] = charset[buf[i] % 36];
+    i++;
   }
-  close(tempFd);
+  filename = std::string(concat_str);
   return filename;
 }

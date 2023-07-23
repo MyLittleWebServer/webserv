@@ -11,6 +11,7 @@ class POST : public IMethod {
   std::string _boundary;
   std::string _title;
   std::string _content;
+  std::string _randName;
 
   struct stat fileinfo;
 
@@ -29,8 +30,7 @@ class POST : public IMethod {
 
   std::string decodeURL(std::string encoded_string);
 
-  std::string makeRandomNameFile(RequestDts& dts);
-  std::string makeRandomName(int urandFd);
+  std::string makeRandomFileName(RequestDts& dts);
 
   // std::string validateContentType();
 };
