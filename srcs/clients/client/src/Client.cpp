@@ -2,11 +2,13 @@
 
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
+#include "ExceptionThrower.hpp"
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
+#include "Session.hpp"
 #include "Utils.hpp"
 
 char Client::_buf[RECEIVE_LEN] = {0};
@@ -123,7 +125,45 @@ void Client::parseRequest(short port) {
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  _method->doRequest(_request.getRequestParserDts(), _response);
+  RequestDts &dts = _request.getRequestParserDts();
+
+  manageSession(dts);
+  _method->doRequest(dts, _response);
+}
+
+void Client::manageSession(RequestDts &dts) {
+  Session &session = Session::getInstance();
+  std::string sessionId;
+
+  if (*dts.originalPath == "/login" && *dts.method == "POST") {
+    sessionId = session.createSession(
+        getTimeOfDay() +
+        10);  // put this to Location header of redirection response
+    *dts.path = "/session.html?session_id=" + sessionId;
+    throw(*dts.statusCode = E_301_MOVED_PERMANENTLY);
+  }
+
+  std::map<std::string, std::string>::const_iterator it =
+      (*dts.queryStringElements).find("session_id");
+  if (it == (*dts.queryStringElements).end()) {
+    return;
+  }
+  try {
+    SessionData &sessionData = session.getSessionData(it->second);
+    if (*dts.method == "POST") {
+      // *origin_uri/session_id=askldfjkljsdklfjsdflkj
+      sessionData.setData("data", *dts.body);
+    } else if (*dts.method == "GET") {
+      // _response.setHeaderField("Content-Type", "application/json");
+      // _response.setBody(sessionData.getData("data"));
+    }
+  } catch (ExceptionThrower::SessionDataNotFound) {
+    if (*dts.method == "POST") {
+      throw(*dts.statusCode = E_401_UNAUTHORIZED);  // 로그인 session이 없는경우
+    }
+  } catch (ExceptionThrower::SessionDataError &e) {
+    std::cout << e.what() << std::endl;
+  }
 }
 /**
  * @brief 클라이언트가 응답을 전송합니다.
@@ -452,7 +492,7 @@ void Client::methodNotAllowCheck() {
  * @date 2023.07.22
  */
 void Client::responseFinalCheck() {
-  contentNegotiation();
+  // contentNegotiation();
   methodNotAllowCheck();
   headMethodBodyCheck();
   setResponseConnection();
