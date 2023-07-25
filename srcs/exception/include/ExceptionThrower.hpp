@@ -68,4 +68,25 @@ class ExceptionThrower {
 
     virtual const char* what() const throw();
   };
+
+  class SessionDataError : public std::runtime_error {
+   public:
+    SessionDataError();
+
+    virtual const char* what() const throw();
+  };
+
+  class SessionDataNotFound : public std::runtime_error {
+   public:
+    SessionDataNotFound();
+
+    virtual const char* what() const throw();
+  };
+
+  class SessionDataExpired : public std::runtime_error {
+   public:
+    SessionDataExpired();
+
+    virtual const char* what() const throw();
+  };
 };
