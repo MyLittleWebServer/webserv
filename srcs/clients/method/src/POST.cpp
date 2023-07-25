@@ -19,6 +19,7 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
 #ifndef DEBUG_MSG
   std::cout << " >>>>>>>>>>>>>>> POST\n";
   std::cout << "path: " << *dts.path << "\n";
+  std::cout << "original path: " << *dts.originalPath << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
@@ -204,13 +205,7 @@ std::string POST::decodeURL(std::string encoded_string) {
 }
 
 std::string POST::makeRandomFileName(RequestDts& dts) {
-  std::string charset =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  std::string result;
-  std::srand(std::time(0));
-
-  for (int i = 0; i < 8; ++i)
-    result.push_back(charset[std::rand() % charset.size()]);
+  std::string result = generateRandomString();
 
   if (access(result.c_str(), F_OK) == 0)
     throw((*dts.statusCode) = E_409_CONFLICT);
