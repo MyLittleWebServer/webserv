@@ -10,6 +10,8 @@
 
 #include "Utils.hpp"
 
+#include <ctime>
+
 /**
  * @brief 에러 메세지를 출력하고 프로그램을 종료합니다.
  *
@@ -77,6 +79,8 @@ std::string getCurrentTime() {
 
   return (std::string(buffer));
 }
+
+int getTimeOfDay() { return std::time(NULL); }
 
 /**
  * @brief 문자열을 소문자로 변환합니다.
@@ -165,4 +169,15 @@ size_t find_index(std::vector<std::string> &vec, std::string &str) {
     i++;
   }
   return std::string::npos;
+}
+
+std::string generateRandomString() {
+  static std::string charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::string result;
+  std::srand(std::time(0));
+
+  for (int i = 0; i < 32; ++i)
+    result.push_back(charset[std::rand() % charset.size()]);
+  return result;
 }
