@@ -140,33 +140,30 @@ bool Client::manageSession(RequestDts &dts) {
     _response.setHeaderField("Set-Cookie",
                              "session_id=" + sessionId +
                                  //  "; expires=" + getCurrentTime() +
-                                 "; Max-Age=60; Path=/session;");
+                                 "; Max-Age=60;");
     *dts.path = "";
     throw(*dts.statusCode = E_303_SEE_OTHER);
   }
 
+  if (*dts.originalPath != "/session" && *dts.originalPath != "/gaepo.html" &&
+      *dts.originalPath != "/session.html") {
+    return false;
+  }
   // 쿠키 없을 경우 동작 안 함
-  if (*dts.originalPath == "/session") {
-    if ((*dts.headerFields)["cookie"].empty()) {
-      throw(*dts.statusCode = E_401_UNAUTHORIZED);
-    }
+  if ((*dts.headerFields)["cookie"].empty()) {
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
   }
 
   // 쿠키 파싱
   std::map<std::string, std::string> cookieMap;
-  if (!(*dts.headerFields)["cookie"].empty() &&
-      *dts.originalPath == "/session") {
-    std::vector<std::string> cookie =
-        ft_split((*dts.headerFields)["cookie"], "; ");
+  std::vector<std::string> cookie =
+      ft_split((*dts.headerFields)["cookie"], "; ");
 
-    std::vector<std::string>::const_iterator it = cookie.begin();
-    for (; it < cookie.end(); ++it) {
-      std::vector<std::string> keyValue = ft_split(*it, '=');
-      std::cout << ">>>>>> COOKIE: " << *it << '\n';
-      cookieMap[keyValue[0]] = keyValue[1];
-    }
-  } else {
-    return false;
+  std::vector<std::string>::const_iterator it = cookie.begin();
+  for (; it < cookie.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    std::cout << ">>>>>> COOKIE: " << *it << '\n';
+    cookieMap[keyValue[0]] = keyValue[1];
   }
 
   // 메소드에 따른 동작 수행
@@ -180,6 +177,7 @@ bool Client::manageSession(RequestDts &dts) {
         _response.setHeaderField("Content-Type", "application/json");
         _response.setBody(sessionData.getData("data"));
       }
+      return true;
     }
   } catch (ExceptionThrower::SessionDataNotFound &e) {
     if (*dts.method == "POST") {
@@ -188,7 +186,7 @@ bool Client::manageSession(RequestDts &dts) {
   } catch (ExceptionThrower::SessionDataError &e) {
     std::cout << e.what() << std::endl;
   }
-  return true;
+  return false;
 }
 /**
  * @brief 클라이언트가 응답을 전송합니다.
