@@ -2,6 +2,7 @@
 #define PUT_HPP
 
 // #include <vector>
+#include <sys/stat.h>
 
 #include "IMethod.hpp"
 
@@ -17,6 +18,7 @@ class PUT : public IMethod {
   std::string _content;
 
   std::string _alterContent;
+  std::string _pathFinder;
 
   struct stat fileinfo;
 
@@ -31,7 +33,7 @@ class PUT : public IMethod {
 
   void generateUrlEncoded(RequestDts& dts);
   void generateMultipart(RequestDts& dts);
-  void writeTextBody(RequestDts& dts, std::string mimeType);
+  void writeTextBody(RequestDts& dts);
   void writeBinaryBody(RequestDts& dts);
 
   std::string decodeURL(std::string encoded_string);
