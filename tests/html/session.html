@@ -27,6 +27,20 @@
       <pre id="responseData"></pre>
   </div>
 
+  <!-- 쿠키 가져와서 session_id에 넣기 -->
+  <script> 
+  function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+  // 쿠키에서 session_id를 가져와서 입력 필드에 설정
+  const sessionId = getCookie('session_id');
+  if (sessionId) {
+    document.getElementById('session_id').value = sessionId;
+  }
+</script>
+
   <script>
       document.getElementById("myForm").addEventListener("submit", function(event) {
           event.preventDefault(); // 폼 기본 동작 취소 (페이지 새로고침 방지)
