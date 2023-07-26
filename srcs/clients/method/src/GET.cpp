@@ -39,9 +39,8 @@ void GET::handlePath(RequestDts& dts, IResponse& response) {
     autoindex = (*dts.matchedLocation)->getAutoindex();
   }
 
-  if (validateSession(dts, response, session))
-    return;
-  else if (checkFile(path)) {
+  if (validateSession(dts, response, session)) return;
+  if (checkFile(path)) {
     *dts.statusCode = E_200_OK;
     prepareBody(path, response);
   } else if (checkIndexFile(pathIndex)) {
@@ -210,25 +209,32 @@ bool GET::validateSession(RequestDts& dts, IResponse& response,
     throw(*dts.statusCode = E_401_UNAUTHORIZED);
   }
 
-  // 쿠키 파싱
-  // dts에서 쿠키 파싱 될 것.
-  std::map<std::string, std::string> cookieMap;
-  std::vector<std::string> cookie =
-      ft_split((*dts.headerFields)["cookie"], "; ");
-
-  std::vector<std::string>::const_iterator it = cookie.begin();
-  for (; it < cookie.end(); ++it) {
-    std::vector<std::string> keyValue = ft_split(*it, '=');
-    std::cout << ">> COOKIE: " << *it << '\n';
-    cookieMap[keyValue[0]] = keyValue[1];
-  }
+  std::cout << ">> session: " << *dts.originalPath << '\n';
 
   try {
+    // 쿠키 파싱
+    // dts에서 쿠키 파싱 될 것.
+    std::map<std::string, std::string> cookieMap;
+    std::vector<std::string> cookie =
+        ft_split((*dts.headerFields)["cookie"], "; ");
+
+    std::vector<std::string>::const_iterator it = cookie.begin();
+    for (; it < cookie.end(); ++it) {
+      std::vector<std::string> keyValue = ft_split(*it, '=');
+      std::cout << ">> COOKIE: " << *it << '\n';
+      if (!keyValue.empty()) cookieMap[keyValue[0]] = keyValue[1];
+    }
+
     SessionData& sessionData = session.getSessionData(cookieMap["session_id"]);
     if (*dts.originalPath == "/session") {
       response.setHeaderField("Content-Type", "application/json");
-      response.setBody(sessionData.getData("data"));
-      return false;
+
+      std::string body =
+          "[{\"username\":\"" + sessionData.getData("username") + "\"},";
+      response.setBody(body);
+      response.addBody(sessionData.getData("data"));
+      response.addBody("]");
+      return true;
     }
   } catch (ExceptionThrower::SessionDataNotFound& e) {
     std::cout << e.what() << std::endl;
@@ -237,5 +243,5 @@ bool GET::validateSession(RequestDts& dts, IResponse& response,
     std::cout << e.what() << std::endl;
     throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
   }
-  return true;
+  return false;
 }
