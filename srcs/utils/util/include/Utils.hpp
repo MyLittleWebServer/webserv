@@ -32,6 +32,8 @@ std::string ft_trim(std::string &str);
 std::string ft_trimOWS(std::string &str);
 
 std::vector<std::string> ft_split(const std::string &str, char delim);
+std::vector<std::string> ft_split(const std::string &str,
+                                  const std::string &delim);
 size_t find_index(std::vector<std::string> &vec, std::string &str);
 
 template <typename T>
