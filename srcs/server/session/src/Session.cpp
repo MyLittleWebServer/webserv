@@ -16,7 +16,7 @@ Session& Session::getInstance() {
 }
 
 std::string Session::createSession(int expirationTime) {
-  std::string newSessionId = generateRandomString();
+  std::string newSessionId = toLowerString(generateRandomString());
   SessionData temp(newSessionId, expirationTime);
   _sessionData[newSessionId] = temp;
   return newSessionId;

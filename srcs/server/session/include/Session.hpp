@@ -8,10 +8,6 @@
 
 class Session {
  private:
-  /**
-  @deprecated
-  */
-  std::map<uintptr_t, std::string> _data;  // obsolate 예정
   std::map<std::string, SessionData> _sessionData;
 
   Session();

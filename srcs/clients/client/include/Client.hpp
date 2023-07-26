@@ -120,7 +120,7 @@ class Client {
   int getRequestTimeOutLimit() const;
   int getRequestTimeOutUnit() const;
 
-  void manageSession(RequestDts &dts);
+  bool manageSession(RequestDts &dts);
 
   class RecvFailException : public std::exception {
    public:
