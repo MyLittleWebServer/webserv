@@ -10,45 +10,73 @@
 #include <vector>
 
 #include "Kqueue.hpp"
+#include "Session.hpp"
 #include "Utils.hpp"
 
 GET::GET() : IMethod() {}
 GET::~GET() {}
 
 void GET::doRequest(RequestDts& dts, IResponse& response) {
-  response.setHeaderField("Content-Type", "text/plain");
-  std::string pathIndex;
+  handlePath(dts, response);
 
-  pathIndex = *dts.path;
-  if ((*dts.matchedLocation)->getIndex() != "") {
-    pathIndex += (*dts.path)[dts.path->size() - 1] == '/'
-                     ? (*dts.matchedLocation)->getIndex()
-                     : "/" + (*dts.matchedLocation)->getIndex();
-  }
-#ifdef DEBUG_MSG
-  std::cout << " -- this : " << *dts.path << std::endl;
-  std::cout << " -- this : " << pathIndex << std::endl;
-#endif
-
-  if (access(dts.path->c_str(), R_OK) == 0 &&
-      (*dts.path)[dts.path->size() - 1] != '/') {
-    *dts.statusCode = E_200_OK;
-    prepareBody(*dts.path, response);
-  } else if (access(pathIndex.c_str(), R_OK) == 0 &&
-             pathIndex[pathIndex.size() - 1] != '/') {
-    *dts.statusCode = E_200_OK;
-    prepareBody(pathIndex, response);
-  } else if (access(pathIndex.c_str(), R_OK) < 0 &&
-             (*dts.path)[dts.path->size() - 1] == '/' &&
-             (*dts.matchedLocation)->getAutoindex() == "on") {
-    *dts.statusCode = E_200_OK;
-    prepareFileList(*dts.path, dts, response);
-  } else {
-    throw(*dts.statusCode = E_404_NOT_FOUND);
-  }
   if (response.getBody().empty()) {
     *dts.statusCode = E_204_NO_CONTENT;
   }
+}
+
+void GET::handlePath(RequestDts& dts, IResponse& response) {
+  Session& session = Session::getInstance();
+
+  std::string path = *dts.path;
+  std::string pathIndex;
+  std::string matchedIndex;
+  std::string autoindex;
+
+  if ((*dts.matchedLocation)->getIndex() != "") {
+    matchedIndex = (*dts.matchedLocation)->getIndex();
+    pathIndex = path + (path[path.size() - 1] == '/' ? matchedIndex
+                                                     : "/" + matchedIndex);
+    autoindex = (*dts.matchedLocation)->getAutoindex();
+  }
+
+  if (validateSession(dts, response, session))
+    return;
+  else if (checkFile(path)) {
+    *dts.statusCode = E_200_OK;
+    prepareBody(path, response);
+  } else if (checkIndexFile(pathIndex)) {
+    *dts.statusCode = E_200_OK;
+    prepareBody(pathIndex, response);
+  } else if (checkAutoIndex(path, pathIndex, autoindex)) {
+    *dts.statusCode = E_200_OK;
+    prepareFileList(path, dts, response);
+  } else {
+    throw(*dts.statusCode = E_404_NOT_FOUND);
+  }
+}
+
+bool GET::checkFile(std::string& path) {
+  // 처음에 요청한 파일이 존재하는지 확인
+  if (access(path.c_str(), R_OK) == 0 && path[path.size() - 1] != '/')
+    return true;
+  return false;
+}
+
+bool GET::checkIndexFile(std::string& pathIndex) {
+  // 요청한 파일은 없고, index 파일이 존재하는지 확인
+  if (access(pathIndex.c_str(), R_OK) == 0 &&
+      pathIndex[pathIndex.size() - 1] != '/')
+    return true;
+  return false;
+}
+
+bool GET::checkAutoIndex(std::string& path, std::string& pathIndex,
+                         const std::string& autoindex) {
+  // 요청한 파일도 없고, index 파일도 없고, autoindex가 켜져있는지 확인
+  if (access(pathIndex.c_str(), R_OK) < 0 && path[path.size() - 1] == '/' &&
+      autoindex == "on")
+    return true;
+  return false;
 }
 
 std::vector<std::string> GET::getFileList(const std::string& path,
@@ -168,4 +196,46 @@ void GET::getContentType(const std::string& path, IResponse& response) {
   } catch (ExceptionThrower::InvalidConfigException& e) {
     response.setHeaderField("Content-Type", "application/octet-stream");
   }
+}
+
+bool GET::validateSession(RequestDts& dts, IResponse& response,
+                          Session& session) {
+  if (*dts.originalPath != "/session" && *dts.originalPath != "/gaepo.html" &&
+      *dts.originalPath != "/session.html" &&
+      *dts.originalPath != "/asset/marin03.jpg") {
+    return false;
+  }
+
+  if ((*dts.headerFields)["cookie"].empty()) {
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
+  }
+
+  // 쿠키 파싱
+  // dts에서 쿠키 파싱 될 것.
+  std::map<std::string, std::string> cookieMap;
+  std::vector<std::string> cookie =
+      ft_split((*dts.headerFields)["cookie"], "; ");
+
+  std::vector<std::string>::const_iterator it = cookie.begin();
+  for (; it < cookie.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    std::cout << ">> COOKIE: " << *it << '\n';
+    cookieMap[keyValue[0]] = keyValue[1];
+  }
+
+  try {
+    SessionData& sessionData = session.getSessionData(cookieMap["session_id"]);
+    if (*dts.originalPath == "/session") {
+      response.setHeaderField("Content-Type", "application/json");
+      response.setBody(sessionData.getData("data"));
+      return false;
+    }
+  } catch (ExceptionThrower::SessionDataNotFound& e) {
+    std::cout << e.what() << std::endl;
+    throw(*dts.statusCode = E_404_NOT_FOUND);
+  } catch (ExceptionThrower::SessionDataError& e) {
+    std::cout << e.what() << std::endl;
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
+  return true;
 }

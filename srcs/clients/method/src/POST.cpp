@@ -17,13 +17,16 @@ POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
 #ifndef DEBUG_MSG
-  std::cout << " >>>>>>>>>>>>>>> POST\n";
+  std::cout << " >> POST\n";
   std::cout << "path: " << *dts.path << "\n";
   std::cout << "original path: " << *dts.originalPath << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
 #endif
+  Session& session = Session::getInstance();
+  handlePath(dts, response, session);
+
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
   response.setStatusCode(E_201_CREATED);
@@ -211,4 +214,44 @@ std::string POST::makeRandomFileName(RequestDts& dts) {
     throw((*dts.statusCode) = E_409_CONFLICT);
 
   return result;
+}
+
+void POST::handlePath(RequestDts& dts, IResponse& response, Session& session) {
+  if (*dts.originalPath == "/login") {
+    login(dts, response, session);
+  } else if (*dts.originalPath == "/session") {
+    submit(dts, session);
+  }
+}
+
+void POST::login(RequestDts& dts, IResponse& response, Session& session) {
+  response.setHeaderField(
+      "Set-Cookie", "session_id=" + session.createSession(getTimeOfDay() + 60) +
+                        "; Max-Age=60;");
+  *dts.path = "";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void POST::submit(RequestDts& dts, Session& session) {
+  // 쿠키 파싱
+  // dts에서 쿠키 파싱 될 것.
+  std::map<std::string, std::string> cookieMap;
+  std::vector<std::string> cookie =
+      ft_split((*dts.headerFields)["cookie"], "; ");
+
+  std::vector<std::string>::const_iterator it = cookie.begin();
+  for (; it < cookie.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    std::cout << ">> COOKIE: " << *it << '\n';
+    cookieMap[keyValue[0]] = keyValue[1];
+  }
+
+  try {
+    SessionData& sessionData = session.getSessionData(cookieMap["session_id"]);
+    sessionData.setData("data", *dts.body);
+  } catch (ExceptionThrower::SessionDataNotFound& e) {
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
+  } catch (ExceptionThrower::SessionDataError& e) {
+    std::cout << e.what() << std::endl;
+  }
 }

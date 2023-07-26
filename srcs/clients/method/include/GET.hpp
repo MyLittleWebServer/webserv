@@ -19,6 +19,11 @@ class GET : public IMethod {
   void prepareTextBody(const std::string& path, IResponse& response);
   void prepareBinaryBody(const std::string& path, IResponse& response);
 
+  bool checkFile(std::string& path);
+  bool checkIndexFile(std::string& pathIndex);
+  bool checkAutoIndex(std::string& path, std::string& pathIndex,
+                      const std::string& autoindex);
+
  protected:
   void validateContentType(IResponse& response);
 
@@ -29,6 +34,8 @@ class GET : public IMethod {
   void doRequest(RequestDts& dts, IResponse& response);
   void fileHandler(const std::string& path);
   virtual void createSuccessResponse(IResponse& response);
+  bool validateSession(RequestDts& dts, IResponse& response, Session& session);
+  void handlePath(RequestDts& dts, IResponse& response);
 };
 
 #endif

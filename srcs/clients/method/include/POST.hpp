@@ -33,6 +33,8 @@ class POST : public IMethod {
   std::string makeRandomFileName(RequestDts& dts);
 
   // std::string validateContentType();
+  void handlePath(RequestDts& dts, IResponse& response, Session& session);
+  void login(RequestDts& dts, IResponse& response, Session& session);
+  void submit(RequestDts& dts, Session& session);
 };
-
 #endif
