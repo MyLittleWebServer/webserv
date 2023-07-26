@@ -126,69 +126,9 @@ bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
   RequestDts &dts = _request.getRequestParserDts();
-  if (manageSession(dts)) return;
   _method->doRequest(dts, _response);
 }
 
-bool Client::manageSession(RequestDts &dts) {
-  Session &session = Session::getInstance();
-  std::string sessionId;
-
-  if (*dts.originalPath == "/login" && *dts.method == "POST") {
-    std::cout << ">> login" << std::endl;
-    sessionId = session.createSession(getTimeOfDay() + 60);
-    _response.setHeaderField("Set-Cookie",
-                             "session_id=" + sessionId +
-                                 //  "; expires=" + getCurrentTime() +
-                                 "; Max-Age=60;");
-    *dts.path = "";
-    throw(*dts.statusCode = E_303_SEE_OTHER);
-  }
-
-  if (*dts.originalPath != "/session" && *dts.originalPath != "/gaepo.html" &&
-      *dts.originalPath != "/session.html" &&
-      *dts.originalPath != "/asset/marin03.jpg") {
-    return false;
-  }
-  // 쿠키 없을 경우 동작 안 함
-  if ((*dts.headerFields)["cookie"].empty()) {
-    throw(*dts.statusCode = E_401_UNAUTHORIZED);
-  }
-
-  // 쿠키 파싱
-  std::map<std::string, std::string> cookieMap;
-  std::vector<std::string> cookie =
-      ft_split((*dts.headerFields)["cookie"], "; ");
-
-  std::vector<std::string>::const_iterator it = cookie.begin();
-  for (; it < cookie.end(); ++it) {
-    std::vector<std::string> keyValue = ft_split(*it, '=');
-    std::cout << ">>>>>> COOKIE: " << *it << '\n';
-    cookieMap[keyValue[0]] = keyValue[1];
-  }
-
-  // 메소드에 따른 동작 수행
-  try {
-    SessionData &sessionData = session.getSessionData(cookieMap["session_id"]);
-    if (*dts.originalPath == "/session") {
-      if (*dts.method == "POST") {
-        sessionData.setData("data", *dts.body);
-        std::cout << ">>> data: " << *dts.body << '\n';
-      } else if (*dts.method == "GET") {
-        _response.setHeaderField("Content-Type", "application/json");
-        _response.setBody(sessionData.getData("data"));
-      }
-      return true;
-    }
-  } catch (ExceptionThrower::SessionDataNotFound &e) {
-    if (*dts.method == "POST") {
-      throw(*dts.statusCode = E_401_UNAUTHORIZED);  // 로그인 session이 없는경우
-    }
-  } catch (ExceptionThrower::SessionDataError &e) {
-    std::cout << e.what() << std::endl;
-  }
-  return false;
-}
 /**
  * @brief 클라이언트가 응답을 전송합니다.
  *
