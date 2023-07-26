@@ -146,7 +146,8 @@ bool Client::manageSession(RequestDts &dts) {
   }
 
   if (*dts.originalPath != "/session" && *dts.originalPath != "/gaepo.html" &&
-      *dts.originalPath != "/session.html") {
+      *dts.originalPath != "/session.html" &&
+      *dts.originalPath != "/asset/marin03.jpg") {
     return false;
   }
   // 쿠키 없을 경우 동작 안 함
