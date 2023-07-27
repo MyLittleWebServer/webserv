@@ -213,15 +213,12 @@ void PUT::generateMultipart(RequestDts& dts) {
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
-      _title = makeRandomFileName(dts);
+      _title = _uniqueID;
       _content = "DummySource";
       writeTextBody(dts);
       return;
     }
-    _title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
-    if (_title == "") {
-      _title = makeRandomFileName(dts);
-    }
+    _title = _uniqueID;
     size_t binStart = (*dts.body).find("\r\n\r\n");
     size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
     if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
@@ -317,19 +314,4 @@ std::string PUT::decodeURL(std::string encoded_string) {
 
   delete[] buf;
   return decoded_string;
-}
-
-std::string PUT::makeRandomFileName(RequestDts& dts) {
-  std::string charset =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  std::string result;
-  std::srand(std::time(0));
-
-  for (int i = 0; i < 8; ++i)
-    result.push_back(charset[std::rand() % charset.size()]);
-
-  if (access(result.c_str(), F_OK) == 0)
-    throw((*dts.statusCode) = E_409_CONFLICT);
-
-  return result;
 }

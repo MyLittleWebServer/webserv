@@ -9,14 +9,12 @@ class PUT : public IMethod {
  private:
   std::string _path;
   std::string _uniqueID;
-  std::string _uniqueContent;
 
   std::string _contentType;
   std::string _boundary;
   std::string _title;
   std::string _content;
 
-  std::string _alterContent;
   std::string _pathFinder;
 
   struct stat fileinfo;
@@ -36,18 +34,14 @@ class PUT : public IMethod {
   void writeBinaryBody(RequestDts& dts);
 
   std::string decodeURL(std::string encoded_string);
-  std::string makeRandomFileName(RequestDts& dts);
 
-  /* PUT only methods */
   void initUniqueIdandPath(RequestDts& dts);
 
-  /* check for Content */
   bool checkBodyContent(RequestDts& dts);
   bool checkForUrlEncoded(RequestDts& dts);
   bool checkForPlainText(RequestDts& dts);
   bool checkForMultipart(RequestDts& dts);
 
-  /* replace for Content */
   void replaceContent(RequestDts& dts);
 };
 
