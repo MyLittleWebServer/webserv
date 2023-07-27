@@ -52,3 +52,20 @@ bool Session::isExpired(const std::string& sessionId) {
   }
   return false;
 }
+
+void Session::deleteExpiredSessions() {
+  if (_sessionData.empty()) {
+    return;
+  }
+  std::map<std::string, SessionData>::iterator it = _sessionData.begin();
+  std::map<std::string, SessionData>::iterator end = _sessionData.end();
+  std::map<std::string, SessionData>::iterator next;
+  for (; it != end; ++it) {
+    next = it;
+    ++next;
+    if (isExpired(it->first)) {
+      _sessionData.erase(it);
+    }
+    it = next;
+  }
+}

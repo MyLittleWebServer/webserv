@@ -21,7 +21,7 @@ class Session {
  public:
   static Session& getInstance();
   std::string createSession(int expirationTime);
-  //  void setSessionData(uintptr_t clientId, const std::string& data);
   SessionData& getSessionData(const std::string& sessionId);
   bool isSessionExist(const std::string& sessionId);
+  void deleteExpiredSessions();
 };
