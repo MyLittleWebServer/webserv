@@ -37,6 +37,7 @@ class Request : public IRequest {
 
   std::list<std::string> _linesBuffer;
   std::map<std::string, std::string> _headerFields;
+  std::map<std::string, std::string> _cookieMap;
   std::map<std::string, std::string> _queryStringElements;
   std::map<std::string, std::string> _serverConf;
 
