@@ -89,6 +89,7 @@ void CGI::initEnv() {
   _remote_addr = "REMOTE_ADDR=" + _request->getHeaderField("HOST");
   _request_method = "REQUEST_METHOD=" + _request->getMethod();
   _script_filename = "SCRIPT_FILENAME=" + _request->getPath();
+  _cookie = "HTTP_COOKIE=" + _request->getHeaderField("COOKIE");
 
   if (_request->getMethod() == "POST") _env.push_back(_content_length.c_str());
   if (_request->getMethod() == "GET") _env.push_back(_query_string.c_str());
@@ -100,6 +101,7 @@ void CGI::initEnv() {
   _env.push_back(_request_method.c_str());
   _env.push_back(_server_name.c_str());
   _env.push_back(_server_software.c_str());
+  _env.push_back(_cookie.c_str());
   _env.push_back(NULL);
 }
 

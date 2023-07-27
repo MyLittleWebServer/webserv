@@ -38,6 +38,7 @@ class CGI : public ICGI {
   std::string _remote_addr;
   std::string _request_method;
   std::string _script_filename;
+  std::string _cookie;
 
  private:
   CGI_STATUS _cgi_status;
