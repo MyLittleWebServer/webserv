@@ -19,25 +19,24 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   if (*dts.body == "") throw(*dts.statusCode = E_200_OK);
   initUniqueIdandPath(dts);
 
-  // check if resource already existed
   if (stat(dts.path->c_str(), &fileinfo) < 0) {
-    generateResource(dts);  // generate resource when no existed
+    generateResource(dts);
     response.setStatusCode(E_201_CREATED);
   } else {
     if (checkBodyContent(dts))
-      throw(*dts.statusCode = E_204_NO_CONTENT);  // when body Content is same
+      throw(*dts.statusCode = E_204_NO_CONTENT);
     replaceContent(dts);
-    response.setStatusCode(E_200_OK);  // when no change occured
+    response.setStatusCode(E_200_OK);
   }
 }
 
 void PUT::initUniqueIdandPath(RequestDts& dts) {
   _uniqueID = "";
-  std::string tmpPath = *dts.path;
-  size_t slashPos = tmpPath.rfind('/');
+  std::string uniquePath = *dts.path;
+  size_t slashPos = uniquePath.rfind('/');
   _pathFinder = (*dts.path).substr(0, slashPos) + "/";
-  if (slashPos != std::string::npos && tmpPath[slashPos + 1] != '\0') {
-    _uniqueID = tmpPath.substr(slashPos + 1);
+  if (slashPos != std::string::npos && uniquePath[slashPos + 1] != '\0') {
+    _uniqueID = uniquePath.substr(slashPos + 1);
   }
 }
 
@@ -50,32 +49,31 @@ bool PUT::checkBodyContent(RequestDts& dts) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
   if (parsedContent == "multipart/form-data") {
-    ret = checkForMultipart(dts);  // check for memory inside memcmp
+    ret = checkForMultipart(dts);
   } else if (parsedContent == "application/x-www-form-urlencoded") {
-    ret = checkForUrlEncoded(dts);  // check for urlencode type
-  } else {                          // check for plain/text
+    ret = checkForUrlEncoded(dts);
+  } else {                          
     ret = checkForPlainText(dts);
   }
   return ret;
 }
 
 bool PUT::checkForMultipart(RequestDts& dts) {
-  /* get binary current body content*/
-  std::string tmpBoundary;
-  std::string tmpContent;
+  std::string cmpBoundary;
+  std::string cmpContent;
   std::string binBody = (*dts.body).data();
   size_t boundaryEndPos = binBody.find("\r\n");
   if (boundaryEndPos == std::string::npos)
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
-  tmpBoundary = binBody.substr(0, boundaryEndPos);
+  cmpBoundary = binBody.substr(0, boundaryEndPos);
 
   size_t filePos = binBody.find("filename=\"");
   size_t fileEndPos = binBody.find('\"', filePos + 11);
   size_t binStart = (*dts.body).find("\r\n\r\n");
-  size_t boundary2EndPos = (*dts.body).find(tmpBoundary, fileEndPos);
+  size_t boundary2EndPos = (*dts.body).find(cmpBoundary, fileEndPos);
   if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
-  tmpContent.insert(tmpContent.end(), (*dts.body).begin() + binStart + 4,
+  cmpContent.insert(cmpContent.end(), (*dts.body).begin() + binStart + 4,
                     (*dts.body).begin() + boundary2EndPos);
 
   /* get binary file body content */
@@ -85,24 +83,27 @@ bool PUT::checkForMultipart(RequestDts& dts) {
   buf << file.rdbuf();
   compBin += (buf.str());
   file.close();
-  if (memcmp(compBin.c_str(), tmpContent.c_str(), sizeof(compBin)) == 0)
+  if (memcmp(compBin.c_str(), cmpContent.c_str(), sizeof(compBin)) == 0)
     return true;
-  _alterContent = tmpContent.data();
   return false;
 }
 
 bool PUT::checkForUrlEncoded(RequestDts& dts) {
-  std::string urlTitle = _uniqueID;  // ?not sure how to get filename?
+  std::string urlTitle = _uniqueID;
   std::string urlContent;
   std::string buf;
-  std::ifstream file(dts.path->c_str(), std::ios::in);
+  std::ifstream file(dts.path->c_str(), std ::ios::in);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   std::getline(file, buf);
   urlContent += buf;
-  // urlContent += '\n';
 
-  std::string compStr = "title=" + urlTitle + "&" + "content=" + urlContent;
-  if (compStr == *(dts.body)) return true;
+  std::string compStr = "title=" + urlTitle + "&" + "content=" + urlContent;  
+  size_t andPos = (*dts.body).find('&');
+  size_t equalPos = (*dts.body).find('=', andPos + 1);
+  std::string bodyContent = (*dts.body).substr(equalPos + 1);
+  std::string bodyStr = "title=" + urlTitle + "&" + "content=" + bodyContent;
+
+  if (compStr == bodyStr) return true;
   return false;
 }
 
@@ -110,22 +111,19 @@ bool PUT::checkForPlainText(RequestDts& dts) {
   std::cout << "dts.path : " << *dts.path << "\n";
   std::ifstream file(dts.path->c_str(), std::ios::in);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  std::string tmpContent;
+  std::string cmpContent;
   std::string buf;
   while (std::getline(file, buf)) {
-    tmpContent += buf;
-    // tmpContent += '\n';
-    std::cout << "buff : " << buf << "\n";
+    cmpContent += buf;
     if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   }
   file.close();
-  if (tmpContent == (*dts.body)) return true;
-  _alterContent = tmpContent;
+  if (cmpContent == (*dts.body)) return true;
   return false;
 }
 
 void PUT::replaceContent(RequestDts& dts) {
-  std::string tmpBoundary;
+  std::string cmpBoundary;
   std::string binBody = (*dts.body).data();
   std::string parsedContent;
   _contentType = (*dts.headerFields)["content-type"].c_str();
@@ -139,12 +137,12 @@ void PUT::replaceContent(RequestDts& dts) {
     size_t boundaryEndPos = binBody.find("\r\n");
     if (boundaryEndPos == std::string::npos)
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    tmpBoundary = binBody.substr(0, boundaryEndPos);
+    cmpBoundary = binBody.substr(0, boundaryEndPos);
 
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     size_t binStart = (*dts.body).find("\r\n\r\n");
-    size_t boundary2EndPos = (*dts.body).find(tmpBoundary, fileEndPos);
+    size_t boundary2EndPos = (*dts.body).find(cmpBoundary, fileEndPos);
     if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
     _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
@@ -155,7 +153,6 @@ void PUT::replaceContent(RequestDts& dts) {
     std::vector<std::string> splitbyAnd = ft_split(*dts.body, '&');
     size_t equalPos = splitbyAnd[1].find('=');
     _content = splitbyAnd[1].substr(equalPos + 1);
-    std::cout << "value_content :: " << _content << "\n";
     writeTextBody(dts);
   }
   else {
@@ -163,32 +160,6 @@ void PUT::replaceContent(RequestDts& dts) {
     writeTextBody(dts);
   }
 }
-
-/*
-
-
-
-
-
-
-
-
-
-
-
- below functions are from POST
-
-
-
-
-
-
-
-
-
-
-
-*/
 
 void PUT::generateResource(RequestDts& dts) {
   std::string parsedContent;
@@ -267,9 +238,9 @@ void PUT::generateMultipart(RequestDts& dts) {
       (*dts.body).clear();
       return;
     }
-    (*dts.body) = (*dts.body).substr(boundary2EndPos);
     _title.clear();
     _content.clear();
+    throw(*dts.statusCode = E_418_IM_A_TEAPOT);
   }
 }
 
