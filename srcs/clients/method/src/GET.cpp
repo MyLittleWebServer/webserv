@@ -218,18 +218,12 @@ bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
   try {
     if (*dts.originalPath == "/") {
       getHome(dts);
-    }
-
-    if (*dts.originalPath == "/asset/marin03.jpg") {
-      getMarin(dts, session);
-    }
-
-    if (*dts.originalPath == "/gaepo.html") {
-      getGaepo(dts, session);
-    }
-
-    if (*dts.originalPath == "/enter.html") {
+    } else if (*dts.originalPath == "/enter.html") {
       getEnterPage(dts);
+    } else if (*dts.originalPath == "/asset/marin03.jpg") {
+      getMarin(dts, session);
+    } else if (*dts.originalPath == "/gaepo.html") {
+      getGaepo(dts, session);
     }
 
     SessionData& sessionData =
@@ -265,13 +259,17 @@ void GET::getHome(RequestDts& dts) {
 }
 
 void GET::getMarin(RequestDts& dts, Session& session) {
-  SessionData& sessionData =
-      session.getSessionData((*dts.cookieMap)["session_id"]);
-  if (!sessionData.isKeyExist("fifteen")) {
+  if ((*dts.cookieMap).find("session_id") == (*dts.cookieMap).end()) {
     *dts.path = "/asset/jangho.jpg";
     throw(*dts.statusCode = E_302_FOUND);
   }
-} 
+  SessionData& sessionData =
+      session.getSessionData((*dts.cookieMap)["session_id"]);
+  if (sessionData.getData("fifteen") == "") {
+    *dts.path = "/asset/jangho.jpg";
+    throw(*dts.statusCode = E_302_FOUND);
+  }
+}
 
 void GET::getGaepo(RequestDts& dts, Session& session) {
   SessionData& sessionData =
