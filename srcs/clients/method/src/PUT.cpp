@@ -1,7 +1,5 @@
 #include "PUT.hpp"
 
-#include <dirent.h>
-
 #include <fstream>
 
 #include "Utils.hpp"
@@ -79,13 +77,14 @@ bool PUT::checkForMultipart(RequestDts& dts) {
   /* get binary file body content */
   std::ifstream file(dts.path->c_str(), std::ios::binary);
   std::stringstream buf;
-  std::string compBin;
+  std::string cmpBin;
   buf << file.rdbuf();
-  compBin += (buf.str());
+  cmpBin += (buf.str());
   file.close();
-  if (memcmp(compBin.c_str(), cmpContent.c_str(), sizeof(compBin)) == 0)
-    return true;
-  return false;
+  if (cmpContent.compare(cmpBin) != 0) {
+      return false;
+  }
+  return true;
 }
 
 bool PUT::checkForUrlEncoded(RequestDts& dts) {
