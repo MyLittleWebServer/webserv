@@ -10,10 +10,9 @@ class GET : public IMethod {
 
  private:
   void handlePath(RequestDts& dts, IResponse& response);
-  bool validateSession(RequestDts& dts);
+  bool validateAuth(RequestDts& dts, Session& session);
   void getPublicEndpoint(RequestDts& dts, IResponse& response);
-  bool getSpecificEndpoint(RequestDts& dts, IResponse& response,
-                           Session& session);
+  bool getSpecificEndpoint(RequestDts& dts, IResponse& response);
   bool checkFile(std::string& path);
   bool checkIndexFile(std::string& pathIndex);
   bool checkAutoIndex(std::string& path, std::string& pathIndex,
@@ -31,6 +30,10 @@ class GET : public IMethod {
 
  private:
   void getSessionData(IResponse& response, SessionData& sessionData);
+  void getHome(RequestDts& dts);
+  void getMarin(RequestDts& dts, Session& session);
+  void getGaepo(RequestDts& dts, Session& session);
+  void getEnterPage(RequestDts& dts);
 
  protected:
   void validateContentType(IResponse& response);

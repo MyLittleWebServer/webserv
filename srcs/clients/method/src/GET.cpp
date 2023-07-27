@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 
+#include "ExceptionThrower.hpp"
 #include "Kqueue.hpp"
 #include "Session.hpp"
 #include "Utils.hpp"
@@ -25,10 +26,7 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
 }
 
 void GET::handlePath(RequestDts& dts, IResponse& response) {
-  Session& session = Session::getInstance();
-  if (validateSession(dts))
-    return;
-  else if (getSpecificEndpoint(dts, response, session))
+  if (getSpecificEndpoint(dts, response))
     return;
   else
     getPublicEndpoint(dts, response);
@@ -203,47 +201,47 @@ void GET::getContentType(const std::string& path, IResponse& response) {
   }
 }
 
-bool GET::validateSession(RequestDts& dts) {
-  if (*dts.originalPath != "/session" && *dts.originalPath != "/gaepo.html" &&
-      *dts.originalPath != "/session.html" &&
-      *dts.originalPath != "/asset/marin03.jpg") {
-    return false;
-  }
-  if ((*dts.headerFields)["cookie"].empty()) {
-    throw(*dts.statusCode = E_401_UNAUTHORIZED);
-  }
-  return true;
-}
-
-bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response,
-                              Session& session) {
-  // 쿠키 파싱
-  // dts에서 쿠키 파싱 될 것.
-  std::map<std::string, std::string> cookieMap;
-  std::vector<std::string> cookie =
-      ft_split((*dts.headerFields)["cookie"], "; ");
-
-  std::vector<std::string>::const_iterator it = cookie.begin();
-  for (; it < cookie.end(); ++it) {
-    std::vector<std::string> keyValue = ft_split(*it, '=');
-    if (!keyValue.empty()) cookieMap[keyValue[0]] = keyValue[1];
-  }
-  // 쿠키 파싱 끝
+/**
+ * @brief 특정 URL의 엔드포인트를 GET하는 함수
+ *
+ * @details
+ *
+ *
+ * @param dts
+ * @param response
+ * @return true : true를 리턴하면 해당 트랜잭션을 더이상 진행하지 않음.
+ * @return false : false를 리턴하면 해당 트랜잭션을 퍼블릭으로 넘어가서 진행.
+ */
+bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
+  Session& session = Session::getInstance();
 
   try {
-    SessionData& sessionData = session.getSessionData(cookieMap["session_id"]);
+    if (*dts.originalPath == "/") {
+      getHome(dts);
+    }
+
+    if (*dts.originalPath == "/asset/marin03.jpg") {
+      getMarin(dts, session);
+    }
+
+    if (*dts.originalPath == "/gaepo.html") {
+      getGaepo(dts, session);
+    }
+
+    if (*dts.originalPath == "/enter.html") {
+      getEnterPage(dts);
+    }
+
+    SessionData& sessionData =
+        session.getSessionData((*dts.cookieMap)["session_id"]);
     if (*dts.originalPath == "/session") {
       getSessionData(response, sessionData);
       return true;
     }
   } catch (ExceptionThrower::SessionDataNotFound& e) {
 #ifdef DEBUG_MSG
-    std::cout << "session not found" << e.what() << std::endl;
+    std::cout << "session not found " << e.what() << std::endl;
 #endif
-    // throw(*dts.statusCode = E_404_NOT_FOUND);
-  } catch (ExceptionThrower::SessionDataError& e) {
-    std::cout << e.what() << std::endl;
-    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
   }
   return false;
 }
@@ -252,8 +250,40 @@ void GET::getSessionData(IResponse& response, SessionData& sessionData) {
   response.setHeaderField("Content-Type", "application/json");
 
   std::string body =
-      "[{\"username\":\"" + sessionData.getData("username") + "\"},";
+      "[{\"entername\":\"" + sessionData.getData("entername") + "\"},";
   response.setBody(body);
   response.addBody(sessionData.getData("data"));
+  response.addBody(",{\"fifteen\":\"" + sessionData.getData("fifteen") + "\"}");
   response.addBody("]");
+}
+
+void GET::getHome(RequestDts& dts) {
+  if ((*dts.cookieMap).find("session_id") == (*dts.cookieMap).end()) {
+    *dts.path = "/enter.html";
+    throw(*dts.statusCode = E_302_FOUND);
+  }
+}
+
+void GET::getMarin(RequestDts& dts, Session& session) {
+  SessionData& sessionData =
+      session.getSessionData((*dts.cookieMap)["session_id"]);
+  if (!sessionData.isKeyExist("fifteen")) {
+    *dts.path = "/asset/jangho.jpg";
+    throw(*dts.statusCode = E_302_FOUND);
+  }
+} 
+
+void GET::getGaepo(RequestDts& dts, Session& session) {
+  SessionData& sessionData =
+      session.getSessionData((*dts.cookieMap)["session_id"]);
+  if (sessionData.getData("fifteen") != "on") {
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
+  }
+}
+
+void GET::getEnterPage(RequestDts& dts) {
+  if ((*dts.cookieMap).find("session_id") != (*dts.cookieMap).end()) {
+    *dts.path = "/";
+    throw(*dts.statusCode = E_302_FOUND);
+  }
 }

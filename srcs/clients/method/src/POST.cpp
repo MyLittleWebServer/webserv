@@ -217,6 +217,8 @@ void POST::handlePath(RequestDts& dts, IResponse& response) {
 
   if (*dts.originalPath == "/login") {
     login(dts, response, session);
+  } else if (*dts.originalPath == "/enter") {
+    enter(dts, response, session);
   } else if (*dts.originalPath == "/session") {
     submit(dts, session);
   } else {
@@ -244,22 +246,28 @@ void POST::login(RequestDts& dts, IResponse& response, Session& session) {
   throw(*dts.statusCode = E_302_FOUND);
 }
 
+void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
+  std::string session_id = session.createSession(getTimeOfDay() + 60);
+
+  response.setHeaderField("Set-Cookie",
+                          "session_id=" + session_id + "; Max-Age=60;");
+  SessionData& sessionData = session.getSessionData(session_id);
+
+  std::vector<std::string> body = ft_split(*dts.body, "&");
+  std::vector<std::string>::const_iterator it = body.begin();
+  for (; it < body.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    if (!keyValue.empty()) sessionData.setData(keyValue[0], keyValue[1]);
+  }
+
+  *dts.path = "/";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
 void POST::submit(RequestDts& dts, Session& session) {
   try {
-    // 쿠키 파싱
-    // dts에서 쿠키 파싱 될 것.
-    std::map<std::string, std::string> cookieMap;
-    std::vector<std::string> cookie =
-        ft_split((*dts.headerFields)["cookie"], "; ");
-
-    std::vector<std::string>::const_iterator it = cookie.begin();
-    for (; it < cookie.end(); ++it) {
-      std::vector<std::string> keyValue = ft_split(*it, '=');
-      std::cout << ">> COOKIE: " << *it << '\n';
-      if (!keyValue.empty()) cookieMap[keyValue[0]] = keyValue[1];
-    }
-
-    SessionData& sessionData = session.getSessionData(cookieMap["session_id"]);
+    SessionData& sessionData =
+        session.getSessionData((*dts.cookieMap)["session_id"]);
     sessionData.setData("data", *dts.body);
   } catch (ExceptionThrower::SessionDataNotFound& e) {
     throw(*dts.statusCode = E_401_UNAUTHORIZED);
