@@ -21,4 +21,6 @@ class SessionData {
   const std::string& getData(const std::string& key) const;
 
   void setData(const std::string& key, const std::string& value);
+
+  bool isKeyExist(const std::string& key) const;
 };

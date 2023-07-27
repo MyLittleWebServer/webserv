@@ -22,3 +22,7 @@ const std::string& SessionData::getData(const std::string& key) const {
 void SessionData::setData(const std::string& key, const std::string& value) {
   _data[key] = value;
 }
+
+bool SessionData::isKeyExist(const std::string& key) const {
+  return (_data.find(key) != _data.end());
+}
