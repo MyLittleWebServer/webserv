@@ -17,7 +17,7 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
   if (*dts.body == "") throw(*dts.statusCode = E_200_OK);
-  initUniqueIdentifier(dts);
+  initUniqueIdandPath(dts);
 
   // check if resource already existed
   if (stat(dts.path->c_str(), &fileinfo) < 0) {
@@ -31,7 +31,7 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   }
 }
 
-void PUT::initUniqueIdentifier(RequestDts& dts) {
+void PUT::initUniqueIdandPath(RequestDts& dts) {
   _uniqueID = "";
   std::string tmpPath = *dts.path;
   size_t slashPos = tmpPath.rfind('/');
@@ -151,7 +151,14 @@ void PUT::replaceContent(RequestDts& dts) {
                     (*dts.body).begin() + boundary2EndPos);
 
     writeBinaryBody(dts);
-  } else {
+  } else if (parsedContent == "application/x-www-form-urlencoded") {
+    std::vector<std::string> splitbyAnd = ft_split(*dts.body, '&');
+    size_t equalPos = splitbyAnd[1].find('=');
+    _content = splitbyAnd[1].substr(equalPos + 1);
+    std::cout << "value_content :: " << _content << "\n";
+    writeTextBody(dts);
+  }
+  else {
     _content = (*dts.body).data();
     writeTextBody(dts);
   }

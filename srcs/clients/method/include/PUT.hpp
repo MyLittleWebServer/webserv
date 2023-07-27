@@ -1,7 +1,6 @@
 #ifndef PUT_HPP
 #define PUT_HPP
 
-// #include <vector>
 #include <sys/stat.h>
 
 #include "IMethod.hpp"
@@ -39,8 +38,8 @@ class PUT : public IMethod {
   std::string decodeURL(std::string encoded_string);
   std::string makeRandomFileName(RequestDts& dts);
 
-  /* PUT only */
-  void initUniqueIdentifier(RequestDts& dts);
+  /* PUT only methods */
+  void initUniqueIdandPath(RequestDts& dts);
 
   /* check for Content */
   bool checkBodyContent(RequestDts& dts);
