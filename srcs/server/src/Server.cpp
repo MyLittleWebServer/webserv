@@ -88,14 +88,14 @@ void Server::hostInit(void) {
  * @see PF_INET : IPv4 인터넷 프로토콜
  * @see SOCK_STREAM : TCP
  *
- * @exception throwWithPerror socket() 함수가 실패하면 예외를 던집니다.
+ * @exception throwWithErrorMessage socket() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
  * @date 2023.07.17
  */
 void Server::socketInit(void) {
   this->_socket = socket(PF_INET, SOCK_STREAM, 0);
-  if (this->_socket == -1) throwWithPerror("socket() error");
+  if (this->_socket == -1) throwWithErrorMessage("socket error");
 }
 
 /**
@@ -138,8 +138,9 @@ void Server::addrInit(void) {
  * @see SO_REUSEADDR : TIME_WAIT 상태의 포트를 재사용하는 옵션
  * @see bind : 소켓에 주소를 할당하는 함수
  *
- * @exception throwWithPerror setsockopt() 함수가 실패하면 예외를 던집니다.
- * @exception throwWithPerror bind() 함수가 실패하면 예외를 던집니다.
+ * @exception throwWithErrorMessage setsockopt() 함수가 실패하면 예외를
+ * 던집니다.
+ * @exception throwWithErrorMessage bind() 함수가 실패하면 예외를 던집니다.
  *
  * @author chanhihi
  * @date 2023.07.17
@@ -148,11 +149,11 @@ void Server::bindSocketWithAddr(void) {
   int enable = 1;
   if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &enable,
                  sizeof(int)) < 0) {
-    throwWithPerror("setsockopt(SO_REUSEADDR) failed");
+    throwWithErrorMessage("setsockopt(SO_REUSEADDR) failed");
   }
 
   if (bind(this->_socket, (struct sockaddr *)&_addr, sizeof(_addr)) == -1)
-    throwWithPerror("bind() error");
+    throwWithErrorMessage("bind error");
 }
 
 /**
@@ -173,7 +174,8 @@ void Server::bindSocketWithAddr(void) {
  * @date 2023.07.17
  */
 void Server::listenSocket(void) const {
-  if (listen(this->_socket, BACKLOG) == -1) throwWithPerror("listen() error");
+  if (listen(this->_socket, BACKLOG) == -1)
+    throwWithErrorMessage("listen error");
 }
 
 /**
@@ -192,7 +194,7 @@ void Server::listenSocket(void) const {
  */
 void Server::asyncSocket(void) const {
   if (fcntl(this->_socket, F_SETFL, O_NONBLOCK) == -1)
-    throwWithPerror("fcntl() error");
+    throwWithErrorMessage("fcntl() error");
 }
 
 /**

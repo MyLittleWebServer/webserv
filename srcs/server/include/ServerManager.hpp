@@ -34,6 +34,7 @@ class ServerManager {
 
  public:
   ServerManager(int ac, char **av);
+  void initSignal(void);
   void initConfig(void);
   void initServer(void);
   void startServer(void);

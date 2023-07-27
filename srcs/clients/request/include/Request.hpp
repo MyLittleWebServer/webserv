@@ -19,6 +19,7 @@ class Request : public IRequest {
  private:
   bool _isParsed;
   bool _is_cgi;
+  bool _is_expect_100;
 
   size_t _contentLength;
 
@@ -69,6 +70,7 @@ class Request : public IRequest {
 
   const bool &isParsed(void) const;
   const bool &isCgi(void) const;
+  const bool &isExpect100(void) const;
 
   void clear(void);
 };

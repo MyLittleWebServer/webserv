@@ -62,4 +62,6 @@ IProxyConfig& Config::getProxyConfig() { return _proxy_config; }
 
 IMimeTypesConfig& Config::getMimeTypesConfig() { return _mime_types_config; }
 
-std::list<IServerConfig*> Config::getServerConfigs() { return _server_configs; }
+std::list<IServerConfig*>& Config::getServerConfigs() {
+  return _server_configs;
+}

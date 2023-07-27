@@ -134,7 +134,6 @@ void GET::prepareBinaryBody(const std::string& path, IResponse& response) {
 
 void GET::createSuccessResponse(IResponse& response) {
   validateContentType(response);
-  response.setHeaderField("Date", getCurrentTime());
   response.setHeaderField("Content-Length", itos(response.getBody().size()));
   response.assembleResponse();
 #ifdef DEBUG_MSG_BODY
@@ -145,8 +144,15 @@ void GET::createSuccessResponse(IResponse& response) {
 
 void GET::validateContentType(IResponse& response) {
   const std::string& value = response.getFieldValue("Content-Type");
-  if (value == "text/html" || value == "text/css" ||
-      value == "application/json") {
+  if (value == "text/html" || value == "text/css" || value == "text/xml" ||
+      value == "text/mathml" || value == "text/plain" ||
+      value == "text/vnd.sun.j2me.app-descriptor" ||
+      value == "text/vnd.wap.wml" || value == "text/x-component" ||
+      value == "application/javascript" || value == "application/atom+xml" ||
+      value == "application/rss+xml" || value == "application/json" ||
+      value == "application/x-perl" || value == "application/json" ||
+      value == "application/xhtml+xml" || value == "application/x-tcl" ||
+      value == "application/xspf+xml") {
     response.setHeaderField("Content-Type", value + "; charset=UTF-8");
   }
 }
@@ -159,15 +165,7 @@ void GET::getContentType(const std::string& path, IResponse& response) {
     std::cout << "extension::" << extension << std::endl;
     response.setHeaderField("Content-Type", config.getVariable(extension));
     return;
-  } catch (std::exception& e) {
-    std::cout << "find :: ";
-    std::map<std::string, std::string>::iterator it;
-    for (it = config._data.begin(); it != config._data.end(); ++it) {
-      if (it->first.find(extension) != std::string::npos) {
-        std::cout << it->second << std::endl;
-        _contentType = it->second;
-      }
-    }
-    _contentType = "text/plain";
+  } catch (ExceptionThrower::InvalidConfigException& e) {
+    response.setHeaderField("Content-Type", "application/octet-stream");
   }
 }

@@ -65,20 +65,9 @@ void OPTIONS::makeServerOptions(IResponse& response) {
  * @date 2023.07.21
  */
 void OPTIONS::makeLocationOption(RequestDts& dts, IResponse& response) {
-  const std::map<std::string, bool>& methodInfo =
-      (*dts.matchedLocation)->getAllowMethod();
-  std::map<std::string, bool>::const_iterator start = methodInfo.begin();
-  std::map<std::string, bool>::const_iterator end = methodInfo.end();
-  std::string allowMethods;
-  for (; start != end; ++start) {
-    if (start->second) {
-      allowMethods += start->first;
-      allowMethods += ", ";
-    }
-  }
-  if (allowMethods.size() > 2)
-    allowMethods = allowMethods.substr(0, allowMethods.size() - 2);
-  response.setHeaderField("Allow", allowMethods);
+  std::string allow_methods =
+      (*dts.matchedLocation)->getVariable("allow_method");
+  response.setHeaderField("Allow", allow_methods);
 }
 
 /**
