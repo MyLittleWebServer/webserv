@@ -10,6 +10,8 @@
 
 #include "Utils.hpp"
 
+#include <ctime>
+
 /**
  * @brief 에러 메세지를 출력하고 프로그램을 종료합니다.
  *
@@ -77,6 +79,8 @@ std::string getCurrentTime() {
 
   return (std::string(buffer));
 }
+
+int getTimeOfDay() { return std::time(NULL); }
 
 /**
  * @brief 문자열을 소문자로 변환합니다.
@@ -151,6 +155,22 @@ std::vector<std::string> ft_split(const std::string &str, char delim) {
   return result;
 }
 
+std::vector<std::string> ft_split(const std::string &s,
+                                  const std::string &delimiter) {
+  size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+  std::string token;
+  std::vector<std::string> res;
+
+  while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+    token = s.substr(pos_start, pos_end - pos_start);
+    pos_start = pos_end + delim_len;
+    res.push_back(token);
+  }
+
+  res.push_back(s.substr(pos_start));
+  return res;
+}
+
 /**
  * @brief 벡터에서 값으로 인덱스를 찾아 반환합니다.
  *
@@ -165,4 +185,15 @@ size_t find_index(std::vector<std::string> &vec, std::string &str) {
     i++;
   }
   return std::string::npos;
+}
+
+std::string generateRandomString() {
+  static std::string charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::string result;
+  std::srand(std::time(0));
+
+  for (int i = 0; i < 32; ++i)
+    result.push_back(charset[std::rand() % charset.size()]);
+  return result;
 }

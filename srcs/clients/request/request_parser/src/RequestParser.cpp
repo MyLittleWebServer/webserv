@@ -151,6 +151,20 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   dts.linesBuffer->clear();
 }
 
+void RequestParser::parseCookie(RequestDts &dts) {
+  std::vector<std::string> cookie =
+      ft_split((*dts.headerFields)["cookie"], "; ");
+
+  std::vector<std::string>::const_iterator it = cookie.begin();
+  for (; it < cookie.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    if (!keyValue.empty()) {
+      (*dts.cookieMap)[keyValue[0]] = keyValue[1];
+    }
+  }
+  (*dts.headerFields).erase("cookie");
+}
+
 /**
  * @brief validateDuplicateInvalidHeaders;
  *
@@ -492,6 +506,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
+  parseCookie(dts);
   validateContentLengthHeader(dts);
   validateHostHeader(port, dts);
   ValidateContentEncoding(dts);

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Session Page</title>
+  <link rel="icon" href="/asset/index.ico/favicon.ico">
+  <link href='http://www.openhiun.com/hangul/nanumbarungothic.css' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" type="text/css" href="/asset/css/login.css">
+</head>
+<body>
+    
+  <h2>세션</h2>
+  <h2>POST 후 GET 요청으로 데이터 표시하기</h2>
+  <form id="myForm">
+      <label for="inputString">문자열 입력:</label>
+      <input type="text" id="inputString" required>
+      <input type="submit" value="Post Data">
+    </form>
+    
+  <h2>Session ID로 데이터 표시하기</h2>
+  <form id="fetchForm">
+      <label for="inputString">Session ID:</label>
+      <input type="text" id="session_id" required>
+      <button id="fetchButton">Fetch Data</button>
+  </form>
+  <div id="responseContainer">
+      <h3>GET 응답 데이터:</h3>
+      <pre id="responseData"></pre>
+  </div>
+
+  <!-- 쿠키 가져와서 session_id에 넣기 -->
+  <script> 
+  function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+  // 쿠키에서 session_id를 가져와서 입력 필드에 설정
+  const sessionId = getCookie('session_id');
+  if (sessionId) {
+    document.getElementById('session_id').value = sessionId;
+  }
+</script>
+
+  <script>
+      document.getElementById("myForm").addEventListener("submit", function(event) {
+          event.preventDefault(); // 폼 기본 동작 취소 (페이지 새로고침 방지)
+
+          const inputString = document.getElementById("inputString").value;
+
+          // POST 요청 보내기
+          fetch("/session", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ data: inputString }), // JSON 형식으로 데이터 전송
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+              // POST 요청에 대한 응답을 받은 후에 GET 요청으로 데이터 받아오기
+              fetch("/session", {
+                  method: "GET",
+              })
+              .then(response => response.json())
+              .then(data => {
+                  console.log("GET 응답 받음:", data);
+
+                  // GET 응답 데이터를 페이지에 표시
+                  const responseDataElement = document.getElementById("responseData");
+                  responseDataElement.textContent = JSON.stringify(data, null, 2);
+              })
+              .catch(error => {
+                  console.error("GET 요청 실패:", error);
+              });
+              // 
+          })
+          .catch(error => {
+              console.error("POST 요청 실패:", error);
+          });
+      });
+  </script> 
+
+  <script>
+      document.getElementById("fetchButton").addEventListener("click", function(event) {
+        event.preventDefault(); // 버튼 기본 동작 취소 (페이지 새로고침 방지)
+        const session_id = document.getElementById("session_id").value;
+
+        // GET 요청 보내기
+        fetch(`/session?session_id=${encodeURIComponent(session_id)}`, {
+            method: "GET",
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("GET 응답 받음:", data);
+
+            // GET 응답 데이터를 페이지에 표시
+            const responseDataElement = document.getElementById("responseData");
+            responseDataElement.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            console.error("GET 요청 실패:", error);
+        });
+      });
+  </script>
+</body>
+</html>

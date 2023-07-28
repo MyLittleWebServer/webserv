@@ -7,6 +7,7 @@
 #include "Config.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
+#include "Session.hpp"
 #include "Status.hpp"
 
 class IMethod {

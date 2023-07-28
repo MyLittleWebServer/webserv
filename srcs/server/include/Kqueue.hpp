@@ -28,6 +28,8 @@ typedef enum {
   FD_CGI,
 } e_fd_type;
 
+typedef enum { SESSION_TIMER } e_timer_type;
+
 /**
  * @brief Kqueue class : kevent와 FD를 관리하는 클래스입니다.
  *
@@ -72,6 +74,7 @@ class Kqueue {
   static void addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                        uint32_t fflags, intptr_t data, void* udata);
   static void addEvent(uintptr_t ident);
+  static void addTimerEvent();
 
   static void registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                           uint32_t fflags, intptr_t data, void* udata);

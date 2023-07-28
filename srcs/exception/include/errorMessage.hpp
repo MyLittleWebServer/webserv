@@ -20,3 +20,9 @@ static const std::string CGI_NOT_FINISHED = "Cgi is not finished yet";
 static const std::string CGI_PIPE_FAILED = "Cannot create pipe for cgi";
 
 static const std::string FILE_ACCESS_FAILED = "File access failed";
+
+static const std::string SESSION_DATA_ERROR = "Session data error";
+
+static const std::string SESSION_DATA_NOT_FOUND = "Session data not found";
+
+static const std::string SESSION_DATA_EXPIRED = "Session data expired";

@@ -17,6 +17,7 @@ class RequestParser : public IRequestParser {
   void parseQueryString(RequestDts& dts, size_t pos);
   void parseQueryKeyValue(RequestDts& dts, std::string str);
   void parseHeaderFields(RequestDts& dts);
+  void parseCookie(RequestDts& dts);
   void parseCgi(RequestDts& dts);
   void parseContent(RequestDts& dts);
   void parseContentLength(RequestDts& dts);

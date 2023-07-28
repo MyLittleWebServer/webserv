@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "Session.hpp"
+
 /**
  * @brief EventHandler 생성자
  *
@@ -121,6 +123,7 @@ void EventHandler::branchCondition(void) {
       cgiCondition();
       break;
     default:
+      timerCondition();
       break;
   }
 }
@@ -428,8 +431,18 @@ void EventHandler::processKeepAliveTimeOut(Client &currClient) {
 void EventHandler::processRequestTimeOut(Client &currClient) {
   currClient.setConnectionClose();
   currClient.createExceptionResponse(E_408_REQUEST_TIMEOUT);
-  disableEvent(currClient.getSD(), EVFILT_WRITE,
+  disableEvent(currClient.getSD(), EVFILT_READ,
                static_cast<void *>(&currClient));
   enableEvent(currClient.getSD(), EVFILT_WRITE,
               static_cast<void *>(&currClient));
+}
+
+void EventHandler::timerCondition() {
+  if (_currentEvent->filter == EVFILT_TIMER &&
+      _currentEvent->ident == SESSION_TIMER) {
+#ifdef DEBUG_MSG
+    std::cout << "expired sessions cleared" << std::endl;
+#endif
+    Session::getInstance().deleteExpiredSessions();
+  }
 }

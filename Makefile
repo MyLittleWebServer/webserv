@@ -58,6 +58,7 @@ sources1 += FileChecker.cpp \
 						Reader.cpp \
 						Utils.cpp \
 						Status.cpp
+
 # ---- Network ---- #
 
 sources1 +=	Client.cpp
@@ -65,7 +66,7 @@ sources1 +=	Client.cpp
 sources1 +=	ServerManager.cpp \
 						Server.cpp \
 						Kqueue.cpp \
-						EventHandler.cpp
+						EventHandler.cpp 
 
 # ---- HTTP ---- #
 
@@ -102,6 +103,11 @@ sources1 += Config.cpp \
 # ---- Exception ---- #
 
 sources1 +=	ExceptionThrower.cpp
+
+# ---- Bonus ---- #
+
+sources1 +=	Session.cpp \
+						SessionData.cpp
 
 
 # ---- SRC ---- #

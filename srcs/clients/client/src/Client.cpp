@@ -2,11 +2,13 @@
 
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
+#include "ExceptionThrower.hpp"
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
+#include "Session.hpp"
 #include "PUT.hpp"
 #include "Utils.hpp"
 
@@ -124,8 +126,10 @@ void Client::parseRequest(short port) {
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  _method->doRequest(_request.getRequestParserDts(), _response);
+  RequestDts &dts = _request.getRequestParserDts();
+  _method->doRequest(dts, _response);
 }
+
 /**
  * @brief 클라이언트가 응답을 전송합니다.
  *
@@ -455,7 +459,7 @@ void Client::methodNotAllowCheck() {
  * @date 2023.07.22
  */
 void Client::responseFinalCheck() {
-  contentNegotiation();
+  // contentNegotiation();
   methodNotAllowCheck();
   headMethodBodyCheck();
   setResponseConnection();
