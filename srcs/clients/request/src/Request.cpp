@@ -40,6 +40,7 @@ Request &Request::operator=(const Request &src) {
     _isParsed = src._isParsed;
     _contentLength = src._contentLength;
     _is_cgi = src._is_cgi;
+    _is_session = src._is_session;
     _originalPath = src._originalPath;
     _is_expect_100 = src._is_expect_100;
   }
@@ -51,6 +52,7 @@ void Request::initMember() {
   _isParsed = false;
   _is_cgi = false;
   _is_expect_100 = false;
+  _is_session = false;
 
   _contentLength = 0;
 
@@ -76,6 +78,7 @@ void Request::initMember() {
 void Request::initDts() {
   _request_parser_dts.isParsed = &_isParsed;
   _request_parser_dts.is_cgi = &_is_cgi;
+  _request_parser_dts.is_session = &_is_session;
 
   _request_parser_dts.contentLength = &_contentLength;
 
@@ -157,6 +160,8 @@ IServerConfig *Request::getMatchedServer(void) const {
 const bool &Request::isParsed() const { return _isParsed; }
 
 const bool &Request::isCgi() const { return _is_cgi; }
+
+const bool &Request::isSession() const { return _is_session; }
 
 std::ostream &operator<<(std::ostream &os, const Request &request) {
   os << request.getMethod() << request.getRequest() << request.getPath()

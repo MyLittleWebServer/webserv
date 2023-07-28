@@ -98,10 +98,10 @@ const std::string& ServerConfig::getKeepAliveTimeOut() {
   return getVariable("keepalive_timeout");
 }
 
-const std::string& ServerConfig::getKeepAliveTimeOut() {
-  return getVariable("session");
-}
-
 const std::string& ServerConfig::getRoot() { return getVariable("root"); }
 
 const std::string& ServerConfig::getCgi() { return getVariable("cgi"); }
+
+const std::string& ServerConfig::getSessionConfig() {
+  return getVariable("session");
+}

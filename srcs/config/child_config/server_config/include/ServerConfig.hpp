@@ -43,6 +43,7 @@ class ServerConfig : public IServerConfig {
   const std::string& getAccessLog();
   const std::string& getRoot();
   const std::string& getCgi();
+  const std::string& getSessionConfig();
   const virtual std::string& getRequestTimeOut();
   const virtual std::string& getKeepAliveTimeOut();
 };
