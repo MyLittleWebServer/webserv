@@ -74,8 +74,6 @@ class Client {
   int _requestTimeOutLimit;
   int _requestTimeOutUnit;
 
-  bool _sessionConfig;
-
   static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
@@ -121,9 +119,6 @@ class Client {
   int getKeepAliveTimeOutUnit() const;
   int getRequestTimeOutLimit() const;
   int getRequestTimeOutUnit() const;
-
-  void initSessionConfig(short serverPort);
-  bool getSessionConfig() const;
 
   class RecvFailException : public std::exception {
    public:

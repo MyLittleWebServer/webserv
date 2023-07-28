@@ -8,7 +8,6 @@
 #include "Kqueue.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
-#include "Session.hpp"
 #include "PUT.hpp"
 #include "Utils.hpp"
 
