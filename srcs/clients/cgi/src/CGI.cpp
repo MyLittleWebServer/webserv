@@ -268,7 +268,7 @@ bool CGI::readChildFinish() {
   char buffer[1024];
   ssize_t readSize;
   while (true) {
-    memset(buffer, 0, 1024);
+    std::memset(buffer, 0, 1024);
     readSize = read(_out_pipe[0], buffer, 1024 - 1);
     if (readSize == 0) return true;
     if (readSize == -1) return false;
