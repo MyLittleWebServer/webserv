@@ -51,6 +51,7 @@ class EventHandler : public Kqueue {
 
   void clientCondition();
   void cgiCondition();
+  void timerCondition();
 
   void processRequest(Client& client);
   void enactRequestAndCreateResponse(Client& client);

@@ -117,6 +117,7 @@ void ServerManager::initServer(void) {
       std::cout << "server: " << server->getPort();
 #endif
       _eventQueue.addEvent(server->getSocket());
+      _eventQueue.addTimerEvent();
       Kqueue::setFdSet(server->getSocket(), FD_SERVER);
       _serverVector.push_back(server);
 #ifdef DEBUG_MSG
@@ -196,7 +197,6 @@ void ServerManager::startServer(void) {
         eventHandler.checkFlags();
         eventHandler.branchCondition();
       }
-      Session::getInstance().deleteExpiredSessions();
     }
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
