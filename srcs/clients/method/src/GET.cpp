@@ -2,6 +2,7 @@
 #include "GET.hpp"
 
 #include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <cstdlib>
@@ -45,39 +46,84 @@ void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
     autoindex = (*dts.matchedLocation)->getAutoindex();
   }
 
+  std::cout << "path::" << path << std::endl;
+  std::cout << "pathIndex::" << pathIndex << std::endl;
+  std::cout << "autoindex::" << autoindex << std::endl;
+
   if (checkFile(path)) {
+    std::cout << "checkFile" << std::endl;
     *dts.statusCode = E_200_OK;
     prepareBody(path, response);
-  } else if (checkIndexFile(pathIndex)) {
-    *dts.statusCode = E_200_OK;
-    prepareBody(pathIndex, response);
-  } else if (checkAutoIndex(path, pathIndex, autoindex)) {
-    *dts.statusCode = E_200_OK;
-    prepareFileList(path, dts, response);
+  } else if (checkDirectory(path)) {
+    if (checkIndexFile(pathIndex)) {
+      std::cout << "check index file" << std::endl;
+      *dts.statusCode = E_200_OK;
+      prepareBody(pathIndex, response);
+    } else if (checkAutoIndex(pathIndex, autoindex)) {
+      std::cout << "auto" << std::endl;
+      *dts.statusCode = E_200_OK;
+      prepareFileList(path, dts, response);
+    } else {
+      throw(*dts.statusCode = E_404_NOT_FOUND);
+    }
   } else {
     throw(*dts.statusCode = E_404_NOT_FOUND);
+  }
+
+  // if (access(dts.path->c_str(), R_OK) == 0 &&
+  //     (*dts.path)[dts.path->size() - 1] != '/') {
+  //   *dts.statusCode = E_200_OK;
+  //   prepareBody(*dts.path, response);
+  // } else if (access(pathIndex.c_str(), R_OK) == 0 &&
+  //            pathIndex[pathIndex.size() - 1] != '/') {
+  //   *dts.statusCode = E_200_OK;
+  //   // return fileHandler(pathIndex);
+  //   prepareBody(pathIndex, response);
+  // } else if (access(pathIndex.c_str(), R_OK) < 0 &&
+  //            (*dts.path)[dts.path->size() - 1] == '/' && autoindex == "on") {
+  //   *dts.statusCode = E_200_OK;
+  //   prepareFileList(*dts.path, dts, response);
+  //   // return 0;
+  // } else {
+  //   throw(*dts.statusCode = E_404_NOT_FOUND);
+  // }
+  if (response.getBody().empty()) {
+    *dts.statusCode = E_204_NO_CONTENT;
   }
 }
 
 bool GET::checkFile(std::string& path) {
-  // 처음에 요청한 파일이 존재하는지 확인
-  if (access(path.c_str(), R_OK) == 0 && path[path.size() - 1] != '/')
+  // 처음에 요청한 파일이 존재하며 파일인지 확인
+  struct stat fileStat;
+
+  if (stat(path.c_str(), &fileStat) == 0 && !(S_ISDIR(fileStat.st_mode)))
+    return true;
+  return false;
+}
+
+bool GET::checkDirectory(std::string& path) {
+  // 처음에 요청한 Path가 디렉토리이며 접근 가능한 경우
+  struct stat fileStat;
+
+  if (stat(path.c_str(), &fileStat) == 0 && (S_ISDIR(fileStat.st_mode)))
     return true;
   return false;
 }
 
 bool GET::checkIndexFile(std::string& pathIndex) {
+  struct stat fileStat;
+
   // 요청한 파일은 없고, index 파일이 존재하는지 확인
-  if (access(pathIndex.c_str(), R_OK) == 0 &&
-      pathIndex[pathIndex.size() - 1] != '/')
+  if (stat(pathIndex.c_str(), &fileStat) == 0 && (S_ISREG(fileStat.st_mode)))
     return true;
   return false;
 }
 
-bool GET::checkAutoIndex(std::string& path, std::string& pathIndex,
-                         const std::string& autoindex) {
+bool GET::checkAutoIndex(std::string& pathIndex, const std::string& autoindex) {
+  struct stat fileStat;
+
   // 요청한 파일도 없고, index 파일도 없고, autoindex가 켜져있는지 확인
-  if (access(pathIndex.c_str(), R_OK) < 0 && path[path.size() - 1] == '/' &&
+  if (stat(pathIndex.c_str(), &fileStat) < 0 && !(S_ISREG(fileStat.st_mode)) &&
       autoindex == "on")
     return true;
   return false;
@@ -198,6 +244,7 @@ void GET::getContentType(const std::string& path, IResponse& response) {
     return;
   } catch (ExceptionThrower::InvalidConfigException& e) {
     response.setHeaderField("Content-Type", "application/octet-stream");
+    // response.setHeaderField("Content-Type", "text/plain");
   }
 }
 
@@ -213,6 +260,7 @@ void GET::getContentType(const std::string& path, IResponse& response) {
  * @return false : false를 리턴하면 해당 트랜잭션을 퍼블릭으로 넘어가서 진행.
  */
 bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
+  if (*dts.is_session == false) return false;
   const std::string& originalPath = *dts.originalPath;
   try {
     SessionData& sessionData =
