@@ -4,6 +4,7 @@
 #include <sys/event.h>
 
 #include <iostream>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -28,7 +29,7 @@ typedef enum {
   FD_CGI,
 } e_fd_type;
 
-typedef enum { SESSION_TIMER } e_timer_type;
+typedef enum { SESSION_TIMER = 2147483647 } e_timer_type;
 
 /**
  * @brief Kqueue class : kevent와 FD를 관리하는 클래스입니다.
