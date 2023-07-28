@@ -213,18 +213,45 @@ std::string POST::makeRandomFileName(RequestDts& dts) {
 }
 
 void POST::handlePath(RequestDts& dts, IResponse& response) {
-  Session& session = Session::getInstance();
-
-  if (*dts.originalPath == "/login") {
-    login(dts, response, session);
-  } else if (*dts.originalPath == "/enter") {
-    enter(dts, response, session);
-  } else if (*dts.originalPath == "/session") {
-    submit(dts, session);
-  } else {
+  if (getSpecificEndpoint(dts, response))
+    return;
+  else {
     generateResource(dts);
     response.setStatusCode(E_201_CREATED);
   }
+}
+
+/**
+ * @brief 특정 URL의 엔드포인트를 POST하는 함수
+ *
+ * @details
+ *
+ *
+ * @param dts
+ * @param response
+ * @return true : true를 리턴하면 해당 POST요청을 더이상 진행하지 않음.
+ * @return false : false를 리턴하면 해당 함수를 종료.
+ */
+bool POST::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
+  if (*dts.is_session == false) return false;
+  Session& session = Session::getInstance();
+  const std::string& originalPath = *dts.originalPath;
+  try {
+    if (originalPath == "/login") {
+      login(dts, response, session);
+    } else if (originalPath == "/enter") {
+      enter(dts, response, session);
+    } else if (originalPath == "/session") {
+      submit(dts, session);
+      return true;
+    }
+  } catch (ExceptionThrower::SessionDataNotFound& e) {
+#ifdef DEBUG_MSG
+    std::cout << "session not found " << e.what() << std::endl;
+#endif
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
+  }
+  return false;
 }
 
 void POST::login(RequestDts& dts, IResponse& response, Session& session) {
@@ -263,13 +290,7 @@ void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
 }
 
 void POST::submit(RequestDts& dts, Session& session) {
-  try {
-    SessionData& sessionData =
-        session.getSessionData((*dts.cookieMap)["session_id"]);
-    sessionData.setData("data", *dts.body);
-  } catch (ExceptionThrower::SessionDataNotFound& e) {
-    throw(*dts.statusCode = E_401_UNAUTHORIZED);
-  } catch (ExceptionThrower::SessionDataError& e) {
-    std::cout << e.what() << std::endl;
-  }
+  SessionData& sessionData =
+      session.getSessionData((*dts.cookieMap)["session_id"]);
+  sessionData.setData("data", *dts.body);
 }
