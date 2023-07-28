@@ -50,6 +50,7 @@ msgArray statusInfo[] = {
     msgArray("URI Too Long", "414", 0, "NULL"),
     msgArray("Unsupported Media Type", "415", 24, "Unsupported Media Type."),
     msgArray("Expection Failed", "417", 16, "Expection Failed"),
+    msgArray("I'm a TeaPot", "418", 47, "I Can't Do Anything Because I'm Just a Teapot."),
     msgArray("Internal Server Error", "500", 21, "Internal Server Error"),
     msgArray("Not_Implemented", "501", 19, "Not Implemented Yet."),
     msgArray("Bad Gateway", "502", 11, "Bad Gateway"),

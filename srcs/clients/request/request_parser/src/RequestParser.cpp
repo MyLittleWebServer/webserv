@@ -692,8 +692,8 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  */
 void RequestParser::checkMethod(RequestDts &dts) {
   if (*dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "DELETE" && *dts.method != "HEAD" &&
-      *dts.method != "OPTIONS")
+      *dts.method != "DELETE" && *dts.method != "PUT" &&
+      *dts.method != "HEAD" && *dts.method != "OPTION")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -788,7 +788,8 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
 }
 
 void RequestParser::checkCgiMethod(RequestDts &dts) {
-  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
+  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST" &&
+      *dts.method != "PUT")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 

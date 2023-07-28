@@ -9,6 +9,7 @@
 #include "OPTIONS.hpp"
 #include "POST.hpp"
 #include "Session.hpp"
+#include "PUT.hpp"
 #include "Utils.hpp"
 
 char Client::_buf[RECEIVE_LEN] = {0};
@@ -175,7 +176,9 @@ void Client::newHTTPMethod(void) {
     _method = new GET();
   else if (_request.getMethod() == "POST")
     _method = new POST();
-  else if (_request.getMethod() == "DELETE")
+  else if (_request.getMethod() == "PUT") {
+    _method = new PUT();
+  } else if (_request.getMethod() == "DELETE")
     _method = new DELETE();
   else if (_request.getMethod() == "HEAD")
     _method = new HEAD();
