@@ -9,7 +9,8 @@ PUT::PUT(void) {}
 PUT::~PUT(void) {}
 
 void PUT::doRequest(RequestDts& dts, IResponse& response) {
-  std::cout << " >>>>>>>>>>>>>>> PUT\n";
+#ifdef DEBUG_MSG
+  std::cout << " >> PUT\n";
   std::cout << "path: " << *dts.path << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
