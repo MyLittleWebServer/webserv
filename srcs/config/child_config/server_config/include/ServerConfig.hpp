@@ -23,6 +23,7 @@ class ServerConfig : public IServerConfig {
   static const std::string CGI;
   static const std::string KEEPALIVE_TIMEOUT;
   static const std::string REQUEST_TIMEOUT;
+  static const std::string SESSION;
 
  public:
   ServerConfig();

@@ -9,6 +9,7 @@ const std::string ServerConfig::ROOT = "html";
 const std::string ServerConfig::CGI = ".bla";
 const std::string ServerConfig::KEEPALIVE_TIMEOUT = "75s";
 const std::string ServerConfig::REQUEST_TIMEOUT = "60s";
+const std::string ServerConfig::SESSION = "off";
 
 ServerConfig::ServerConfig() {
   _data.insert(std::pair<std::string, std::string>("server_name", SERVER_NAME));
@@ -21,6 +22,7 @@ ServerConfig::ServerConfig() {
                                                    KEEPALIVE_TIMEOUT));
   _data.insert(
       std::pair<std::string, std::string>("request_timeout", REQUEST_TIMEOUT));
+  _data.insert(std::pair<std::string, std::string>("session", SESSION));
 }
 
 ServerConfig::~ServerConfig() {
@@ -94,6 +96,10 @@ const std::string& ServerConfig::getRequestTimeOut() {
 
 const std::string& ServerConfig::getKeepAliveTimeOut() {
   return getVariable("keepalive_timeout");
+}
+
+const std::string& ServerConfig::getKeepAliveTimeOut() {
+  return getVariable("session");
 }
 
 const std::string& ServerConfig::getRoot() { return getVariable("root"); }
