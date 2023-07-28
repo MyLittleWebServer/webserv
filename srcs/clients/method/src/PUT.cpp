@@ -109,7 +109,9 @@ bool PUT::checkForUrlEncoded(RequestDts& dts) {
 }
 
 bool PUT::checkForPlainText(RequestDts& dts) {
+#ifdef DEBUG_MSG
   std::cout << "dts.path : " << *dts.path << "\n";
+#endif
   std::ifstream file(dts.path->c_str(), std::ios::in);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   std::string cmpContent;
