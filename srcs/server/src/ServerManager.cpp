@@ -16,6 +16,7 @@
 #include "ServerManager.hpp"
 
 #include "Color.hpp"
+#include "Session.hpp"
 
 /**
  * @brief ServerManager 함수는 ServerManager를 생성합니다.
@@ -195,6 +196,7 @@ void ServerManager::startServer(void) {
         eventHandler.checkFlags();
         eventHandler.branchCondition();
       }
+      Session::getInstance().deleteExpiredSessions();
     }
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;

@@ -60,7 +60,7 @@ void Session::deleteExpiredSessions() {
   std::map<std::string, SessionData>::iterator it = _sessionData.begin();
   std::map<std::string, SessionData>::iterator end = _sessionData.end();
   std::map<std::string, SessionData>::iterator next;
-  for (; it != end; ++it) {
+  while (it != end) {
     next = it;
     ++next;
     if (isExpired(it->first)) {
