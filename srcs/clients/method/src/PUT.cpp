@@ -15,6 +15,7 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
+#endif
   if (*dts.body == "") throw(*dts.statusCode = E_200_OK);
   initUniqueIdandPath(dts);
 
