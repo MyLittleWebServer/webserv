@@ -440,7 +440,7 @@ void EventHandler::processRequestTimeOut(Client &currClient) {
 void EventHandler::timerCondition() {
   if (_currentEvent->filter == EVFILT_TIMER &&
       *(static_cast<e_timer_type *>(_currentEvent->udata)) == SESSION_TIMER) {
-    std::cout << "timer" << std::endl;
+    std::cout << "expired sessions cleared" << std::endl;
     Session::getInstance().deleteExpiredSessions();
   }
 }
