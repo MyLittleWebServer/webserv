@@ -5,7 +5,7 @@ SessionData::SessionData(const std::string& id, int time)
     : _id(id), _expirationTime(time) {
   _data["entername"] = "";
   _data["data"] = "";
-  _data["fifteen"] = "";
+  _data["fifteen"] = "off";
 }
 SessionData::SessionData(const SessionData& src)
     : _expirationTime(src._expirationTime), _data(src._data) {}

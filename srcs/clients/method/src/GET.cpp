@@ -213,22 +213,18 @@ void GET::getContentType(const std::string& path, IResponse& response) {
  * @return false : false를 리턴하면 해당 트랜잭션을 퍼블릭으로 넘어가서 진행.
  */
 bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
-  Session& session = Session::getInstance();
-
+  const std::string& originalPath = *dts.originalPath;
   try {
-    if (*dts.originalPath == "/") {
-      getHome(dts);
-    } else if (*dts.originalPath == "/enter.html") {
-      getEnterPage(dts);
-    } else if (*dts.originalPath == "/asset/marin03.jpg") {
-      getMarin(dts, session);
-    } else if (*dts.originalPath == "/gaepo.html") {
-      getGaepo(dts, session);
-    }
-
     SessionData& sessionData =
-        session.getSessionData((*dts.cookieMap)["session_id"]);
-    if (*dts.originalPath == "/session") {
+        Session::getInstance().getSessionData((*dts.cookieMap)["session_id"]);
+
+    if (originalPath == "/enter.html") {
+      getHome(dts);
+    } else if (originalPath == "/asset/marin03.jpg") {
+      getJangChoOrMarin(dts, sessionData);
+    } else if (originalPath == "/gaepo.html") {
+      getGaepo(dts, sessionData);
+    } else if (originalPath == "/session") {
       getSessionData(response, sessionData);
       return true;
     }
@@ -236,6 +232,11 @@ bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
 #ifdef DEBUG_MSG
     std::cout << "session not found " << e.what() << std::endl;
 #endif
+    if (originalPath == "/") {
+      getEnterPage(dts);
+    } else if (originalPath == "/asset/marin03.jpg") {
+      getJangCho(dts);
+    }
   }
   return false;
 }
@@ -251,37 +252,34 @@ void GET::getSessionData(IResponse& response, SessionData& sessionData) {
   response.addBody("]");
 }
 
-void GET::getHome(RequestDts& dts) {
-  if ((*dts.cookieMap).find("session_id") == (*dts.cookieMap).end()) {
-    *dts.path = "/enter.html";
-    throw(*dts.statusCode = E_302_FOUND);
-  }
-}
-
-void GET::getMarin(RequestDts& dts, Session& session) {
-  if ((*dts.cookieMap).find("session_id") == (*dts.cookieMap).end()) {
-    *dts.path = "/asset/jangho.jpg";
-    throw(*dts.statusCode = E_302_FOUND);
-  }
-  SessionData& sessionData =
-      session.getSessionData((*dts.cookieMap)["session_id"]);
-  if (sessionData.getData("fifteen") == "") {
-    *dts.path = "/asset/jangho.jpg";
-    throw(*dts.statusCode = E_302_FOUND);
-  }
-}
-
-void GET::getGaepo(RequestDts& dts, Session& session) {
-  SessionData& sessionData =
-      session.getSessionData((*dts.cookieMap)["session_id"]);
-  if (sessionData.getData("fifteen") != "on") {
-    throw(*dts.statusCode = E_401_UNAUTHORIZED);
-  }
-}
-
 void GET::getEnterPage(RequestDts& dts) {
-  if ((*dts.cookieMap).find("session_id") != (*dts.cookieMap).end()) {
-    *dts.path = "/";
+  *dts.path = "/enter.html";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void GET::getJangCho(RequestDts& dts) {
+  *dts.path = "/asset/jangho.jpg";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void GET::getJangChoOrMarin(RequestDts& dts, SessionData& sessionData) {
+  if (sessionData.getData("fifteen") == "on") {
+    return;
+  } else {
+    *dts.path = "/asset/jangho.jpg";
     throw(*dts.statusCode = E_302_FOUND);
+  }
+}
+
+void GET::getHome(RequestDts& dts) {
+  *dts.path = "/";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void GET::getGaepo(RequestDts& dts, SessionData& sessionData) {
+  if (sessionData.getData("fifteen") == "on") {
+    return;
+  } else {
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
   }
 }

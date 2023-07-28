@@ -30,10 +30,11 @@ class GET : public IMethod {
 
  private:
   void getSessionData(IResponse& response, SessionData& sessionData);
-  void getHome(RequestDts& dts);
-  void getMarin(RequestDts& dts, Session& session);
-  void getGaepo(RequestDts& dts, Session& session);
   void getEnterPage(RequestDts& dts);
+  void getJangCho(RequestDts& dts);
+  void getJangChoOrMarin(RequestDts& dts, SessionData& sessionData);
+  void getHome(RequestDts& dts);
+  void getGaepo(RequestDts& dts, SessionData& sessionData);
 
  protected:
   void validateContentType(IResponse& response);
