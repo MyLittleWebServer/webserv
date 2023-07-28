@@ -213,7 +213,7 @@ void CGI::makeChild() {
 
     execve(_request->getPath().c_str(), NULL, const_cast<char**>(_env.data()));
     std::cout << "cgi: execve failed" << std::endl;
-    exit(1);
+    throw(4.2);
   }
   Kqueue::setFdSet(_out_pipe[0], FD_CGI);
   Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
