@@ -63,16 +63,16 @@ const char* ExceptionThrower::CGIPipeException::what() const throw() {
   return std::runtime_error::what();
 }
 
-ExceptionThrower::FileAcccessFailedException::FileAcccessFailedException()
+ExceptionThrower::FileAccessFailedException::FileAccessFailedException()
     : std::runtime_error(FILE_ACCESS_FAILED) {}
 
-const char* ExceptionThrower::FileAcccessFailedException::what() const throw() {
+const char* ExceptionThrower::FileAccessFailedException::what() const throw() {
   return std::runtime_error::what();
 }
 
-ExceptionThrower::CGIBodyToLongException::CGIBodyToLongException()
+ExceptionThrower::CGIBodyTooLongException::CGIBodyTooLongException()
     : std::runtime_error(CGI_BODY_TOO_LONG) {}
 
-const char* ExceptionThrower::CGIBodyToLongException::what() const throw() {
+const char* ExceptionThrower::CGIBodyTooLongException::what() const throw() {
   return std::runtime_error::what();
 }

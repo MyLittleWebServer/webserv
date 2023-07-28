@@ -162,10 +162,10 @@ void CGI::setPipeNonblock() {
 
 void CGI::execute() {
   if (_body.size() >= 65536) {
-    throw ExceptionThrower::CGIBodyToLongException();
+    throw ExceptionThrower::CGIBodyTooLongException();
   }
   if (access(_request->getPath().c_str(), R_OK) == -1) {
-    throw ExceptionThrower::FileAcccessFailedException();
+    throw ExceptionThrower::FileAccessFailedException();
   }
   if (pipe(_in_pipe) < 0) {
     throw ExceptionThrower::CGIPipeException();
@@ -187,9 +187,9 @@ void CGI::executeCGI() {
     if (_cgi_status == CGI_START) execute();
   } catch (ExceptionThrower::CGIPipeException& e) {
     generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
-  } catch (ExceptionThrower::FileAcccessFailedException& e) {
+  } catch (ExceptionThrower::FileAccessFailedException& e) {
     generateErrorResponse(E_404_NOT_FOUND);
-  } catch (ExceptionThrower::CGIBodyToLongException& e) {
+  } catch (ExceptionThrower::CGIBodyTooLongException& e) {
     generateErrorResponse(E_413_REQUEST_ENTITY_TOO_LARGE);
   }
 }
