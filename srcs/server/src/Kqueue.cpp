@@ -76,10 +76,9 @@ void Kqueue::addEvent(uintptr_t ident) {
 
 void Kqueue::addTimerEvent() {
   struct kevent temp_event;
-  e_timer_type* TimerType = new e_timer_type(SESSION_TIMER);
 
-  EV_SET(&temp_event, 1, EVFILT_TIMER, EV_ADD | EV_ENABLE, NOTE_SECONDS, 600,
-         static_cast<void*>(TimerType));
+  EV_SET(&temp_event, SESSION_TIMER, EVFILT_TIMER, EV_ADD | EV_ENABLE,
+         NOTE_SECONDS, 600, (void*)NULL);
   Kqueue::_eventsToAdd.push_back(temp_event);
 }
 
