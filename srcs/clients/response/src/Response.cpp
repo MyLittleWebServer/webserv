@@ -151,6 +151,11 @@ void Response::configureErrorPages(RequestDts &dts) {
   }
 }
 
+void Response::setCookie(std::string &session_id) {
+  setHeaderField("Set-Cookie",
+                 "session_id=" + session_id + "; httponly; Max-Age=60;");
+}
+
 void Response::clear() {
   _response.clear();
   _responseFlag = false;

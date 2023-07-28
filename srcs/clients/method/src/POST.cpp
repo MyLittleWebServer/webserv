@@ -230,8 +230,7 @@ void POST::handlePath(RequestDts& dts, IResponse& response) {
 void POST::login(RequestDts& dts, IResponse& response, Session& session) {
   std::string session_id = session.createSession(getTimeOfDay() + 60);
 
-  response.setHeaderField("Set-Cookie",
-                          "session_id=" + session_id + "; Max-Age=60;");
+  response.setCookie(session_id);
   SessionData& sessionData = session.getSessionData(session_id);
 
   std::vector<std::string> body = ft_split(*dts.body, "&");
@@ -249,8 +248,7 @@ void POST::login(RequestDts& dts, IResponse& response, Session& session) {
 void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
   std::string session_id = session.createSession(getTimeOfDay() + 300);
 
-  response.setHeaderField("Set-Cookie",
-                          "session_id=" + session_id + "; Max-Age=300;");
+  response.setCookie(session_id);
   SessionData& sessionData = session.getSessionData(session_id);
 
   std::vector<std::string> body = ft_split(*dts.body, "&");
