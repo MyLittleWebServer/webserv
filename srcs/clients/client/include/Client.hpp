@@ -40,9 +40,9 @@
 enum ClientStates {
   START,
   RECEIVING,
-
+  EXPECT_CONTINUE,
   METHOD_SELECT,
-
+  EXPECT_CONTINUE_PROCESS_RESPONSE,
   PROCESS_RESPONSE,
   RESPONSE_DONE,
   END_KEEP_ALIVE,
@@ -69,10 +69,22 @@ class Client {
   ICGI *_cgi;
   size_t _lastSentPos;
 
+  int _keepAliveTimeOutLimit;
+  int _keepAliveTimeOutUnit;
+  int _requestTimeOutLimit;
+  int _requestTimeOutUnit;
+
   static char _buf[RECEIVE_LEN];
 
   bool checkIfReceiveFinished(ssize_t n);
   // std::map<uintptr_t, char *> _clientBuf;
+
+ private:
+  void contentNegotiation();
+  void headMethodBodyCheck();
+  void setResponseConnection();
+  void reassembleResponse();
+  void methodNotAllowCheck();
 
  public:
   Client();
@@ -95,13 +107,19 @@ class Client {
   void createSuccessResponse();
   void makeAndExecuteCgi();
   void clear();
-  void setResponseConnection();
   void setConnectionClose();
-  void bodyCheck();
-  void reassembleResponse();
-  void removeTimeOutEventInEventsToAdd(
-      std::vector<struct kevent> &_eventsToAdd);
+  void createContinueResponse();
+  void responseFinalCheck();
+
   ClientStates getState() const;
+
+  void initTimeOut(short serverPort);
+  void initTimeOutLimitAndUnit(const std::string &str, int &limit, int &unit);
+  int getKeepAliveTimeOutLimit() const;
+  int getKeepAliveTimeOutUnit() const;
+  int getRequestTimeOutLimit() const;
+  int getRequestTimeOutUnit() const;
+
   class RecvFailException : public std::exception {
    public:
     const char *what() const throw();

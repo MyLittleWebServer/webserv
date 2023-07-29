@@ -53,8 +53,6 @@ class EventHandler : public Kqueue {
   void cgiCondition();
 
   void processRequest(Client& client);
-  void registTimerEvent();
-  void deleteTimerEvent();
   void enactRequestAndCreateResponse(Client& client);
   void handleExceptionStatusCode(Client& client);
 
@@ -62,6 +60,12 @@ class EventHandler : public Kqueue {
   void validateConnection(Client& client);
 
   void processTimeOut(Client& client);
+  void processRequestTimeOut(Client& client);
+  void processKeepAliveTimeOut(Client& client);
+
+  void setKeepAliveTimeOutTimer(Client& clinet);
+  void setRequestTimeOutTimer(Client& clinet);
+  void deleteTimerEvent();
 
  public:
   EventHandler(const std::vector<Server*>& serverVector);

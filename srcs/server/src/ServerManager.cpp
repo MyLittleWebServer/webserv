@@ -44,6 +44,19 @@ ServerManager::ServerManager(int ac, char **av) {
 }
 
 /**
+ * @brief initSignal 함수는 signal를 초기화합니다.
+ *
+ * @details
+ * signal(SIGPIPE, SIG_DFL) 의 경우 소켓 및 파이프가 끊겼을 경우 프로세스가 죽는
+ * 현상이 발생합니다. Server manager에서 ignore을 한번 선언하여 SIGPIPE를
+ * 무시하고 자체적으로 처리합니다.
+ *
+ * @author chanhihi
+ * @date 2023.07.17
+ */
+void ServerManager::initSignal(void) { signal(SIGPIPE, SIG_IGN); }
+
+/**
  * @brief initConfig 함수는 Config를 초기화합니다.
  *
  * @details
@@ -78,7 +91,8 @@ void ServerManager::initConfig(void) {
  * 3. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
  *    이벤트 큐에 추가합니다.
  * 4. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
- *    Kqueue 클래스의 setFdSet() 함수를 호출하여 FD_SERVER 타입으로 설정합니다.
+ *    Kqueue 클래스의 setFdSet() 함수를 호출하여 FD_SERVER 타입으로
+ * 설정합니다.
  * 5. Server 객체를 _serverVector에 저장합니다.
  *
  * @see Server
@@ -92,6 +106,7 @@ void ServerManager::initConfig(void) {
  * @date 2023.07.17
  */
 void ServerManager::initServer(void) {
+  Kqueue::init();
   std::set<short>::iterator it = _listenOrganizer.begin();
   try {
     while (it != _listenOrganizer.end()) {

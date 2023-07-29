@@ -29,6 +29,7 @@ typedef struct RequestDts {
   ILocationConfig** matchedLocation;
   bool* isParsed;
   bool* is_cgi;
+  bool* is_expect_100;
   unsigned long* contentLength;
 } RequestDts;
 

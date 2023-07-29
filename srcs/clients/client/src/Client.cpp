@@ -105,7 +105,19 @@ void Client::createSuccessResponse() {
 void Client::parseRequest(short port) {
   if (_request.isParsed()) return;
   _request.parseRequest(_recvBuff, port);
-  if (_request.isParsed()) _state = METHOD_SELECT;
+  if (_request.isParsed()) {
+    _state = METHOD_SELECT;
+    return;
+  }
+  if (_request.isExpect100()) {
+    _state = EXPECT_CONTINUE;
+    std::string temp = std::string(toLowerString(_recvBuff));
+    size_t pos = temp.find("expect");
+    size_t end = temp.find("\r\n", pos);
+    if (pos == std::string::npos) return;
+    if (end == std::string::npos) return;
+    _recvBuff.erase(pos, end - pos + 2);
+  }
 }
 
 bool Client::isCgi() { return _request.isCgi(); }
@@ -143,6 +155,10 @@ void Client::sendResponse() {
     _lastSentPos += n;
     return;
   }
+  if (_state == EXPECT_CONTINUE_PROCESS_RESPONSE) {
+    _state = RECEIVING;
+    return;
+  }
   if (_request.getHeaderField("connection") == "close") {
     _state = END_CLOSE;
     return;
@@ -168,6 +184,63 @@ IMethod *Client::getMethod() const { return _method; }
 ClientStates Client::getState() const { return _state; }
 
 void Client::setState(ClientStates state) { _state = state; }
+
+/**
+ * @brief initTimeOut;
+ *
+ * 클라이언트가 바인딩 된 서버 포트로 Config에서 매치된 서버를 찾아 타임아웃
+ * 관련 멤버 변수를 초기화합니다.
+ *
+ * @param serverPort
+ * @return void
+ * @author Clearsu
+ * @date 2023.07.23
+ */
+void Client::initTimeOut(short serverPort) {
+  std::list<IServerConfig *> &serverConfigs =
+      Config::getInstance().getServerConfigs();
+  std::list<IServerConfig *>::const_iterator it = serverConfigs.begin();
+  std::list<IServerConfig *>::const_iterator end = serverConfigs.end();
+
+  for (; it != end; ++it) {
+    if (serverPort == (*it)->getListen()) {
+      initTimeOutLimitAndUnit((*it)->getKeepAliveTimeOut(),
+                              _keepAliveTimeOutLimit, _keepAliveTimeOutUnit);
+      initTimeOutLimitAndUnit((*it)->getRequestTimeOut(), _requestTimeOutLimit,
+                              _requestTimeOutUnit);
+      return;
+    }
+  }
+}
+
+/**
+ * @brief  initTimeOutLimitAndUnit;
+ *
+ * 타임아웃 시간 제한과 단위를 초기화합니다.
+ *
+ * @param str
+ * @param limit
+ * @param unit
+ * @return void
+ * @author Clearsu
+ * @date 2023.07.23
+ */
+void Client::initTimeOutLimitAndUnit(const std::string &str, int &limit,
+                                     int &unit) {
+  std::stringstream timeOutStr(str);
+  std::string unitStr;
+  timeOutStr >> limit >> unitStr;
+  if (unitStr == "s") {
+    unit = NOTE_SECONDS;
+  } else {
+    unit = 0;  // miliseconds
+  }
+}
+
+int Client::getKeepAliveTimeOutLimit() const { return _keepAliveTimeOutLimit; }
+int Client::getKeepAliveTimeOutUnit() const { return _keepAliveTimeOutUnit; }
+int Client::getRequestTimeOutLimit() const { return _requestTimeOutLimit; }
+int Client::getRequestTimeOutUnit() const { return _requestTimeOutUnit; }
 
 /**
  * @brief 소켓 디스크립터를 반환합니다.
@@ -243,7 +316,6 @@ void Client::setResponseConnection() {
  * Connection을 close로 설정하여 서버 스스로 강제로 소켓 연결을
  * 끊습니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
@@ -253,33 +325,136 @@ void Client::setConnectionClose() {
 }
 
 /**
- * @brief bodyCheck;
+ * @brief headMethodBodyCheck;
  *
- * Method가 HEAD 라면 BODY를 제거합니다.
+ * Method가 HEAD 라면 body를 제거합니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
  */
-void Client::bodyCheck() {
+void Client::headMethodBodyCheck() {
   if (_request.getMethod() == "HEAD") _response.setBody("");
 }
 
 /**
- * @brief ressembleResponse;
+ * @brief reassembleResponse;
  *
  * Response를 조립합니다.
  * state를 PROCESS_RESPONSE로 변경합니다.
  * 최종적으로 마지막 파서를 거쳐 Response를 보낼 준비가 돠었다는 것을
  * 의미합니다.
  *
- * @param RequestDts HTTP 관련 데이터
  * @return void
  * @author middlefitting
  * @date 2023.07.21
  */
 void Client::reassembleResponse() {
+  _response.setHeaderField("Date", getCurrentTime());
   _response.assembleResponse();
+  if (_state == EXPECT_CONTINUE) {
+    _state = EXPECT_CONTINUE_PROCESS_RESPONSE;
+    return;
+  }
   _state = PROCESS_RESPONSE;
+}
+
+/**
+ * @brief createContinueResponse;
+ *
+ * Response를 조립합니다.
+ * 중간 응답인 100 continue를 생성합니다.
+ * setResponseParsed 함수를 호출하여 write 이벤트를 호출합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::createContinueResponse() {
+  _response.setStatusCode(E_100_CONTINUE);
+  _response.setBody("");
+  _response.assembleResponse();
+  _response.setResponseParsed();
+}
+
+/**
+ * @brief contentNegotiation;
+ *
+ * content 협상을 수행합니다.
+ * _status 가 100, 200 이 아니라면 return 합니다.
+ * Accept 헤더 필드와 Accept-Charset 헤더 필드를 확인합니다.
+ * 둘다 비어있다면 return 합니다.
+ * 서버가 반환하려는 자료형이 클라이언트가 수용 가능한 자료형에 없을 경우에는
+ * 406 에러를 반환합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::contentNegotiation() {
+  Status statusCode = _response.getStatus();
+  if (statusCode != E_100_CONTINUE && statusCode != E_200_OK) return;
+  std::string accept = _request.getHeaderField("accept");
+  std::string accept_charset = _request.getHeaderField("accept-charset");
+  if (accept.empty() && accept_charset.empty()) return;
+
+  std::string content_type = _response.getFieldValue("Content-Type");
+  if (content_type.empty()) return;
+  std::vector<std::string> types = ft_split(content_type, ';');
+  std::string type = ft_trim(types[0]);
+  std::string charset;
+  charset.clear();
+  if (types.size() > 1) {
+    std::string charset = ft_trim(types[1]);
+  }
+
+  std::vector<std::string> accept_types = ft_split(accept, ',');
+  std::vector<std::string> accept_charsets = ft_split(accept_charset, ',');
+  std::string all_type = "*/*";
+  if ((!accept.empty() && find_index(accept_types, type) == std::string::npos &&
+       find_index(accept_types, all_type) == std::string::npos) ||
+      (!accept_charset.empty() &&
+       find_index(accept_charsets, charset) == std::string::npos &&
+       find_index(accept_charsets, all_type) == std::string::npos)) {
+    _response.clear();
+    _response.setStatusCode(E_406_NOT_ACCEPTABLE);
+    _response.setHeaderField("Content-Type", content_type);
+    _response.setBody("");
+    _response.assembleResponse();
+  }
+}
+
+/**
+ * @brief methodNotAllowCheck;
+ *
+ * RFC 7231 6.5.5 405 Method Not Allowed (MUST)
+ * 응답이 405 Method Not Allowed 일 경우, Allow 헤더 필드를 추가합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::methodNotAllowCheck() {
+  if (_response.getStatus() != E_405_METHOD_NOT_ALLOWED) return;
+  std::string allow_methods = (*_request.getRequestParserDts().matchedLocation)
+                                  ->getVariable("allow_method");
+  _response.setHeaderField("Allow", allow_methods);
+}
+
+/**
+ * @brief responseFinalCheck;
+ *
+ * 클라이언트에 응답을 보내기 직전, 응답을 최종적으로 확인합니다.
+ * RFC 내용에 따라 필요한 HTTP 1.1 구성 요소들을 추가하거나 제거합니다.
+ *
+ * @return void
+ * @author middlefitting
+ * @date 2023.07.22
+ */
+void Client::responseFinalCheck() {
+  contentNegotiation();
+  methodNotAllowCheck();
+  headMethodBodyCheck();
+  setResponseConnection();
+  reassembleResponse();
 }

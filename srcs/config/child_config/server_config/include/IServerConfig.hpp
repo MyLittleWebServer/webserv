@@ -18,4 +18,6 @@ class IServerConfig : public IChildConfig {
   const virtual std::string& getAccessLog() = 0;
   const virtual std::string& getRoot() = 0;
   const virtual std::string& getCgi() = 0;
+  const virtual std::string& getRequestTimeOut() = 0;
+  const virtual std::string& getKeepAliveTimeOut() = 0;
 };

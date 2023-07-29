@@ -39,14 +39,13 @@ void throwWithErrorMessage(const std::string &message) {
  *
  * @exception std::runtime_error getsockname()이 실패하면 예외를 던집니다.
  *
- * @param _currentEvent
+ * @param ident
  * @return short
  */
-short getBoundPort(const struct kevent *_currentEvent) {
+short getBoundPort(const uintptr_t ident) {
   struct sockaddr_in addr;
   socklen_t addr_len = sizeof(addr);
-  if (getsockname(_currentEvent->ident, (struct sockaddr *)&addr, &addr_len) ==
-      -1)
+  if (getsockname(ident, (struct sockaddr *)&addr, &addr_len) == -1)
     throw std::runtime_error("getsockname() error\n");
 #ifdef DEBUG_MSG
   std::cout << "getsockname: " << ntohs(addr.sin_port) << std::endl;
@@ -146,7 +145,24 @@ std::vector<std::string> ft_split(const std::string &str, char delim) {
   std::string token;
 
   while (std::getline(iss, token, delim)) {
+    if (token.empty()) continue;
     result.push_back(token);
   }
   return result;
+}
+
+/**
+ * @brief 벡터에서 값으로 인덱스를 찾아 반환합니다.
+ *
+ * @param vec
+ * @param str
+ * @return size_t
+ */
+size_t find_index(std::vector<std::string> &vec, std::string &str) {
+  size_t i = 0;
+  while (i < vec.size()) {
+    if (vec[i] == str) return i;
+    i++;
+  }
+  return std::string::npos;
 }

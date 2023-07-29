@@ -1,8 +1,13 @@
 #include "POST.hpp"
 
-#include <unistd.h>
+#include <fcntl.h>
 
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include "Utils.hpp"
 
@@ -15,7 +20,8 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
   std::cout << " >>>>>>>>>>>>>>> POST\n";
   std::cout << "path: " << *dts.path << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
-  std::cout << "content-length: " << (*dts.headerFields)["content-length"] << "\n";
+  std::cout << "content-length: " << (*dts.headerFields)["content-length"]
+            << "\n";
 #endif
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   generateResource(dts);
@@ -23,7 +29,9 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
 }
 
 void POST::generateResource(RequestDts& dts) {
-  std::string parsedContent = _contentType = (*dts.headerFields)["content-type"].c_str();
+  std::string parsedContent;
+  _contentType = (*dts.headerFields)["content-type"].c_str();
+  parsedContent = _contentType;
   if (_contentType.find(';') != std::string::npos) {
     parsedContent = _contentType.substr(0, _contentType.find(';'));
   }
@@ -32,17 +40,15 @@ void POST::generateResource(RequestDts& dts) {
   } else if (parsedContent == "multipart/form-data") {
     generateMultipart(dts);
   } else {
-    std::string mimeType = "txt"; // default mime type as plain text
+    std::string mimeType = "bin";
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
-    Config::getInstance().getMimeTypesConfig());
-
+        Config::getInstance().getMimeTypesConfig());
     try {
       std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
-      _title = "file";
+      _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
-    }
-    catch (ExceptionThrower::InvalidConfigException& e) {
+    } catch (ExceptionThrower::InvalidConfigException& e) {
       throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
@@ -61,6 +67,9 @@ void POST::generateUrlEncoded(RequestDts& dts) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   }
   _title = decodedBody.substr(equalPos1 + 1, andPos - equalPos1 - 1);
+  if (_title == "") {
+    _title = makeRandomFileName(dts);
+  }
   size_t equalPos2 = decodedBody.find('=', andPos + 1);
   _content = decodedBody.substr(equalPos2 + 1);
 #ifdef DEBUG_MSG
@@ -84,19 +93,21 @@ void POST::generateMultipart(RequestDts& dts) {
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
-      _title = "Unsupported File Name";
-      _content = "Unsupported File Source";
+      _title = makeRandomFileName(dts);
+      _content = "DummySource";
       writeTextBody(dts, "txt");
       return;
     }
     _title = binBody.substr(filePos + 10, fileEndPos - filePos - 10);
+    if (_title == "") {
+      _title = makeRandomFileName(dts);
+    }
     size_t binStart = (*dts.body).find("\r\n\r\n");
     size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
     if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    _content.insert(_content.end(),
-                          (*dts.body).begin() + binStart + 4,
-                          (*dts.body).begin() + boundary2EndPos);
+    _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
+                    (*dts.body).begin() + boundary2EndPos);
     writeBinaryBody(dts);
     size_t isEOFCRLF = (*dts.body).find("\r\n", boundary2EndPos);
     std::string isEOF =
@@ -190,4 +201,19 @@ std::string POST::decodeURL(std::string encoded_string) {
 
   delete[] buf;
   return decoded_string;
+}
+
+std::string POST::makeRandomFileName(RequestDts& dts) {
+  std::string charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::string result;
+  std::srand(std::time(0));
+
+  for (int i = 0; i < 8; ++i)
+    result.push_back(charset[std::rand() % charset.size()]);
+
+  if (access(result.c_str(), F_OK) == 0)
+    throw((*dts.statusCode) = E_409_CONFLICT);
+
+  return result;
 }
