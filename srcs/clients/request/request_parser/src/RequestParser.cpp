@@ -19,17 +19,16 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
 }
 
 /**
- * @brief splitLinesByCRLF;
+ * @brief 읽은 요청을 CRLF 기준으로 나눕니다.
  *
+ * @details
  * CRLF에 따라 라인을 구분하여 dts->linesBuffer에 저장합니다.
  * CRLF가 연속된 이후는 dts->body에 저장합니다.
  *
  * @param RequestDts HTTP 관련 데이터
- *
  * @return void
  *
  * @author
- * @author middlefitting modify 2023.07.17
  * @date 2023.07.17
  */
 void RequestParser::splitLinesByCRLF(RequestDts &dts) {
@@ -47,6 +46,21 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   }
 }
 
+/**
+ * @brief 요청 라인을 파싱합니다.
+ *
+ * @details
+ * 요청 라인이 method, path, protocol 세 덩어리로 나누어지는지 확인하고,
+ * 정해진 최대 URI 길이를 넘지 않는지 체크합니다.
+ * 이후, path에 anchor나 query가 있을 경우 파싱합니다.
+ * 형식에 맞지 않을 경우 404 에러 상태 코드를 throw 합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseRequestLine(RequestDts &dts) {
   const std::string &firstLine(dts.linesBuffer->front());
   int delim_cnt = 0;
@@ -61,27 +75,59 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   std::istringstream iss(firstLine);
   dts.linesBuffer->pop_front();
   iss >> *dts.method >> *dts.path >> *dts.protocol;
-  size_t anchorPos = dts.path->find("#");
-  if (anchorPos != std::string::npos) parseAnchor(dts, anchorPos);
-  size_t qMarkPos = dts.path->find("?");
-  if (qMarkPos != std::string::npos) parseQueryString(dts, qMarkPos);
 
+  checkRequestUriLimitLength(dts);
+  parseAnchor(dts);
+  parseQueryString(dts);
+
+#ifdef DEBUG_MSG
   std::cout << "method: " << *dts.method << std::endl;
   std::cout << "path: " << *dts.path << std::endl;
   std::cout << "protocol: " << *dts.protocol << std::endl;
+#endif
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  checkRequestUriLimitLength(dts);
 }
 
-void RequestParser::parseAnchor(RequestDts &dts, size_t anchorPos) {
-  *dts.anchor = &(*dts.path)[anchorPos + 1];
+/**
+ * @brief anchor(#)를 파싱합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
+void RequestParser::parseAnchor(RequestDts &dts) {
+  size_t anchorPos = dts.path->find("#");
+  if (anchorPos == std::string::npos) {
+    return;
+  }
+  *dts.anchor = dts.path->substr(anchorPos + 1);
   *dts.path = dts.path->substr(0, anchorPos);
 }
 
-void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
-  std::string tempQuery(
-      dts.path->substr(qMarkPos + 1, dts.path->size() - qMarkPos - 1));
+/**
+ * @brief query string을 파싱합니다.
+ *
+ * @details
+ * 쿼리문 전체를 tempQuery에 담고, 키-값 쌍이 하나일 때와 두 개 이상이어서 '&'로
+ * 구분될 때를 구분하여 파싱합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
+void RequestParser::parseQueryString(RequestDts &dts) {
+  size_t qMarkPos = dts.path->find("?");
+  if (qMarkPos == std::string::npos) {
+    return;
+  }
+
+  std::string tempQuery =
+      dts.path->substr(qMarkPos + 1, dts.path->size() - qMarkPos - 1);
   *dts.query_string = tempQuery;
   *dts.path = dts.path->substr(0, qMarkPos);
   size_t andPos = tempQuery.find("&", 0);
@@ -89,6 +135,7 @@ void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
     parseQueryKeyValue(dts, tempQuery);
     return;
   }
+
   size_t start = 0;
   while (andPos != std::string::npos) {
     std::string tempPair = tempQuery.substr(start, andPos);
@@ -98,6 +145,16 @@ void RequestParser::parseQueryString(RequestDts &dts, size_t qMarkPos) {
   }
 }
 
+/**
+ * @brief 쿼리문의 키-값 쌍을 '='로 구분하여 파싱합니다.
+ *
+ * @param dts
+ * @param str
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
   size_t pos = str.find("=");
   if (pos == std::string::npos) throw(*dts.statusCode = E_400_BAD_REQUEST);
@@ -107,18 +164,17 @@ void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
 }
 
 /**
- * @brief parseHeaderFields;
+ * @brief 헤더필드를 파싱합니다.
  *
+ * @details
  * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
  * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
  * 중복 금지 헤더를 체크합니다.
  *
  * @param RequestDts HTTP 관련 데이터
- *
  * @return void
  *
  * @author
- * @author middlefitting modify 2023.07.17
  * @date 2023.07.17
  */
 void RequestParser::parseHeaderFields(RequestDts &dts) {
@@ -151,6 +207,19 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   dts.linesBuffer->clear();
 }
 
+/**
+ * @brief Cookie 헤더필드를 파싱합니다.
+ *
+ * @details
+ * 복수의 쿠키 키-쌍이 들어올 수 있으므로 "; "로 split합니다.
+ * 이후, '='로 구분하여 파싱합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseCookie(RequestDts &dts) {
   std::vector<std::string> cookie =
       ft_split((*dts.headerFields)["cookie"], "; ");
@@ -166,18 +235,16 @@ void RequestParser::parseCookie(RequestDts &dts) {
 }
 
 /**
- * @brief validateDuplicateInvalidHeaders;
+ * @brief Content-Length나 Host 헤더필드를 검사합니다.
  *
  * RFC 7230 3.3.2 Content-Length
  * Content-Length 헤더 필드가 중복될 경우 400 Bad Request를 반환합니다. (MUST)
  *
  * @param key 헤더의 키
  * @param RequestDts HTTP 관련 데이터
- *
  * @return void
  *
  * @author
- * @author middlefitting modify 2023.07.17
  * @date 2023.07.18
  */
 void RequestParser::validateDuplicateInvalidHeaders(std::string key,
@@ -188,6 +255,20 @@ void RequestParser::validateDuplicateInvalidHeaders(std::string key,
   }
 }
 
+/**
+ * @brief 본문(body) 파싱 로직을 분기합니다.
+ *
+ * @details
+ * Transfer-Encoding와 Content-Length 헤더필드 둘 다 요청에 포함되어 있지 않을
+ * 경우, 본문이 있더라도 무시하고 파싱을 완료합니다. 위 헤더필드의 존재 유무에
+ * 따라 본문을 파싱합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseContent(RequestDts &dts) {
   if ((*dts.headerFields)["transfer-encoding"] == "" &&
       (*dts.headerFields)["content-length"] == "") {
@@ -200,6 +281,16 @@ void RequestParser::parseContent(RequestDts &dts) {
     return parseContentLength(dts);
 }
 
+/**
+ * @brief 본문 길이가 Content-Length 헤더필드의 값보다 크거나 같을 경우 파싱을
+ * 종료합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseContentLength(RequestDts &dts) {
   *dts.contentLength =
       std::strtol((*dts.headerFields)["content-length"].c_str(), NULL, 10);
@@ -210,20 +301,19 @@ void RequestParser::parseContentLength(RequestDts &dts) {
 }
 
 /**
- * @brief parseTransferEncoding;
+ * @brief Transfer-Encoding 헤더필드를 평가합니다.
  *
+ * @details
  * 클라이언트는 여러 인코딩을 사용하였을 경우 마지막에 chunked를 사용하여야
  * 합니다. (MUST) 따라서 마지막이 chunked가 아니면 400 에러를 반환합니다.
  * 구현되지 않은 인코딩에 대해서는 501 에러를 반환합니다.
  * 구현된 인코딩에 대해서는 파싱을 진행합니다.
  *
  * @param RequestDts HTTP 관련 데이터
- *
  * @return void
  *
  * @author
- * @author middlefitting modify 2023.07.17
- * @date 2023.07.17
+ * @date 2023.07.29
  */
 void RequestParser::parseTransferEncoding(RequestDts &dts) {
   std::vector<std::string> encodings =
@@ -245,23 +335,44 @@ void RequestParser::parseTransferEncoding(RequestDts &dts) {
 }
 
 /**
- * @brief parseTransferEncoding;
+ * @brief 헤더 정보를 close로 설정합니다.
  *
+ * @details
  * 특정 상황에서 connection 을 close 하기 위해 사용합니다.
- * connection 헤더 정보를 close로 설정합니다.
  *
  * @param RequestDts HTTP 관련 데이터
- *
  * @return void
  *
  * @author
- * @author middlefitting modify 2023.07.17
  * @date 2023.07.18
  */
 void RequestParser::setConnectionClose(RequestDts &dts) {
   (*dts.headerFields)["connection"] = "close";
 }
 
+/**
+ * @brief Transfer-Encoding: chunked 일 때의 본문을 파싱합니다.
+ *
+ * @details
+ * chunked 요청의 경우 본문은 다음과 같은 형태입니다.
+ * chunk size가 0일 경우 파싱을 종료합니다.
+ *
+ * 5
+ * abcde
+ * 1
+ * f
+ * 3
+ * kjs
+ * ...(계속)
+ * 0
+ *
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::parseChunkedEncoding(RequestDts &dts) {
   std::string body = *dts.body;
   dts.body->clear();
@@ -285,47 +396,58 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
   }
 }
 
-bool RequestParser::checkPathForm(RequestDts &dts) {
-  std::string::const_iterator iter = dts.path->begin();
-  std::string::const_iterator end = dts.path->end();
-  if (*iter == '/') ++iter;
-  while (iter != end) {
-    if (*iter == '/' && *(iter + 1) == '/') return false;
-    ++iter;
-  }
-  return true;
-}
-
+/**
+ * @brief default location을 지정합니다.
+ *
+ * @param defaultLocation
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void RequestParser::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation,
     RequestDts &dts) {
   *dts.matchedLocation = *defaultLocation;
   dts.path->erase(0, 1);  // remove the first '/'
   *dts.path = (*defaultLocation)->getRoot() + *dts.path;
-  dts.path->erase(0, 1);
+  dts.path->erase(0, 1);  // here as well
 }
 
+/**
+ * @brief 클라이언트가 바인딩 된 서버 포트로 conf 파일의 서버블록을 매칭합니다.
+ *
+ * @details
+ * 포트가 일치할 경우,
+ *
+ * @param port
+ * @param dts
+ */
 void RequestParser::matchServerConf(short port, RequestDts &dts) {
   Config &config = Config::getInstance();
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
+  std::list<IServerConfig *>::iterator firstServer;
+  bool firstFlag = true;
   if (serverInfo.empty()) throw(42.42);
   while (it != serverInfo.end()) {
     if ((*it)->getListen() != port) {
       ++it;
       continue;
     }
+    if (firstFlag == true) {
+      firstServer = it;
+      firstFlag = false;
+    }
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
       *dts.matchedServer = *it;
       return;
-    } else
-      *dts.matchedServer = *it;
+    }
     ++it;
   }
+  *dts.matchedServer = *firstServer;
   if (*dts.matchedServer == NULL) {
-#ifdef DEBUG_MSG
-    std::cout << "no matched server" << std::endl;
-#endif
     throw(*dts.statusCode = E_404_NOT_FOUND);
   }
 }
@@ -340,17 +462,12 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
   return (dts.path->substr(0, end));
 }
 
-// /root//dir/test.txt
-// GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
   *dts.originalPath = *dts.path;  // for GET file list
   std::string firstToken = getFirstTokenOfPath(dts);
   if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
   }
-#ifdef DEBUG_MSG
-  std::cout << "firstToken: " << firstToken << std::endl;
-#endif
   std::list<ILocationConfig *>::const_iterator it =
       (*dts.matchedServer)->getLocationConfigs().begin();
   std::list<ILocationConfig *>::const_iterator endIt =
@@ -358,9 +475,6 @@ void RequestParser::validatePath(RequestDts &dts) {
   std::list<ILocationConfig *>::const_iterator defaultLocation;
   while (it != endIt) {
     const std::string &currRoute = (*it)->getRoute();
-#ifdef DEBUG_MSG
-    std::cout << "currRoute: " << currRoute << std::endl;
-#endif
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
       dts.path->erase(0, firstToken.size());
@@ -370,12 +484,6 @@ void RequestParser::validatePath(RequestDts &dts) {
                                 // slash at the end of root path
       *dts.path = (*it)->getRoot() + *dts.path;
       dts.path->erase(0, 1);  // remove the first '/'
-#ifdef DEBUG_MSG
-      std::cout << "actual path: " << *dts.path << '\n';
-#endif
-      if (checkPathForm(dts) == false)
-        throw(*dts.statusCode = E_404_NOT_FOUND);
-      return;
     }
     if (currRoute == "/") defaultLocation = it;
     ++it;
