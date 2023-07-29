@@ -8,6 +8,12 @@
 #include "Status.hpp"
 #include "Utils.hpp"
 
+/**
+ * @brief Response 클래스는 IResponse 인터페이스를 구현한 클래스이다.
+ *
+ * @author
+ * @date 2023.07.29
+ */
 class Response : public IResponse {
  public:
   Response();

@@ -4,6 +4,28 @@
 
 #include "Status.hpp"
 
+/**
+ * @brief Response 클래스의 인터페이스
+ *
+ * @see getResponseFlag
+ * @see getStatus
+ * @see getResponse
+ * @see getBody
+ * @see getFieldValue
+ * @see assembleResponse
+ * @see eraseHeaderField
+ * @see addBody
+ * @see setHeaderField
+ * @see setBody
+ * @see setStatusCode
+ * @see setResponseParsed
+ * @see isParsed
+ * @see setCookie
+ * @see clear
+ *
+ * @author tocatoca
+ * @date 2023.07.29
+ */
 class IResponse {
  public:
   virtual ~IResponse() {}
