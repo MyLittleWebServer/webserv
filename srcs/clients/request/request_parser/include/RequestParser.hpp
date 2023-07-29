@@ -13,8 +13,8 @@ class RequestParser : public IRequestParser {
  private:
   void splitLinesByCRLF(RequestDts& dts);
   void parseRequestLine(RequestDts& dts);
-  void parseAnchor(RequestDts& dts, size_t pos);
-  void parseQueryString(RequestDts& dts, size_t pos);
+  void parseAnchor(RequestDts& dts);
+  void parseQueryString(RequestDts& dts);
   void parseQueryKeyValue(RequestDts& dts, std::string str);
   void parseHeaderFields(RequestDts& dts);
   void parseCookie(RequestDts& dts);
@@ -25,7 +25,6 @@ class RequestParser : public IRequestParser {
   void parseTransferEncoding(RequestDts& dts);
   void parseChunkedEncoding(RequestDts& dts);
   std::string getFirstTokenOfPath(RequestDts& dts) const;
-  bool checkPathForm(RequestDts& dts);
   bool allHeaderRecieved(RequestDts& dts);
   void setDefaultLocation(
       std::list<ILocationConfig*>::const_iterator defaultLocation,
