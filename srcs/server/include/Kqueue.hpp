@@ -61,9 +61,9 @@ class Kqueue {
   static fd_set _cgi_fds;
 
  protected:
-  static int _kq;
-  static std::vector<struct kevent> _eventsToAdd;
-  static struct kevent _eventList[CONCURRENT_EVENTS];
+  static int __kq;
+  static std::vector<struct kevent> __eventsToAdd;
+  static struct kevent __eventList[CONCURRENT_EVENTS];
 
  public:
   Kqueue(void);
@@ -74,7 +74,7 @@ class Kqueue {
   static void addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                        uint32_t fflags, intptr_t data, void* udata);
   static void addEvent(uintptr_t ident);
-  static void addTimerEvent();
+  static void addSessionTimerEvent();
 
   static void registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                           uint32_t fflags, intptr_t data, void* udata);

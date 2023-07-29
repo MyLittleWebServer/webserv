@@ -59,7 +59,7 @@ EventHandler &EventHandler::getInstance() {
  * @author chanhihi
  * @date 2023-07-17
  */
-void EventHandler::setCurrentEvent(int i) { _currentEvent = &(_eventList[i]); }
+void EventHandler::setCurrentEvent(int i) { _currentEvent = &(__eventList[i]); }
 
 /**
  * @brief checkFlags : kevent의 flags를 확인합니다.

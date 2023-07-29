@@ -13,12 +13,12 @@ fd_set Kqueue::_client_fds;
 fd_set Kqueue::_method_fds;
 fd_set Kqueue::_cgi_fds;
 
-int Kqueue::_kq = 0;
-std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>();
-struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {};
+int Kqueue::__kq = 0;
+std::vector<struct kevent> Kqueue::__eventsToAdd = std::vector<struct kevent>();
+struct kevent Kqueue::__eventList[CONCURRENT_EVENTS] = {};
 
 Kqueue::Kqueue(void) {
-  if ((_kq = kqueue()) == -1) throwWithErrorMessage("kqueue error");
+  if ((__kq = kqueue()) == -1) throwWithErrorMessage("kqueue error");
 }
 
 Kqueue::~Kqueue() {}
@@ -50,7 +50,7 @@ void Kqueue::addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
 #endif
 
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
-  Kqueue::_eventsToAdd.push_back(temp_event);
+  Kqueue::__eventsToAdd.push_back(temp_event);
 }
 
 /**
@@ -71,15 +71,15 @@ void Kqueue::addEvent(uintptr_t ident) {
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-  Kqueue::_eventsToAdd.push_back(temp_event);
+  Kqueue::__eventsToAdd.push_back(temp_event);
 }
 
-void Kqueue::addTimerEvent() {
+void Kqueue::addSessionTimerEvent() {
   struct kevent temp_event;
 
   EV_SET(&temp_event, SESSION_TIMER, EVFILT_TIMER, EV_ADD | EV_ENABLE,
          NOTE_SECONDS, 600, (void*)NULL);
-  Kqueue::_eventsToAdd.push_back(temp_event);
+  Kqueue::__eventsToAdd.push_back(temp_event);
 }
 
 void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
@@ -87,7 +87,7 @@ void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
-  int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
+  int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1)
     throwWithErrorMessage("kevent() error on registEvent()\n" +
                           std::string(strerror(errno)));
@@ -110,7 +110,7 @@ void Kqueue::disableEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, filter, EV_DISABLE, 0, 0, udata);
-  int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
+  int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1) throwWithErrorMessage("kevent error on disableEvent");
 }
 
@@ -126,7 +126,7 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
-  int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
+  int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1) throwWithErrorMessage("kevent error on enableEvent");
 }
 
@@ -141,7 +141,7 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
 
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
-  int ret = kevent(Kqueue::_kq, &temp_event, 1, NULL, 0, NULL);
+  int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1) throwWithErrorMessage("kevent error on deleteEvent");
 }
 
@@ -163,10 +163,10 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
  * @return int : 새로운 이벤트의 수
  */
 int Kqueue::newEvents() {
-  int new_events = kevent(_kq, &_eventsToAdd[0], _eventsToAdd.size(),
-                          _eventList, CONCURRENT_EVENTS, NULL);
+  int new_events = kevent(__kq, &__eventsToAdd[0], __eventsToAdd.size(),
+                          __eventList, CONCURRENT_EVENTS, NULL);
   if (new_events == -1) throwWithErrorMessage("kevent error on newEvents");
-  _eventsToAdd.clear();
+  __eventsToAdd.clear();
   return (new_events);
 }
 
@@ -177,7 +177,7 @@ int Kqueue::newEvents() {
  * @return const struct kevent&
  */
 const struct kevent& Kqueue::getEvent(int index) const {
-  return (_eventList[index]);
+  return (__eventList[index]);
 }
 
 /**
