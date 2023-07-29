@@ -94,7 +94,6 @@ void ServerManager::initConfig(void) {
  * 4. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
  *    Kqueue 클래스의 setFdSet() 함수를 호출하여 FD_SERVER 타입으로
  * 설정합니다.
- * 5. Server 객체를 _serverVector에 저장합니다.
  *
  * @see Server
  * @see Kqueue
@@ -111,23 +110,14 @@ void ServerManager::initServer(void) {
   std::set<short>::iterator it = _listenOrganizer.begin();
   try {
     while (it != _listenOrganizer.end()) {
-      Server *server = new Server(*it);
-      server->initServerSocket();
-#ifdef DEBUG_MSG
-      std::cout << "server: " << server->getPort();
-#endif
-      _eventQueue.addEvent(server->getSocket());
+      Server server(*it);
+      server.initServerSocket();
+      _eventQueue.addEvent(server.getSocket());
       _eventQueue.addTimerEvent();
-      Kqueue::setFdSet(server->getSocket(), FD_SERVER);
+      Kqueue::setFdSet(server.getSocket(), FD_SERVER);
       _serverVector.push_back(server);
-#ifdef DEBUG_MSG
-      std::cout << ":" << server->getSocket() << std::endl;
-#endif
       ++it;
     }
-#ifdef DEBUG_MSG
-    std::cout << "Server initialized" << std::endl;
-#endif
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
@@ -154,11 +144,11 @@ void ServerManager::promptServer(void) {
             << " ] --------\n"
             << std::endl;
 
-  std::vector<Server *>::const_iterator it = this->_serverVector.begin();
-  for (; it != this->_serverVector.end(); ++it) {
-    std::cout << "socket: " << BOLDGREEN << (*it)->getSocket() << RESET;
-    std::cout << "   | host: " << BOLDGREEN << (*it)->getHost() << RESET;
-    std::cout << "   | port: " << BOLDGREEN << (*it)->getPort() << RESET
+  std::vector<Server>::const_iterator it = _serverVector.begin();
+  for (; it != _serverVector.end(); ++it) {
+    std::cout << "socket: " << BOLDGREEN << (*it).getSocket() << RESET;
+    std::cout << "   | host: " << BOLDGREEN << (*it).getHost() << RESET;
+    std::cout << "   | port: " << BOLDGREEN << (*it).getPort() << RESET
               << std::endl
               << std::endl;
   }
@@ -189,7 +179,7 @@ void ServerManager::promptServer(void) {
 void ServerManager::startServer(void) {
   try {
     std::cout << "Server started" << std::endl;
-    EventHandler eventHandler(_serverVector);
+    EventHandler &eventHandler = EventHandler::getInstance();
     while (1) {
       int eventCount = _eventQueue.newEvents();
       for (int i = 0; i < eventCount; ++i) {
