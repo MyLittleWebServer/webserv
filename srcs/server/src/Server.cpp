@@ -21,6 +21,22 @@
 
 Server::Server(int port) : _port(port) {}
 
+Server::Server(const Server &src)
+    : _addr(src._addr),
+      _socket(src._socket),
+      _port(src._port),
+      _host(src._host) {}
+
+Server &Server::operator=(const Server &src) {
+  if (this != &src) {
+    _addr = src._addr;
+    _socket = src._socket;
+    _port = src._port;
+    _host = src._host;
+  }
+  return *this;
+}
+
 Server::~Server(void) {}
 
 /**
