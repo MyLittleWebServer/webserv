@@ -36,18 +36,6 @@ EventHandler::EventHandler() : _errorFlag(false) {}
 EventHandler::~EventHandler(void) {}
 
 /**
- * @brief EventHandler를 Singleton 패턴으로 구현합니다.
- *
- * @author Clearsu
- * @date 2023-07-29
- */
-
-EventHandler &EventHandler::getInstance() {
-  static EventHandler instance;
-  return instance;
-}
-
-/**
  * @brief 현재 이벤트를 설정합니다.
  *
  * @details

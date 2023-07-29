@@ -164,8 +164,8 @@ void ServerManager::promptServer(std::vector<Server> &serverVector) {
 void ServerManager::startServer(void) {
   try {
     std::cout << "Server started" << std::endl;
-    EventHandler &eventHandler = EventHandler::getInstance();
     _eventQueue.addSessionTimerEvent();
+    EventHandler eventHandler;
     while (1) {
       int eventCount = _eventQueue.newEvents();
       for (int i = 0; i < eventCount; ++i) {

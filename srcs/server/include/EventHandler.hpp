@@ -67,11 +67,9 @@ class EventHandler : public Kqueue {
   void setRequestTimeOutTimer(Client& clinet);
   void deleteTimerEvent();
 
+ public:
   EventHandler();
   virtual ~EventHandler();
-
- public:
-  static EventHandler& getInstance();
 
   void setCurrentEvent(int i);
   void checkFlags(void);
