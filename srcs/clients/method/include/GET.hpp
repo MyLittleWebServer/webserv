@@ -10,13 +10,12 @@ class GET : public IMethod {
 
  private:
   void handlePath(RequestDts& dts, IResponse& response);
-  bool validateAuth(RequestDts& dts, Session& session);
   void getPublicEndpoint(RequestDts& dts, IResponse& response);
   bool getSpecificEndpoint(RequestDts& dts, IResponse& response);
   bool checkFile(std::string& path);
+  bool checkDirectory(std::string& path);
   bool checkIndexFile(std::string& pathIndex);
-  bool checkAutoIndex(std::string& path, std::string& pathIndex,
-                      const std::string& autoindex);
+  bool checkAutoIndex(std::string& pathIndex, const std::string& autoindex);
   void prepareBody(const std::string& pathIndex, IResponse& response);
   void prepareFileList(const std::string& path, RequestDts& dts,
                        IResponse& response);
