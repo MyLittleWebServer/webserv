@@ -22,14 +22,19 @@
 Server::Server(int port) : _port(port) {}
 
 Server::Server(const Server &src)
-    : _addr(src._addr),
-      _socket(src._socket),
-      _port(src._port),
-      _host(src._host) {}
+    : _socket(src._socket), _port(src._port), _host(src._host) {
+  _addr.sin_len = src._addr.sin_len;
+  _addr.sin_family = src._addr.sin_family;
+  _addr.sin_port = src._addr.sin_port;
+  _addr.sin_addr.s_addr = src._addr.sin_addr.s_addr;
+}
 
 Server &Server::operator=(const Server &src) {
   if (this != &src) {
-    _addr = src._addr;
+    _addr.sin_len = src._addr.sin_len;
+    _addr.sin_family = src._addr.sin_family;
+    _addr.sin_port = src._addr.sin_port;
+    _addr.sin_addr.s_addr = src._addr.sin_addr.s_addr;
     _socket = src._socket;
     _port = src._port;
     _host = src._host;
@@ -54,12 +59,12 @@ Server::~Server(void) {}
  * @date 2023.07.17
  */
 void Server::initServerSocket(void) {
-  this->hostInit();
-  this->socketInit();
-  this->addrInit();
-  this->bindSocketWithAddr();
-  this->listenSocket();
-  this->asyncSocket();
+  hostInit();
+  socketInit();
+  addrInit();
+  bindSocketWithAddr();
+  listenSocket();
+  asyncSocket();
 }
 
 /**
@@ -84,11 +89,11 @@ void Server::hostInit(void) {
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
   while (it != serverInfo.end()) {
-    if ((*it)->getListen() == this->_port) {
-      this->_host = (*it)->getServerName();
+    if ((*it)->getListen() == _port) {
+      _host = (*it)->getServerName();
       return;
     } else {
-      this->_host = "";
+      _host = "";
     }
     ++it;
   }
@@ -110,8 +115,8 @@ void Server::hostInit(void) {
  * @date 2023.07.17
  */
 void Server::socketInit(void) {
-  this->_socket = socket(PF_INET, SOCK_STREAM, 0);
-  if (this->_socket == -1) throwWithErrorMessage("socket error");
+  _socket = socket(PF_INET, SOCK_STREAM, 0);
+  if (_socket == -1) throwWithErrorMessage("socket error");
 }
 
 /**
@@ -163,12 +168,11 @@ void Server::addrInit(void) {
  */
 void Server::bindSocketWithAddr(void) {
   int enable = 1;
-  if (setsockopt(this->_socket, SOL_SOCKET, SO_REUSEADDR, &enable,
-                 sizeof(int)) < 0) {
+  if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
     throwWithErrorMessage("setsockopt(SO_REUSEADDR) failed");
   }
 
-  if (bind(this->_socket, (struct sockaddr *)&_addr, sizeof(_addr)) == -1)
+  if (bind(_socket, (struct sockaddr *)&_addr, sizeof(_addr)) == -1)
     throwWithErrorMessage("bind error");
 }
 
@@ -190,8 +194,7 @@ void Server::bindSocketWithAddr(void) {
  * @date 2023.07.17
  */
 void Server::listenSocket(void) const {
-  if (listen(this->_socket, BACKLOG) == -1)
-    throwWithErrorMessage("listen error");
+  if (listen(_socket, BACKLOG) == -1) throwWithErrorMessage("listen error");
 }
 
 /**
@@ -209,7 +212,7 @@ void Server::listenSocket(void) const {
  * @date 2023.07.17
  */
 void Server::asyncSocket(void) const {
-  if (fcntl(this->_socket, F_SETFL, O_NONBLOCK) == -1)
+  if (fcntl(_socket, F_SETFL, O_NONBLOCK) == -1)
     throwWithErrorMessage("fcntl() error");
 }
 
@@ -217,16 +220,16 @@ void Server::asyncSocket(void) const {
  * @brief getSocket 서버의 소켓을 반환합니다.
  * @return uintptr_t
  */
-uintptr_t Server::getSocket(void) const { return (this->_socket); }
+uintptr_t Server::getSocket(void) const { return _socket; }
 
 /**
  * @brief getPort 서버의 포트를 반환합니다.
  * @return short
  */
-short Server::getPort(void) const { return (this->_port); }
+short Server::getPort(void) const { return _port; }
 
 /**
  * @brief getHost 서버의 host를 반환합니다.
  * @return std::string
  */
-std::string Server::getHost(void) const { return (this->_host); }
+std::string Server::getHost(void) const { return _host; }
