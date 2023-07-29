@@ -8,13 +8,21 @@
 </head>
 <body>
     <div class="container">
-        <label for="uname"><b>Username</b></label>
-        <input type="text" placeholder="Enter Username" name="uname" required>
+      <form action="/login" method="post">
 
-        <label for="psw"><b>Password</b></label>
-        <input type="password" placeholder="Enter Password" name="psw" required>
+        <label for="username"><b>Username</b></label>
+        <input type="text" placeholder="Enter Username" name="username" required>
 
-        <button type="submit" class="btn">Login</button>
+        <label for="password"><b>Password</b></label>
+        <input type="password" placeholder="Enter Password" name="password" required>
+
+        <label>
+          <input type="checkbox" checked="checked" name="fifteen"> +15
+        </label>
+          <div class="login-help">
+            <button type="submit" class="btn">SignIn</button>
+            <a href="./signup.html">Sign Up</a>
+      </form>
     </div>
 </body>
 </html>

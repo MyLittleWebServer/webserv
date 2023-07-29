@@ -22,5 +22,6 @@ class IResponse {
   virtual void setResponseParsed() = 0;
   virtual bool isParsed() = 0;
 
+  virtual void setCookie(std::string &str) = 0;
   virtual void clear(void) = 0;
 };

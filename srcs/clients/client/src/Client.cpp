@@ -2,11 +2,13 @@
 
 #include "DELETE.hpp"
 #include "DummyMethod.hpp"
+#include "ExceptionThrower.hpp"
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
+#include "PUT.hpp"
 #include "Utils.hpp"
 
 char Client::_buf[RECEIVE_LEN] = {0};
@@ -123,8 +125,10 @@ void Client::parseRequest(short port) {
 bool Client::isCgi() { return _request.isCgi(); }
 
 void Client::doRequest() {
-  _method->doRequest(_request.getRequestParserDts(), _response);
+  RequestDts &dts = _request.getRequestParserDts();
+  _method->doRequest(dts, _response);
 }
+
 /**
  * @brief 클라이언트가 응답을 전송합니다.
  *
@@ -171,7 +175,9 @@ void Client::newHTTPMethod(void) {
     _method = new GET();
   else if (_request.getMethod() == "POST")
     _method = new POST();
-  else if (_request.getMethod() == "DELETE")
+  else if (_request.getMethod() == "PUT") {
+    _method = new PUT();
+  } else if (_request.getMethod() == "DELETE")
     _method = new DELETE();
   else if (_request.getMethod() == "HEAD")
     _method = new HEAD();
@@ -452,7 +458,7 @@ void Client::methodNotAllowCheck() {
  * @date 2023.07.22
  */
 void Client::responseFinalCheck() {
-  contentNegotiation();
+  // contentNegotiation();
   methodNotAllowCheck();
   headMethodBodyCheck();
   setResponseConnection();

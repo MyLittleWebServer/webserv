@@ -76,3 +76,23 @@ ExceptionThrower::CGIBodyTooLongException::CGIBodyTooLongException()
 const char* ExceptionThrower::CGIBodyTooLongException::what() const throw() {
   return std::runtime_error::what();
 }
+ExceptionThrower::SessionDataError::SessionDataError()
+    : std::runtime_error(SESSION_DATA_ERROR) {}
+
+const char* ExceptionThrower::SessionDataError::what() const throw() {
+  return std::runtime_error::what();
+}
+
+ExceptionThrower::SessionDataNotFound::SessionDataNotFound()
+    : std::runtime_error(SESSION_DATA_NOT_FOUND) {}
+
+const char* ExceptionThrower::SessionDataNotFound::what() const throw() {
+  return std::runtime_error::what();
+}
+
+ExceptionThrower::SessionDataExpired::SessionDataExpired()
+    : std::runtime_error(SESSION_DATA_ERROR) {}
+
+const char* ExceptionThrower::SessionDataExpired::what() const throw() {
+  return std::runtime_error::what();
+}

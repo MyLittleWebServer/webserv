@@ -22,6 +22,7 @@ typedef struct RequestDts {
   std::string* body;
   std::list<std::string>* linesBuffer;
   std::map<std::string, std::string>* headerFields;
+  std::map<std::string, std::string>* cookieMap;
   std::map<std::string, std::string>* queryStringElements;
   std::string* query_string;
   std::map<std::string, std::string>* serverConf;
@@ -30,6 +31,7 @@ typedef struct RequestDts {
   bool* isParsed;
   bool* is_cgi;
   bool* is_expect_100;
+  bool* is_session;
   unsigned long* contentLength;
 } RequestDts;
 

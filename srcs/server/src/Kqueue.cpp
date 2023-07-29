@@ -74,6 +74,14 @@ void Kqueue::addEvent(uintptr_t ident) {
   Kqueue::_eventsToAdd.push_back(temp_event);
 }
 
+void Kqueue::addTimerEvent() {
+  struct kevent temp_event;
+
+  EV_SET(&temp_event, SESSION_TIMER, EVFILT_TIMER, EV_ADD | EV_ENABLE,
+         NOTE_SECONDS, 600, (void*)NULL);
+  Kqueue::_eventsToAdd.push_back(temp_event);
+}
+
 void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                          uint32_t fflags, intptr_t data, void* udata) {
   struct kevent temp_event;

@@ -51,5 +51,6 @@ class Response : public IResponse {
   void setResponseParsed();
   bool isParsed();
 
+  void setCookie(std::string &session_id);
   void clear(void);
 };

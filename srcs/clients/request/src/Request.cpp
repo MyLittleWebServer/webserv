@@ -20,27 +20,29 @@ Request::Request(const Request &src)
 
 Request &Request::operator=(const Request &src) {
   if (this != &src) {
-    this->_path = src._path;
-    this->_protocol = src._protocol;
-    this->_statusCode = src._statusCode;
-    this->_linesBuffer = src._linesBuffer;
-    this->_headerFields = src._headerFields;
-    this->_serverConf = src._serverConf;
-    this->_matchedServer = src._matchedServer;
-    this->_matchedLocation = src._matchedLocation;
-    this->_cgi_path = src._cgi_path;
-    this->_method = src._method;
-    this->_request = src._request;
-    this->_statusCode = src._statusCode;
-    this->_query_string = src._query_string;
-    this->_queryStringElements = src._queryStringElements;
-    this->_body = src._body;
-    this->_anchor = src._anchor;
-    this->_isParsed = src._isParsed;
-    this->_contentLength = src._contentLength;
-    this->_is_cgi = src._is_cgi;
-    this->_originalPath = src._originalPath;
-    this->_is_expect_100 = src._is_expect_100;
+    _path = src._path;
+    _protocol = src._protocol;
+    _statusCode = src._statusCode;
+    _linesBuffer = src._linesBuffer;
+    _headerFields = src._headerFields;
+    _cookieMap = src._cookieMap;
+    _serverConf = src._serverConf;
+    _matchedServer = src._matchedServer;
+    _matchedLocation = src._matchedLocation;
+    _cgi_path = src._cgi_path;
+    _method = src._method;
+    _request = src._request;
+    _statusCode = src._statusCode;
+    _query_string = src._query_string;
+    _queryStringElements = src._queryStringElements;
+    _body = src._body;
+    _anchor = src._anchor;
+    _isParsed = src._isParsed;
+    _contentLength = src._contentLength;
+    _is_cgi = src._is_cgi;
+    _is_session = src._is_session;
+    _originalPath = src._originalPath;
+    _is_expect_100 = src._is_expect_100;
   }
   initDts();
   return *this;
@@ -50,6 +52,7 @@ void Request::initMember() {
   _isParsed = false;
   _is_cgi = false;
   _is_expect_100 = false;
+  _is_session = false;
 
   _contentLength = 0;
 
@@ -64,6 +67,7 @@ void Request::initMember() {
   _query_string.clear();
 
   _headerFields.clear();
+  _cookieMap.clear();
   _queryStringElements.clear();
   _serverConf.clear();
 
@@ -74,6 +78,7 @@ void Request::initMember() {
 void Request::initDts() {
   _request_parser_dts.isParsed = &_isParsed;
   _request_parser_dts.is_cgi = &_is_cgi;
+  _request_parser_dts.is_session = &_is_session;
 
   _request_parser_dts.contentLength = &_contentLength;
 
@@ -91,6 +96,7 @@ void Request::initDts() {
 
   _request_parser_dts.linesBuffer = &_linesBuffer;
   _request_parser_dts.headerFields = &_headerFields;
+  _request_parser_dts.cookieMap = &_cookieMap;
   _request_parser_dts.queryStringElements = &_queryStringElements;
   _request_parser_dts.serverConf = &_serverConf;
 
@@ -154,6 +160,8 @@ IServerConfig *Request::getMatchedServer(void) const {
 const bool &Request::isParsed() const { return _isParsed; }
 
 const bool &Request::isCgi() const { return _is_cgi; }
+
+const bool &Request::isSession() const { return _is_session; }
 
 std::ostream &operator<<(std::ostream &os, const Request &request) {
   os << request.getMethod() << request.getRequest() << request.getPath()

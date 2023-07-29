@@ -33,7 +33,12 @@ std::string &Response::getFieldValue(const std::string &key) {
 }
 
 void Response::create300Response(RequestDts &dts) {
-  if (dts.path->empty()) *dts.path = "/";
+  if (dts.path->empty()) {
+    *dts.path = "/";
+  }
+  if (!(*dts.query_string).empty()) {
+    *dts.path += '?' + *dts.query_string;
+  }
   setHeaderField("Location", *dts.path);
   assembleResponse();
 }
@@ -144,6 +149,11 @@ void Response::configureErrorPages(RequestDts &dts) {
     }
     file.close();
   }
+}
+
+void Response::setCookie(std::string &session_id) {
+  setHeaderField("Set-Cookie",
+                 "session_id=" + session_id + "; httponly; Max-Age=60;");
 }
 
 void Response::clear() {

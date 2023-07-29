@@ -17,15 +17,15 @@ POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
 #ifndef DEBUG_MSG
-  std::cout << " >>>>>>>>>>>>>>> POST\n";
+  std::cout << " >> POST\n";
   std::cout << "path: " << *dts.path << "\n";
+  std::cout << "original path: " << *dts.originalPath << "\n";
   std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
   std::cout << "content-length: " << (*dts.headerFields)["content-length"]
             << "\n";
 #endif
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
-  generateResource(dts);
-  response.setStatusCode(E_201_CREATED);
+  handlePath(dts, response);
 }
 
 void POST::generateResource(RequestDts& dts) {
@@ -204,16 +204,93 @@ std::string POST::decodeURL(std::string encoded_string) {
 }
 
 std::string POST::makeRandomFileName(RequestDts& dts) {
-  std::string charset =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  std::string result;
-  std::srand(std::time(0));
-
-  for (int i = 0; i < 8; ++i)
-    result.push_back(charset[std::rand() % charset.size()]);
+  std::string result = generateRandomString();
 
   if (access(result.c_str(), F_OK) == 0)
     throw((*dts.statusCode) = E_409_CONFLICT);
 
   return result;
+}
+
+void POST::handlePath(RequestDts& dts, IResponse& response) {
+  if (getSpecificEndpoint(dts, response))
+    return;
+  else {
+    generateResource(dts);
+    response.setStatusCode(E_201_CREATED);
+  }
+}
+
+/**
+ * @brief 특정 URL의 엔드포인트를 POST하는 함수
+ *
+ * @details
+ *
+ *
+ * @param dts
+ * @param response
+ * @return true : true를 리턴하면 해당 POST요청을 더이상 진행하지 않음.
+ * @return false : false를 리턴하면 해당 함수를 종료.
+ */
+bool POST::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
+  if (*dts.is_session == false) return false;
+  Session& session = Session::getInstance();
+  const std::string& originalPath = *dts.originalPath;
+  try {
+    if (originalPath == "/login") {
+      login(dts, response, session);
+    } else if (originalPath == "/enter") {
+      enter(dts, response, session);
+    } else if (originalPath == "/session") {
+      submit(dts, session);
+      return true;
+    }
+  } catch (ExceptionThrower::SessionDataNotFound& e) {
+#ifdef DEBUG_MSG
+    std::cout << "session not found " << e.what() << std::endl;
+#endif
+    throw(*dts.statusCode = E_401_UNAUTHORIZED);
+  }
+  return false;
+}
+
+void POST::login(RequestDts& dts, IResponse& response, Session& session) {
+  std::string session_id = session.createSession(getTimeOfDay() + 60);
+
+  response.setCookie(session_id);
+  SessionData& sessionData = session.getSessionData(session_id);
+
+  std::vector<std::string> body = ft_split(*dts.body, "&");
+  std::vector<std::string>::const_iterator it = body.begin();
+  for (; it < body.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    if (!keyValue.empty() && keyValue[0] != "password")
+      sessionData.setData(keyValue[0], keyValue[1]);
+  }
+
+  *dts.path = "";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
+  std::string session_id = session.createSession(getTimeOfDay() + 300);
+
+  response.setCookie(session_id);
+  SessionData& sessionData = session.getSessionData(session_id);
+
+  std::vector<std::string> body = ft_split(*dts.body, "&");
+  std::vector<std::string>::const_iterator it = body.begin();
+  for (; it < body.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    if (!keyValue.empty()) sessionData.setData(keyValue[0], keyValue[1]);
+  }
+
+  *dts.path = "/";
+  throw(*dts.statusCode = E_302_FOUND);
+}
+
+void POST::submit(RequestDts& dts, Session& session) {
+  SessionData& sessionData =
+      session.getSessionData((*dts.cookieMap)["session_id"]);
+  sessionData.setData("data", *dts.body);
 }

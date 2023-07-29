@@ -151,6 +151,20 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   dts.linesBuffer->clear();
 }
 
+void RequestParser::parseCookie(RequestDts &dts) {
+  std::vector<std::string> cookie =
+      ft_split((*dts.headerFields)["cookie"], "; ");
+
+  std::vector<std::string>::const_iterator it = cookie.begin();
+  for (; it < cookie.end(); ++it) {
+    std::vector<std::string> keyValue = ft_split(*it, '=');
+    if (!keyValue.empty()) {
+      (*dts.cookieMap)[keyValue[0]] = keyValue[1];
+    }
+  }
+  (*dts.headerFields).erase("cookie");
+}
+
 /**
  * @brief validateDuplicateInvalidHeaders;
  *
@@ -406,6 +420,10 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+void RequestParser::parseSessionConfig(RequestDts &dts) {
+  if ((*dts.matchedServer)->getSessionConfig() == "on") *dts.is_session = true;
+}
+
 /**
  * @brief validateHeaderKey;
  *
@@ -492,6 +510,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   splitLinesByCRLF(dts);
   parseRequestLine(dts);
   parseHeaderFields(dts);
+  parseCookie(dts);
   validateContentLengthHeader(dts);
   validateHostHeader(port, dts);
   ValidateContentEncoding(dts);
@@ -499,6 +518,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   matchServerConf(port, dts);
   validatePath(dts);
   parseCgi(dts);
+  parseSessionConfig(dts);
   requestChecker(dts);
 }
 
@@ -677,8 +697,8 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  */
 void RequestParser::checkMethod(RequestDts &dts) {
   if (*dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "DELETE" && *dts.method != "HEAD" &&
-      *dts.method != "OPTIONS")
+      *dts.method != "DELETE" && *dts.method != "PUT" &&
+      *dts.method != "HEAD" && *dts.method != "OPTION")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -773,7 +793,8 @@ void RequestParser::checkAllowedMethods(RequestDts &dts) {
 }
 
 void RequestParser::checkCgiMethod(RequestDts &dts) {
-  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST")
+  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST" &&
+      *dts.method != "PUT")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
