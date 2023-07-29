@@ -142,7 +142,7 @@ void EventHandler::branchCondition(void) {
  */
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
-  if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1)
+  if ((clientSocket = accept(_currentEvent->ident, NULL, NULL)) == -1)
     throwWithErrorMessage("accept error");
   std::cout << "accept ... : " << clientSocket << std::endl;
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);

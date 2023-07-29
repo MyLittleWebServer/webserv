@@ -14,7 +14,7 @@
  */
 class Reader : public IReader {
  private:
-  IFileChecker& checker;
+  IFileChecker& _checker;
 
   Reader();
   virtual ~Reader(void);

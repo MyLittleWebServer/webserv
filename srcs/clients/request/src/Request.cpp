@@ -116,24 +116,24 @@ void Request::parseRequest(const std::string &request, short port) {
 }
 
 RequestDts &Request::getRequestParserDts(void) {
-  return this->_request_parser_dts;
+  return _request_parser_dts;
 }
 
-const std::string &Request::getRequest(void) const { return (this->_request); }
-const std::string &Request::getMethod(void) const { return (this->_method); }
-const std::string &Request::getPath(void) const { return (this->_path); }
+const std::string &Request::getRequest(void) const { return (_request); }
+const std::string &Request::getMethod(void) const { return (_method); }
+const std::string &Request::getPath(void) const { return (_path); }
 const std::string &Request::getProtocol(void) const {
-  return (this->_protocol);
+  return (_protocol);
 }
-const std::string &Request::getCgiPath(void) const { return (this->_cgi_path); }
-const std::string &Request::getBody(void) const { return (this->_body); }
+const std::string &Request::getCgiPath(void) const { return (_cgi_path); }
+const std::string &Request::getBody(void) const { return (_body); }
 const std::string &Request::getQueryString(void) const { return _query_string; }
 
-size_t Request::getContentLength(void) const { return (this->_contentLength); }
+size_t Request::getContentLength(void) const { return (_contentLength); }
 
-Status Request::getStatusCode(void) const { return (this->_statusCode); }
+Status Request::getStatusCode(void) const { return (_statusCode); }
 std::map<std::string, std::string> &Request::getHeaderFields(void) {
-  return (this->_headerFields);
+  return (_headerFields);
 }
 const std::string Request::getHeaderField(std::string key) const {
   key = toLowerString(key).substr(0, key.length());
@@ -147,11 +147,11 @@ const std::string Request::getHeaderField(std::string key) const {
 }
 const std::map<std::string, std::string> &Request::getQueryStringElements(
     void) const {
-  return (this->_queryStringElements);
+  return (_queryStringElements);
 }
 
 IServerConfig *Request::getMatchedServer(void) const {
-  return (*this->_request_parser_dts.matchedServer);
+  return (*_request_parser_dts.matchedServer);
 }
 
 const bool &Request::isParsed() const { return _isParsed; }

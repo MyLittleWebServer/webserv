@@ -18,7 +18,7 @@ std::vector<struct kevent> Kqueue::_eventsToAdd = std::vector<struct kevent>();
 struct kevent Kqueue::_eventList[CONCURRENT_EVENTS] = {};
 
 Kqueue::Kqueue(void) {
-  if ((this->_kq = kqueue()) == -1) throwWithErrorMessage("kqueue error");
+  if ((_kq = kqueue()) == -1) throwWithErrorMessage("kqueue error");
 }
 
 Kqueue::~Kqueue() {}
@@ -177,7 +177,7 @@ int Kqueue::newEvents() {
  * @return const struct kevent&
  */
 const struct kevent& Kqueue::getEvent(int index) const {
-  return (this->_eventList[index]);
+  return (_eventList[index]);
 }
 
 /**

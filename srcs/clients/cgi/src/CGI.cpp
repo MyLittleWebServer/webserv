@@ -64,12 +64,12 @@ CGI::CGI(const CGI& copy) { *this = copy; }
 
 CGI& CGI::operator=(const CGI& copy) {
   if (this != &copy) {
-    this->_cgi_status = copy._cgi_status;
-    this->_request = copy._request;
-    this->_response = copy._response;
-    this->_client_fd = copy._client_fd;
-    this->_cgiResult = copy._cgiResult;
-    this->_body = copy._body;
+    _cgi_status = copy._cgi_status;
+    _request = copy._request;
+    _response = copy._response;
+    _client_fd = copy._client_fd;
+    _cgiResult = copy._cgiResult;
+    _body = copy._body;
     initEnv();
   }
   return *this;
@@ -286,5 +286,5 @@ bool CGI::isCgiFinish() { return _cgi_status == CGI_END; }
 
 const std::string& CGI::getCgiResult() {
   if (_cgi_status != CGI_END) throw ExceptionThrower::CGINotFinishedException();
-  return this->_cgiResult;
+  return _cgiResult;
 }

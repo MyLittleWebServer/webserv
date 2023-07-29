@@ -254,7 +254,7 @@ int Client::getRequestTimeOutUnit() const { return _requestTimeOutUnit; }
  *
  * @return uintptr_t
  */
-uintptr_t Client::getSD() const { return this->_sd; }
+uintptr_t Client::getSD() const { return _sd; }
 
 const char *Client::RecvFailException::what() const throw() {
   return ("error occured in recv()");
