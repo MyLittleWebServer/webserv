@@ -420,6 +420,10 @@ void RequestParser::parseCgi(RequestDts &dts) {
   *dts.cgi_path = cgiPath;
 }
 
+void RequestParser::parseSessionConfig(RequestDts &dts) {
+  if ((*dts.matchedServer)->getSessionConfig() == "on") *dts.is_session = true;
+}
+
 /**
  * @brief validateHeaderKey;
  *
@@ -514,6 +518,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   matchServerConf(port, dts);
   validatePath(dts);
   parseCgi(dts);
+  parseSessionConfig(dts);
   requestChecker(dts);
 }
 

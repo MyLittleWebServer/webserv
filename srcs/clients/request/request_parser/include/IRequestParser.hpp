@@ -31,6 +31,7 @@ typedef struct RequestDts {
   bool* isParsed;
   bool* is_cgi;
   bool* is_expect_100;
+  bool* is_session;
   unsigned long* contentLength;
 } RequestDts;
 

@@ -19,6 +19,7 @@ class RequestParser : public IRequestParser {
   void parseHeaderFields(RequestDts& dts);
   void parseCookie(RequestDts& dts);
   void parseCgi(RequestDts& dts);
+  void parseSessionConfig(RequestDts& dts);
   void parseContent(RequestDts& dts);
   void parseContentLength(RequestDts& dts);
   void parseTransferEncoding(RequestDts& dts);

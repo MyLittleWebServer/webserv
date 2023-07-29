@@ -32,7 +32,8 @@ class POST : public IMethod {
 
   std::string makeRandomFileName(RequestDts& dts);
 
-  // std::string validateContentType();
+  bool getSpecificEndpoint(RequestDts& dts, IResponse& response);
+
  private:
   void handlePath(RequestDts& dts, IResponse& response);
   void login(RequestDts& dts, IResponse& response, Session& session);
