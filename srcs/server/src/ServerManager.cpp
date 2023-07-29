@@ -58,30 +58,6 @@ ServerManager::ServerManager(int ac, char **av) {
 void ServerManager::initSignal(void) { signal(SIGPIPE, SIG_IGN); }
 
 /**
- * @brief initConfig 함수는 Config를 초기화합니다.
- *
- * @details
- * Config class는 Singleton으로 구현되어 있습니다.
- *
- * @author chanhihi
- * @date 2023.07.17
- */
-void ServerManager::initConfig(void) {
-  try {
-    Config &config = Config::getInstance();
-    std::list<IServerConfig *> serverInfo = config.getServerConfigs();
-    std::list<IServerConfig *>::iterator it = serverInfo.begin();
-    while (it != serverInfo.end()) {
-      _listenOrganizer.insert((*it)->getListen());
-      ++it;
-    }
-    std::cout << "Config initialized" << std::endl;
-  } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
-  }
-}
-
-/**
  * @brief initServer 함수는 _listenOrganizer에 저장된 포트를 기반으로 서버를
  * 초기화합니다.
  *
@@ -107,27 +83,31 @@ void ServerManager::initConfig(void) {
  */
 void ServerManager::initServer(void) {
   Kqueue::init();
-  std::set<short>::iterator it = _listenOrganizer.begin();
+  Config &config = Config::getInstance();
+  std::list<IServerConfig *> serverInfo = config.getServerConfigs();
+  std::list<IServerConfig *>::iterator it = serverInfo.begin();
+  std::vector<Server> serverVector;
   try {
-    while (it != _listenOrganizer.end()) {
-      Server server(*it);
-      server.initServerSocket();
-      _eventQueue.addEvent(server.getSocket());
-      _eventQueue.addTimerEvent();
-      Kqueue::setFdSet(server.getSocket(), FD_SERVER);
-      _serverVector.push_back(server);
+    while (it != serverInfo.end()) {
+      serverVector.push_back(Server((*it)->getListen()));
+      std::cout << serverVector.back().getPort() << '\n';
+      serverVector.back().initServerSocket();
+      _eventQueue.addEvent(serverVector.back().getSocket());
+      Kqueue::setFdSet(serverVector.back().getSocket(), FD_SERVER);
       ++it;
     }
+    _eventQueue.addSessionTimerEvent();
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
+  promptServer(serverVector);
 }
 
 /**
  * @brief promptServer 함수는 서버의 정보를 출력합니다.
  *
  * @details
- * initServer() 함수에서 생성되어 _serverVector에 들어있는 서버의 정보를
+ * initServer() 함수에서 생성된 serverVector에 들어있는 서버의 정보를
  * 출력합니다.
  *
  * @see initServer
@@ -139,13 +119,13 @@ void ServerManager::initServer(void) {
  * @author chanhihi
  * @date 2023.07.17
  */
-void ServerManager::promptServer(void) {
+void ServerManager::promptServer(std::vector<Server> &serverVector) {
   std::cout << "\n-------- [ " BOLDBLUE << "Web Server Info" << RESET
             << " ] --------\n"
             << std::endl;
 
-  std::vector<Server>::const_iterator it = _serverVector.begin();
-  for (; it != _serverVector.end(); ++it) {
+  std::vector<Server>::const_iterator it = serverVector.begin();
+  for (; it != serverVector.end(); ++it) {
     std::cout << "socket: " << BOLDGREEN << (*it).getSocket() << RESET;
     std::cout << "   | host: " << BOLDGREEN << (*it).getHost() << RESET;
     std::cout << "   | port: " << BOLDGREEN << (*it).getPort() << RESET
@@ -156,7 +136,8 @@ void ServerManager::promptServer(void) {
 }
 
 /**
- * @brief startServer 함수는 _serverVector에 저장된 서버들을 시작합니다.
+ * @brief startServer 함수는 kqueue에 등록된 이벤트를 기반으로 서버를
+ * 가동합니다.
  *
  * @details
  * EventHandler 객체를 생성합니다.
@@ -171,7 +152,7 @@ void ServerManager::promptServer(void) {
  * @see branchCondition
  *
  * @exception std::exception
- * 서버를 시작되어 작동하는 과정에서 예외가 발생하면 예외를 던집니다.
+ * 서버가 시작되어 작동하는 과정에서 예외가 발생하면 예외를 던집니다.
  *
  * @author chanhihi
  * @date 2023.07.17
