@@ -78,9 +78,7 @@ int main(int ac, char **av) {
   try {
     ServerManager serverManager(ac, av);
     serverManager.initSignal();
-    serverManager.initConfig();
     serverManager.initServer();
-    serverManager.promptServer();
     serverManager.startServer();
   } catch (...) {
     return (errno);

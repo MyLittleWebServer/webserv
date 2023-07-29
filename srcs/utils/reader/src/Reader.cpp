@@ -1,14 +1,14 @@
 #include "../include/Reader.hpp"
 
-Reader::Reader() : checker(FileChecker::getInstance()) {}
+Reader::Reader() : _checker(FileChecker::getInstance()) {}
 
 Reader::~Reader(void) {}
 
-Reader::Reader(Reader const& src) : checker(src.checker) { *this = src; }
+Reader::Reader(Reader const& src) : _checker(src._checker) { *this = src; }
 
 Reader& Reader::operator=(Reader const& src) {
   if (this != &src) {
-    this->checker = src.checker;
+    _checker = src._checker;
   }
   return *this;
 }
@@ -18,9 +18,9 @@ std::string Reader::read(std::string filename) {
   std::string line;
 
   std::ifstream ipf(filename);
-  checker.open_check(ipf);
+  _checker.open_check(ipf);
   while (std::getline(ipf, line)) {
-    checker.failCheck(ipf);
+    _checker.failCheck(ipf);
     result += line;
     if (!ipf.eof()) result += "\n";
   }
