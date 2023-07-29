@@ -58,18 +58,20 @@ ServerManager::ServerManager(int ac, char **av) {
 void ServerManager::initSignal(void) { signal(SIGPIPE, SIG_IGN); }
 
 /**
- * @brief initServer 함수는 _listenOrganizer에 저장된 포트를 기반으로 서버를
+ * @brief initServer 함수는 Config에 저장된 포트를 기반으로 서버를
  * 초기화합니다.
  *
  * @details
  * 서버를 초기화하는 과정은 다음과 같습니다.
- * 1. Server 객체를 생성합니다.
- * 2. Server 객체의 initServerSocket() 함수를 호출합니다.
- * 3. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
- *    이벤트 큐에 추가합니다.
+ * 1. 동일한 포트를 중복으로 바인딩하는 것을 막기 위해 set에 바인딩할 포트들을
+ *    삽입합니다.
+ * 2. Server 객체를 생성합니다.
+ * 3. Server 객체의 initServerSocket() 함수를 호출합니다.
  * 4. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
+ *    이벤트 큐 추가 대기열에 추가합니다.
+ * 5. Server 객체의 getSocket() 함수를 호출하여 반환된 소켓 디스크립터를
  *    Kqueue 클래스의 setFdSet() 함수를 호출하여 FD_SERVER 타입으로
- * 설정합니다.
+ *    설정합니다.
  *
  * @see Server
  * @see Kqueue
@@ -88,13 +90,16 @@ void ServerManager::initServer(void) {
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
   std::vector<Server> serverVector;
   try {
-    while (it != serverInfo.end()) {
-      serverVector.push_back(Server((*it)->getListen()));
-      std::cout << serverVector.back().getPort() << '\n';
+    std::set<short> ports;
+    for (; it != serverInfo.end(); ++it) {
+      ports.insert((*it)->getListen());
+    }
+    std::set<short>::iterator it = ports.begin();
+    for (; it != ports.end(); ++it) {
+      serverVector.push_back(Server(*it));
       serverVector.back().initServerSocket();
       _eventQueue.addEvent(serverVector.back().getSocket());
       Kqueue::setFdSet(serverVector.back().getSocket(), FD_SERVER);
-      ++it;
     }
     _eventQueue.addSessionTimerEvent();
   } catch (std::exception &e) {
