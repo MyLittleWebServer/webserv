@@ -39,7 +39,6 @@ class Client;
  */
 class EventHandler : public Kqueue {
  private:
-  std::set<uintptr_t> _serverSocketSet;
   struct kevent* _currentEvent;
   bool _errorFlag;
 
@@ -68,9 +67,11 @@ class EventHandler : public Kqueue {
   void setRequestTimeOutTimer(Client& clinet);
   void deleteTimerEvent();
 
- public:
-  EventHandler(const std::vector<Server*>& serverVector);
+  EventHandler();
   virtual ~EventHandler();
+
+ public:
+  static EventHandler& getInstance();
 
   void setCurrentEvent(int i);
   void checkFlags(void);
