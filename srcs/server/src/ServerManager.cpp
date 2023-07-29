@@ -101,7 +101,6 @@ void ServerManager::initServer(void) {
       _eventQueue.addEvent(serverVector.back().getSocket());
       Kqueue::setFdSet(serverVector.back().getSocket(), FD_SERVER);
     }
-    _eventQueue.addSessionTimerEvent();
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
@@ -166,6 +165,7 @@ void ServerManager::startServer(void) {
   try {
     std::cout << "Server started" << std::endl;
     EventHandler &eventHandler = EventHandler::getInstance();
+    _eventQueue.addSessionTimerEvent();
     while (1) {
       int eventCount = _eventQueue.newEvents();
       for (int i = 0; i < eventCount; ++i) {
