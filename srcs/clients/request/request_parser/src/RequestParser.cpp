@@ -272,7 +272,9 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
   std::string chunk;
 
   while (pos != std::string::npos) {
+    // chunk-size
     end = body.find("\r\n", pos);
+    if (end == std::string::npos) break;
     chunkSize = std::strtol(body.substr(pos, end - pos).c_str(), NULL, 16);
     if (chunkSize == 0) {
       *dts.isParsed = true;
