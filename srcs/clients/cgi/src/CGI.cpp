@@ -148,10 +148,7 @@ void CGI::generateResponse() {
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 }
 
-void CGI::setFcntl(int fd) {
-  int flags = fcntl(fd, F_GETFL, 0);
-  fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-}
+void CGI::setFcntl(int fd) { fcntl(fd, F_SETFL, O_NONBLOCK); }
 
 void CGI::setPipeNonblock() {
   setFcntl(_in_pipe[0]);
