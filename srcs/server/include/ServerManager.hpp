@@ -28,7 +28,7 @@
  */
 class ServerManager {
  private:
-  std::vector<Server *> _serverVector;
+  std::vector<Server> _serverVector;
   std::set<short> _listenOrganizer;
   Kqueue _eventQueue;
 
