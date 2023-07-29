@@ -36,7 +36,7 @@ EventHandler::EventHandler() : _errorFlag(false) {}
 EventHandler::~EventHandler(void) {}
 
 /**
- * @brief EventHandler를 Single-tone 패턴으로 구현합니다.
+ * @brief EventHandler를 Singleton 패턴으로 구현합니다.
  *
  * @author Clearsu
  * @date 2023-07-29
