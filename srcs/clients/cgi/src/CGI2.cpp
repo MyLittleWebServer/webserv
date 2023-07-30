@@ -1,6 +1,6 @@
-#include "CGI.hpp"
-
 #include <signal.h>
+
+#include "CGI.hpp"
 
 CGI::CGI() {
   _client_fd = 0;
@@ -90,14 +90,6 @@ void CGI::initEnv() {
 
   if (_request->getMethod() == "POST") _env.push_back(_content_length.c_str());
   if (_request->getMethod() == "GET") _env.push_back(_query_string.c_str());
-  if (!_request->getHeaderField("X-Secret-Header-For-Test").empty()) {
-    std::cout << "X-Secret-Header-For-Test: "
-              << _request->getHeaderField("X-Secret-Header-For-Test")
-              << std::endl;
-    _x_header = "HTTP_X_SECRET_HEADER_FOR_TEST=" +
-                _request->getHeaderField("X-Secret-Header-For-Test");
-    _env.push_back(_x_header.c_str());
-  }
   _env.push_back(_content_type.c_str());
   _env.push_back(_http_user_agent.c_str());
   _env.push_back(_path_info.c_str());
@@ -178,17 +170,9 @@ void CGI::execute() {
     throw ExceptionThrower::CGIPipeException();
   }
   setPipeNonblock();
-  if (_request->getMethod() == "POST" && _body.size() > 0) {
-    Kqueue::setFdSet(_in_pipe[1], FD_CGI);
-    Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-                     static_cast<void*>(this));
-  } else {
-    close(_in_pipe[1]);
-    _in_pipe[1] = -1;
-    Kqueue::setFdSet(_in_pipe[0], FD_CGI);
-    Kqueue::addEvent(_in_pipe[0], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
-                     static_cast<void*>(this));
-  }
+  Kqueue::setFdSet(_in_pipe[1], FD_CGI);
+  Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+                   static_cast<void*>(this));
   _cgi_status = CGI_WRITE;
   makeChild();
 }
@@ -206,6 +190,18 @@ void CGI::executeCGI() {
 }
 
 void CGI::makeChild() {
+  if (_request->getMethod() == "POST" && _body.size() > 0) {
+    Kqueue::setFdSet(_in_pipe[0], FD_CGI);
+    Kqueue::addEvent(_in_pipe[0], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+                     static_cast<void*>(this));
+  } else {
+    std::cout << "no body" << std::endl;
+    if (_in_pipe[1] > 0) close(_in_pipe[1]);
+    _in_pipe[1] = -1;
+    Kqueue::setFdSet(_in_pipe[0], FD_CGI);
+    Kqueue::addEvent(_in_pipe[0], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
+                     static_cast<void*>(this));
+  }
   _pid = fork();
   if (_pid == -1) {
     close(_out_pipe[0]);
@@ -231,9 +227,9 @@ void CGI::makeChild() {
 
 void CGI::writeCGI() {
   if (_in_pipe[1] == -1) {
-    // std::cout << "writeCGI: _in_pipe[1] == -1" << std::endl;
     waitChild();
     if (_cgi_status != CGI_RECEIVING) return;
+
     Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
     Kqueue::deleteEvent(_in_pipe[0], EVFILT_WRITE, static_cast<void*>(this));
     close(_in_pipe[0]);
@@ -244,6 +240,7 @@ void CGI::writeCGI() {
     ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
     if (ret != static_cast<ssize_t>(_body.size())) {
       if (ret == -1) {
+        std::cout << "cgi: write failed" << std::endl;
         Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
         Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE,
                             static_cast<void*>(this));
@@ -283,6 +280,7 @@ void CGI::waitChild() {
       break;
     }
     default:
+      std::cout << "wait child" << std::endl;
       _cgi_status = CGI_RECEIVING;
       break;
   }
@@ -294,6 +292,7 @@ bool CGI::readChildFinish() {
   while (true) {
     std::memset(buffer, 0, 1024);
     readSize = read(_out_pipe[0], buffer, 1024 - 1);
+    std::cout << "readSize: " << readSize << std::endl;
     if (readSize == 0) return true;
     if (readSize == -1) return false;
     _cgiResult += buffer;
@@ -301,10 +300,7 @@ bool CGI::readChildFinish() {
 }
 
 void CGI::waitAndReadCGI() {
-  // waitChild();
-  // if (_cgi_status != CGI_RECEIVING) return;
-  // close(_in_pipe[0]);
-  // close(_out_pipe[1]);
+  std::cout << "wait and read cgi" << std::endl;
   if (!readChildFinish()) return;
   Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
   Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
