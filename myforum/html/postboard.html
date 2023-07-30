@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="icon" href="/asset/index.ico/favicon.ico">
+        <link
+            href='http://www.openhiun.com/hangul/nanumbarungothic.css'
+            rel='stylesheet'
+            type='text/css'>
+        <link rel="stylesheet" type="text/css" href="/asset/css/login.css">
+        <link rel="stylesheet" type="text/css" href="/asset/css/index.css">
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    </head>
+
+    <body>
+        <div data-include-path="nav.py"></div>
+        <form class="container" onsubmit="post_board(event)">
+            <div class="form-group">
+                <label for="title">Title:</label>
+                <input type="text" class="form-control" id="title">
+            </div>
+            <div class="input-group mb-3">
+                <label class="form-label" for="customFile">File:</label>
+                <input type="file" class="form-control" id="customFile" accept="image/gif, image/png, image/jpeg"/>
+            </div>
+            <div class="form-group">
+                <label for="content">Content:</label>
+                <textarea class="form-control" rows="5" id="content"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+    </body>
+
+    <div class="footer-basic fixed-bottom">
+        <div data-include-path="foot.html"></div>
+    </div>
+    <script>
+        function post_board(event) {
+			event.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            if (title.length < 5) {
+                alert('Title len must least 5!');
+                return;
+            }
+            if (title.length > 20) {
+                alert('Title limit 20!');
+                return;
+            }
+            if (content.length < 10) {
+                alert('Content len least 10!');
+                return;
+            }
+            if (content.length > 200) {
+                alert('Content limit 200!');
+                return;
+            }
+			const fileInput = document.getElementById('customFile');
+            const file = fileInput.files[0];
+            if (file != undefined) {
+                fetch('./img-base', {
+                    method: 'POST',
+                    body: file
+                })
+                .then(response => {
+                    if (response.status === 201) {
+                        return response.headers.get('Location');
+                    } else {
+                        alert("Image Save Error!");
+                    }
+                })
+                .then(location => {
+                    const requestData = JSON.stringify({ location, title, content });
+                    return fetch('./postBoardService.py', {
+                        method: 'POST',
+                        body: requestData,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Create post success!');
+                        window.location.href = './boards.py';
+                    } else {
+                        alert('Something Wrong!');
+                    }
+                })
+            }
+            else {
+                const location = '';
+                const requestData = JSON.stringify({ title, content, location });
+                alert(requestData);
+                fetch('./postBoardService.py', {
+                    method: 'POST',
+                    body: requestData,
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Create post success!');
+                        window.location.href = './boards.py';
+                    } else {
+                        alert('Something Wrong!');
+                    }
+                })
+            }
+        }
+    </script>
+
+    <script>
+        window.addEventListener('load', function () {
+            var allElements = document.getElementsByTagName('*');
+            Array
+                .prototype
+                .forEach
+                .call(allElements, function (el) {
+                    var includePath = el.dataset.includePath;
+                    if (includePath) {
+                        var xhttp = new XMLHttpRequest();
+                        xhttp.onreadystatechange = function () {
+                            if (this.readyState == 4 && this.status == 200) {
+                                el.outerHTML = this.responseText;
+                            }
+                        };
+                        xhttp.open('GET', includePath, true);
+                        xhttp.send();
+                    }
+                });
+        });
+    </script>
+</html>
