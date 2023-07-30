@@ -34,23 +34,25 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
  */
 void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   size_t pos = 0;
-  size_t delimeter = dts.request->find("\r\n");
-  //
+  const std::string &dtsRequest = *dts.request;
+  size_t delimeter = dtsRequest.find("\r\n");
+
   if (delimeter == 0) {
     pos = 2;
-    delimeter = dts.request->find("\r\n", 2);
+    delimeter = dtsRequest.find("\r\n", 2);
     _valid_flag = false;
   } else {
     _valid_flag = true;
   }
-  //
+
+  std::list<std::string> &linesBuffer = *dts.linesBuffer;
   while (delimeter != std::string::npos) {
-    std::string chunk = dts.request->substr(pos, delimeter - pos + 2);
-    dts.linesBuffer->push_back(chunk);
+    std::string chunk = dtsRequest.substr(pos, delimeter - pos + 2);
+    linesBuffer.push_back(chunk);
     pos = delimeter + 2;
-    delimeter = dts.request->find("\r\n", pos);
+    delimeter = dtsRequest.find("\r\n", pos);
     if (delimeter == pos) {
-      *dts.body = dts.request->substr(pos + 2);
+      *dts.body = dtsRequest.substr(pos + 2);
       break;
     }
   }
@@ -136,12 +138,13 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
   size_t end = 0;
 
   while (lineIt != lineEnd) {
-    pos = (*lineIt).find(":");
-    end = (*lineIt).find("\r\n");
+    const std::string &line = *lineIt;
+    pos = line.find(":");
+    end = line.find("\r\n");
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
-    key = toLowerString((*lineIt).substr(0, pos));
-    value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
+    key = toLowerString(line.substr(0, pos));
+    value = toLowerString(line.substr(pos + 1, end - pos - 1));
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
@@ -193,12 +196,13 @@ void RequestParser::validateDuplicateInvalidHeaders(std::string key,
 }
 
 void RequestParser::parseContent(RequestDts &dts) {
-  if ((*dts.headerFields)["transfer-encoding"] == "" &&
-      (*dts.headerFields)["content-length"] == "") {
+  std::map<std::string, std::string> &headerFields = *dts.headerFields;
+  if (headerFields["transfer-encoding"] == "" &&
+      headerFields["content-length"] == "") {
     dts.body->clear();
     *dts.isParsed = true;
     return;
-  } else if ((*dts.headerFields)["transfer-encoding"] != "")
+  } else if (headerFields["transfer-encoding"] != "")
     return parseTransferEncoding(dts);
   else
     return parseContentLength(dts);
@@ -274,6 +278,8 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
   size_t end = 0;
   size_t chunkSize = 0;
   std::string chunk;
+  std::string &dtsBody = *dts.body;
+  size_t &dtsContentLength = *dts.contentLength;
 
   while (pos != std::string::npos) {
     end = body.find("\r\n", pos);
@@ -284,8 +290,8 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
       return;
     }
     chunk = body.substr(end + 2, chunkSize);
-    *dts.body += chunk;
-    *dts.contentLength += chunkSize;
+    dtsBody += chunk;
+    dtsContentLength += chunkSize;
     pos = end + 2 + chunkSize + 2;
   }
 }
@@ -328,9 +334,6 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
     ++it;
   }
   if (*dts.matchedServer == NULL) {
-#ifdef DEBUG_MSG
-    std::cout << "no matched server" << std::endl;
-#endif
     throw(*dts.statusCode = E_404_NOT_FOUND);
   }
 }
@@ -351,29 +354,23 @@ void RequestParser::validatePath(RequestDts &dts) {
   if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
   }
-#ifdef DEBUG_MSG
-  std::cout << "firstToken: " << firstToken << std::endl;
-#endif
+
   std::list<ILocationConfig *>::const_iterator it =
       (*dts.matchedServer)->getLocationConfigs().begin();
   std::list<ILocationConfig *>::const_iterator endIt =
       (*dts.matchedServer)->getLocationConfigs().end();
   std::list<ILocationConfig *>::const_iterator defaultLocation;
+  std::string &dtsPath = *dts.path;
+
   while (it != endIt) {
     const std::string &currRoute = (*it)->getRoute();
-#ifdef DEBUG_MSG
-    std::cout << "currRoute: " << currRoute << std::endl;
-#endif
     if (currRoute == firstToken) {
       *dts.matchedLocation = *it;
-      dts.path->erase(0, firstToken.size());
+      dtsPath.erase(0, firstToken.size());
       checkAndParseRedirection(dts);
       if (dts.path->size() != 0 && (*dts.path)[0] == '/') dts.path->erase(0, 1);
-      *dts.path = (*it)->getRoot() + *dts.path;
-      dts.path->erase(0, 1);
-#ifdef DEBUG_MSG
-      std::cout << "actual path: " << *dts.path << '\n';
-#endif
+      dtsPath = (*it)->getRoot() + *dts.path;
+      dtsPath.erase(0, 1);
       if (checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
@@ -412,7 +409,9 @@ void RequestParser::checkAndParseRedirection(RequestDts &dts) {
 void RequestParser::parseCgi(RequestDts &dts) {
   *dts.is_cgi = false;
   const std::string &extension = (*dts.matchedServer)->getCgi();
-  if (dts.path->size() < extension.size()) return;
+  if (dts.path->size() < extension.size()) {
+    return;
+  }
   std::string cgiPath =
       dts.path->substr(dts.path->size() - extension.size(), extension.size());
   if (cgiPath != extension) return;
@@ -421,7 +420,9 @@ void RequestParser::parseCgi(RequestDts &dts) {
 }
 
 void RequestParser::parseSessionConfig(RequestDts &dts) {
-  if ((*dts.matchedServer)->getSessionConfig() == "on") *dts.is_session = true;
+  if ((*dts.matchedServer)->getSessionConfig() == "on") {
+    *dts.is_session = true;
+  }
 }
 
 /**
@@ -437,10 +438,28 @@ void RequestParser::parseSessionConfig(RequestDts &dts) {
  * @author middlefitting
  * @date 2023.07.17
  */
-void RequestParser::validateHeaderKey(std::string &key, RequestDts &dts) {
+void RequestParser::validateHeaderKey(const std::string &key, RequestDts &dts) {
   std::string::size_type pos = 0;
-  while (pos < key.length() && !std::isspace(key[pos])) ++pos;
-  if (pos != key.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  size_t end;
+  const char *keyStr = key.c_str();
+
+  if (key.length() > 4) {
+    end = key.length() - 4;
+    while (pos < end) {
+      if (std::isspace(keyStr[pos]) || std::isspace(keyStr[pos + 1]) ||
+          std::isspace(keyStr[pos + 2]) || std::isspace(keyStr[pos + 3])) {
+        throw(*dts.statusCode = E_400_BAD_REQUEST);
+      }
+      pos += 4;
+    }
+  }
+  end = key.length();
+  while (pos < end) {
+    if (std::isspace(keyStr[pos])) {
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
+    }
+    pos++;
+  }
 }
 
 /**
@@ -485,7 +504,9 @@ void RequestParser::removeNotAscii(std::string &field) {
  */
 bool RequestParser::allHeaderRecieved(RequestDts &dts) {
   size_t ret = dts.request->find("\r\n\r\n");
-  if (ret == std::string::npos) return false;
+  if (ret == std::string::npos) {
+    return false;
+  }
   return true;
 }
 
@@ -503,11 +524,6 @@ bool RequestParser::allHeaderRecieved(RequestDts &dts) {
  * @date 2023.07.18
  */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
-  std::cout << "//////////////////" << std::endl;
-  std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
-            << std::endl;
-  std::cout << "//////////////////" << std::endl;
-
   if (!allHeaderRecieved(dts)) {
     attackGuard(dts);
     return;
