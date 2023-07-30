@@ -375,14 +375,14 @@ void RequestParser::validatePath(RequestDts &dts) {
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (this->checkPathForm(dts) == false)
+      if (checkPathForm(dts) == false)
         throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
     ++it;
   }
-  this->setDefaultLocation(defaultLocation, dts);
+  setDefaultLocation(defaultLocation, dts);
 }
 
 void RequestParser::checkAndParseRedirection(RequestDts &dts) {

@@ -43,6 +43,8 @@ class Server {
 
  public:
   Server(int port);
+  Server(const Server& src);
+  Server& operator=(const Server& src);
   virtual ~Server(void);
 
  public:

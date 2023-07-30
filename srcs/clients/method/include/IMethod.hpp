@@ -14,7 +14,6 @@ class IMethod {
  public:
   virtual ~IMethod(){};
   virtual void doRequest(RequestDts& dts, IResponse& response) = 0;
-  // virtual int fileHandler(const std::string& path);
   virtual void createSuccessResponse(IResponse& response) = 0;
 };
 

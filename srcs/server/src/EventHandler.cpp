@@ -20,27 +20,12 @@
 /**
  * @brief EventHandler 생성자
  *
- * @details
- * Event Handler 생성자입니다.
- * 중복된 서버소켓의 처리를 위해 서버의 소켓을 _serverSocketSet에 저장합니다.
- * 해당 소켓의 ident로만 이벤트처리가 가능하므로. Set에 서버소켓이 저장되면
- * serverVector의 Server 객체를 삭제합니다.
- *
- * @param serverVector
- *
  * @return EventHandler
  *
  * @author chanhihi
  * @date 2023-07-21
  */
-EventHandler::EventHandler(const std::vector<Server *> &serverVector)
-    : _errorFlag(false) {
-  for (std::vector<Server *>::const_iterator it = serverVector.begin();
-       it != serverVector.end(); ++it) {
-    _serverSocketSet.insert((*it)->getSocket());
-    delete (*it);
-  }
-}
+EventHandler::EventHandler() : _errorFlag(false) {}
 
 /**
  * @brief Event Handler 소멸자
@@ -62,7 +47,7 @@ EventHandler::~EventHandler(void) {}
  * @author chanhihi
  * @date 2023-07-17
  */
-void EventHandler::setCurrentEvent(int i) { _currentEvent = &(_eventList[i]); }
+void EventHandler::setCurrentEvent(int i) { _currentEvent = &(__eventList[i]); }
 
 /**
  * @brief checkFlags : kevent의 flags를 확인합니다.
@@ -146,9 +131,8 @@ void EventHandler::branchCondition(void) {
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
   if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1) {
-    std::cout << "accept error!!!!!!!!!!!!" << std::endl;
+    std::cout << "accept error" << std::endl;
     return;
-    // throwWithErrorMessage("accept error");
   }
   std::cout << "accept ... : " << clientSocket << std::endl;
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
@@ -221,10 +205,8 @@ void EventHandler::disconnectClient(Client *client) {
  * @brief 소켓에 에러가 발생했는지 확인합니다.
  *
  * @details
- * serverSocketSet에 현재 이벤트의 ident가 존재한다면 서버소켓에 에러가 발생한
- * 것입니다. 서버소켓에 에러가 발생하면 예외를 발생시킵니다.
- * 만약 ident가 존재하지 않는다면 client socket에 에러가 발생한 것이므로, 해당
- * 클라이언트의 접속을 끊습니다.
+ * 서버소켓에 에러가 발생하면 예외를 발생시킵니다.
+ * 클라이언트 소켓에 에러가 발생한 경우 해당 클라이언트의 접속을 끊습니다.
  *
  * @exception throw : 서버소켓에 에러가 발생하면 예외를 발생시킵니다.
  *
@@ -232,11 +214,12 @@ void EventHandler::disconnectClient(Client *client) {
  * @date 2023-07-21
  */
 void EventHandler::checkErrorOnSocket() {
-  if (_serverSocketSet.find(this->_currentEvent->ident) !=
-      this->_serverSocketSet.end())
+  if (getFdType(_currentEvent->ident) == FD_SERVER) {
     throwWithErrorMessage("server socket error");
-  std::cout << " client socket error" << std::endl;
-  disconnectClient(static_cast<Client *>(_currentEvent->udata));
+  } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
+    std::cout << " client socket error" << std::endl;
+    disconnectClient(static_cast<Client *>(_currentEvent->udata));
+  }
 }
 
 /**
