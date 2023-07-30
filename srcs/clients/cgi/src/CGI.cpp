@@ -6,6 +6,17 @@ CGI::CGI() {
   _client_fd = 0;
   _cgi_status = CGI_START;
   _cgiResult = "";
+
+  _in_pipe[0] = 0;
+  _in_pipe[1] = 0;
+  _out_pipe[0] = 0;
+  _out_pipe[1] = 0;
+  _pid = 0;
+
+  _write_event = false;
+  _read_event = false;
+  _wait_event = false;
+
   initEnv();
 }
 
@@ -21,41 +32,52 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
   initEnv();
 }
 
-CGI::~CGI() {
-  // switch (_cgi_status) {
-  //   case CGI_WRITE: {
-  //     Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-  //     Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE,
-  //     static_cast<void*>(this)); close(_in_pipe[0]); close(_in_pipe[1]);
-  //     close(_out_pipe[1]);
-  //     close(_out_pipe[1]);
-  //     break;
-  //   }
-  //   case CGI_WAIT_CHILD: {
-  //     kill(_pid, SIGKILL);
-  //     close(_in_pipe[0]);
-  //     close(_out_pipe[1]);
-  //     Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-  //     Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ,
-  //     static_cast<void*>(this)); close(_out_pipe[0]); break;
-  //   }
-  //   case CGI_RECEIVING: {
-  //     Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-  //     Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ,
-  //     static_cast<void*>(this)); close(_out_pipe[0]); break;
-  //   }
-  //   default:
-  //     break;
-  // }
-
-  // if (_cgi_status == CGI_WRITE) {
-  //   close(_out_pipe[0]);
-  //   close(_out_pipe[1]);
-  //   close(_in_pipe[0]);
-  //   close(_in_pipe[1]);
-  // }
-  // if (_cgi_status == CGI_END) return;
+void CGI::clearChild() {
+  if (_pid > 0) {
+    kill(_pid, SIGKILL);
+    _pid = 0;
+  }
 }
+
+void CGI::clearEvent() {
+  if (_write_event) {
+    Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+    Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
+    _write_event = false;
+  }
+  if (_wait_event) {
+    Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
+    Kqueue::deleteEvent(_in_pipe[0], EVFILT_WRITE, static_cast<void*>(this));
+    _wait_event = false;
+  }
+  if (_read_event) {
+    Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+    Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
+    _read_event = false;
+  }
+}
+
+void CGI::closePipe(int& fd) {
+  if (fd > 0) {
+    close(fd);
+    fd = 0;
+  }
+}
+
+void CGI::clearPipe() {
+  closePipe(_in_pipe[0]);
+  closePipe(_in_pipe[1]);
+  closePipe(_out_pipe[0]);
+  closePipe(_out_pipe[1]);
+}
+
+void CGI::clear() {
+  clearChild();
+  clearEvent();
+  clearPipe();
+}
+
+CGI::~CGI() { clear(); }
 
 CGI::CGI(const CGI& copy) { *this = copy; }
 
@@ -163,9 +185,6 @@ void CGI::setPipeNonblock() {
 }
 
 void CGI::execute() {
-  // if (_body.size() >= 65536) {
-  //   throw ExceptionThrower::CGIBodyTooLongException();
-  // }
   if (access(_request->getPath().c_str(), R_OK) == -1) {
     throw ExceptionThrower::FileAccessFailedException();
   }
@@ -231,7 +250,6 @@ void CGI::makeChild() {
 
 void CGI::writeCGI() {
   if (_in_pipe[1] == -1) {
-    // std::cout << "writeCGI: _in_pipe[1] == -1" << std::endl;
     waitChild();
     if (_cgi_status != CGI_RECEIVING) return;
     Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
@@ -301,10 +319,6 @@ bool CGI::readChildFinish() {
 }
 
 void CGI::waitAndReadCGI() {
-  // waitChild();
-  // if (_cgi_status != CGI_RECEIVING) return;
-  // close(_in_pipe[0]);
-  // close(_out_pipe[1]);
   if (!readChildFinish()) return;
   Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
   Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));

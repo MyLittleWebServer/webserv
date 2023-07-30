@@ -49,6 +49,11 @@ class CGI : public ICGI {
   pid_t _pid;
   int _in_pipe[2];
   int _out_pipe[2];
+
+  bool _write_event;
+  bool _read_event;
+  bool _wait_event;
+
   IRequest* _request;
   IResponse* _response;
   std::vector<const char*> _env;
@@ -74,6 +79,12 @@ class CGI : public ICGI {
 
   void generateErrorResponse(Status status);
   void generateResponse();
+
+  void clear();
+  void clearChild();
+  void closePipe(int& fd);
+  void clearPipe();
+  void clearEvent();
 
  public:
   CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
