@@ -52,7 +52,6 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
     delimeter = dtsRequest.find("\r\n", pos);
     if (delimeter == pos) {
       *dts.body = dtsRequest.substr(pos + 2);
-      //*dts.body = &dtsRequest[pos + 2];
       break;
     }
   }
@@ -510,7 +509,7 @@ void RequestParser::removeNotAscii(std::string &field) {
  * @date 2023.07.16
  */
 bool RequestParser::allHeaderRecieved(RequestDts &dts) {
-  size_t ret = dts.request->rfind("\r\n\r\n");
+  size_t ret = dts.request->find("\r\n\r\n");
   if (ret == std::string::npos) {
     return false;
   }
