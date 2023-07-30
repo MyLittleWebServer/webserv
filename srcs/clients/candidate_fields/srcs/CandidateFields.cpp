@@ -64,6 +64,7 @@ void CandidateFields::initCandidateFields() {
   _candidateFields.insert("x-device-user-agent");
   _candidateFields.insert("te");
   _candidateFields.insert("expect");
+  _candidateFields.insert("x-secret-header-for-test");
 }
 
 CandidateFields& CandidateFields::getInstance() {
