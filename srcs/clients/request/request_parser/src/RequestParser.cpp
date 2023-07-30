@@ -77,18 +77,13 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   std::istringstream iss(firstLine);
   dts.linesBuffer->pop_front();
   iss >> *dts.method >> *dts.path >> *dts.protocol;
+  if (*dts.method == "" || *dts.path == "" || *dts.protocol == "") {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 
   checkRequestUriLimitLength(dts);
   parseAnchor(dts);
   parseQueryString(dts);
-
-#ifdef DEBUG_MSG
-  std::cout << "method: " << *dts.method << std::endl;
-  std::cout << "path: " << *dts.path << std::endl;
-  std::cout << "protocol: " << *dts.protocol << std::endl;
-#endif
-  if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
-    throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**
