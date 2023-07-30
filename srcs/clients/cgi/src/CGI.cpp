@@ -3,6 +3,7 @@
 #include <signal.h>
 
 CGI::CGI() {
+  _lastSentPos = 0;
   _client_fd = 0;
   _cgi_status = CGI_START;
   _cgiResult = "";
@@ -29,6 +30,12 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
   _response = response;
   _body = _request->getBody();
   _client_info = client_info;
+
+  _in_pipe[0] = 0;
+  _in_pipe[1] = 0;
+  _out_pipe[0] = 0;
+  _out_pipe[1] = 0;
+  _pid = 0;
   initEnv();
 }
 
@@ -41,24 +48,29 @@ void CGI::clearChild() {
 
 void CGI::clearEvent() {
   if (_write_event) {
-    Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-    Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
-    _write_event = false;
+    if (_in_pipe[1]) {
+      Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
+      Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
+      _write_event = false;
+    }
   }
   if (_wait_event) {
-    Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
-    Kqueue::deleteEvent(_in_pipe[0], EVFILT_WRITE, static_cast<void*>(this));
-    _wait_event = false;
+    if (_in_pipe[0]) {
+      Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
+      Kqueue::deleteEvent(_in_pipe[0], EVFILT_WRITE, static_cast<void*>(this));
+      _wait_event = false;
+    }
   }
   if (_read_event) {
-    Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-    Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
-    _read_event = false;
+    if (_out_pipe[0]) {
+      Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
+      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
+      _read_event = false;
+    }
   }
 }
 
 void CGI::closePipe(int& fd) {
-  // std::cout << "closePipe: " << fd << std::endl;
   if (fd > 0) {
     close(fd);
     fd = 0;
@@ -262,15 +274,26 @@ void CGI::writeCGI() {
     return;
   }
   if (_request->getMethod() == "POST") {
-    ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
-    if (ret != static_cast<ssize_t>(_body.size())) {
+    ssize_t ret = write(_in_pipe[1], _body.c_str() + _lastSentPos,
+                        _body.size() - _lastSentPos);
+    if (static_cast<size_t>(ret) != _body.size() - _lastSentPos) {
       if (ret == -1) {
         generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
         return;
       };
-      _body = _body.substr(ret);
+      _lastSentPos += ret;
       return;
     }
+    // if (_request->getMethod() == "POST") {
+    //   ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
+    //   if (ret != static_cast<ssize_t>(_body.size())) {
+    //     if (ret == -1) {
+    //       generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
+    //       return;
+    //     };
+    //     _body = _body.substr(ret);
+    //     return;
+    //   }
   }
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));

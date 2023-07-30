@@ -28,6 +28,7 @@ typedef enum CGI_STATUS {
 
 class CGI : public ICGI {
  private:
+  size_t _lastSentPos;
   std::string _x_header;
   std::string _content_type;
   std::string _content_length;
