@@ -25,9 +25,10 @@ class IRequest {
   virtual std::map<std::string, std::string> &getHeaderFields(void) = 0;
   virtual IServerConfig *getMatchedServer(void) const = 0;
 
-  virtual const std::string getHeaderField(std::string key) const = 0;
+  virtual const std::string &getHeaderField(const std::string &key) const = 0;
   virtual void clear(void) = 0;
-  virtual void setHeaderField(std::string key, std::string value) = 0;
+  virtual void setHeaderField(const std::string &key,
+                              const std::string &value) = 0;
 
   virtual const bool &isParsed(void) const = 0;
   virtual const bool &isCgi(void) const = 0;
