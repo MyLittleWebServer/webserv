@@ -82,10 +82,6 @@ void Client::receiveRequest(void) {
     _recvBuff.insert(_recvBuff.end(), Client::_buf, Client::_buf + n);
     std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
-#ifdef DEBUG_MSG
-      std::cout << "received data from " << _sd << ": " << _request
-                << std::endl;
-#endif
       break;
     }
   }
@@ -105,7 +101,9 @@ void Client::createSuccessResponse() {
 }
 
 void Client::parseRequest(short port) {
-  if (_request.isParsed()) return;
+  if (_request.isParsed()) {
+    return;
+  }
   _request.parseRequest(_recvBuff, port);
   if (_request.isParsed()) {
     _state = METHOD_SELECT;
