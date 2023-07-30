@@ -26,6 +26,7 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
  * CRLF가 연속된 이후는 dts->body에 저장합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
  *
  * @author
@@ -56,6 +57,7 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
  * 형식에 맞지 않을 경우 404 에러 상태 코드를 throw 합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -93,6 +95,7 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
  * @brief anchor(#)를 파싱합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -115,6 +118,7 @@ void RequestParser::parseAnchor(RequestDts &dts) {
  * 구분될 때를 구분하여 파싱합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -150,6 +154,7 @@ void RequestParser::parseQueryString(RequestDts &dts) {
  *
  * @param dts
  * @param str
+ *
  * @return void
  *
  * @author
@@ -172,6 +177,7 @@ void RequestParser::parseQueryKeyValue(RequestDts &dts, std::string str) {
  * 중복 금지 헤더를 체크합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
  *
  * @author
@@ -215,6 +221,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
  * 이후, '='로 구분하여 파싱합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -242,6 +249,7 @@ void RequestParser::parseCookie(RequestDts &dts) {
  *
  * @param key 헤더의 키
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
  *
  * @author
@@ -264,6 +272,7 @@ void RequestParser::validateDuplicateInvalidHeaders(std::string key,
  * 따라 본문을 파싱합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -286,6 +295,7 @@ void RequestParser::parseContent(RequestDts &dts) {
  * 종료합니다.
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -310,6 +320,7 @@ void RequestParser::parseContentLength(RequestDts &dts) {
  * 구현된 인코딩에 대해서는 파싱을 진행합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
  *
  * @author
@@ -341,6 +352,7 @@ void RequestParser::parseTransferEncoding(RequestDts &dts) {
  * 특정 상황에서 connection 을 close 하기 위해 사용합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
  *
  * @author
@@ -368,6 +380,7 @@ void RequestParser::setConnectionClose(RequestDts &dts) {
  *
  *
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -401,6 +414,7 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
  *
  * @param defaultLocation
  * @param dts
+ *
  * @return void
  *
  * @author
@@ -419,10 +433,16 @@ void RequestParser::setDefaultLocation(
  * @brief 클라이언트가 바인딩 된 서버 포트로 conf 파일의 서버블록을 매칭합니다.
  *
  * @details
- * 포트가 일치할 경우,
+ * 포트가 일치할 경우, 호스트명을 검사하여 일치하는 서버블록을 매칭합니다.
+ * 일치하는 호스트명이 없을 경우, 해당 포트의 첫 번째 서버블록을 매칭합니다.
  *
  * @param port
  * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
  */
 void RequestParser::matchServerConf(short port, RequestDts &dts) {
   Config &config = Config::getInstance();
@@ -452,6 +472,19 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
   }
 }
 
+/**
+ * @brief 요청 라인의 PATH에서 '/'로 구분되는 첫 번째 토큰을 리턴합니다.
+ *
+ * @details
+ * 리턴된 토큰은 매치된 서버블록에서 일치하는 Location 블록을 찾는 데 쓰입니다.
+ *
+ * @param dts
+ *
+ * @return std::string
+ *
+ * @author
+ * @date 2023.07.30
+ */
 std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
   size_t pos = dts.path->find("/", 1);
   size_t end;
@@ -462,6 +495,21 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
   return (dts.path->substr(0, end));
 }
 
+/**
+ * @brief 요청으로 들어온 PATH를 실제 경로로 변환합니다.
+ *
+ * @details
+ * PATH에서 '/'로 구분되는 첫 번째 토큰을 찾아서 매칭된 서버블록 내 일치하는
+ * Location블록을 찾아서 해당 토큰을 실제 경로인 root로 변환합니다. 일치하는
+ * Location이 없다면 default location인 "/"에 매칭합니다.
+ *
+ * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::validatePath(RequestDts &dts) {
   *dts.originalPath = *dts.path;  // for GET file list
   std::string firstToken = getFirstTokenOfPath(dts);
@@ -491,13 +539,32 @@ void RequestParser::validatePath(RequestDts &dts) {
   setDefaultLocation(defaultLocation, dts);
 }
 
+/**
+ * @brief .conf 파일에 명시된 경로로 HTTP 리다이렉션을 수행합니다.
+ *
+ * @details
+ * Location /some/location {
+ *  return 302 /redirect_path
+ * }
+ * 키:값이 "return":"302 /redirect_path" 과 같은 형태로 파싱되어 있기에 값을
+ * 분리하여 상태 코드 값에 따라 알맞은 redirection이 일어나도록 throw 합니다.
+ *
+ * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::checkAndParseRedirection(RequestDts &dts) {
   unsigned short value;
   try {
     std::stringstream ss((*dts.matchedLocation)->getVariable("return"));
     std::string redirectLocation;
     ss >> value >> redirectLocation;
-    if (redirectLocation != "/") *dts.path = redirectLocation + *dts.path;
+    if (redirectLocation != "/") {
+      *dts.path = redirectLocation + *dts.path;
+    }
   } catch (ExceptionThrower::InvalidConfigException &e) {
     return;
   }
@@ -517,50 +584,77 @@ void RequestParser::checkAndParseRedirection(RequestDts &dts) {
   }
 }
 
+/**
+ * @brief 요청으로 들어온 PATH가 cgi에 대한 경로인지 판별하고, 맞다면
+ * 파싱합니다.
+ *
+ * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::parseCgi(RequestDts &dts) {
   *dts.is_cgi = false;
   const std::string &extension = (*dts.matchedServer)->getCgi();
-  if (dts.path->size() < extension.size()) return;
+  if (dts.path->size() < extension.size()) {
+    return;
+  }
   std::string cgiPath =
       dts.path->substr(dts.path->size() - extension.size(), extension.size());
-  if (cgiPath != extension) return;
+  if (cgiPath != extension) {
+    return;
+  }
   *dts.is_cgi = true;
   *dts.cgi_path = cgiPath;
 }
 
+/**
+ * @brief .conf 파일에서 매치된 서버블록이 세션을 사용하는지 판별합니다.
+ *
+ * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::parseSessionConfig(RequestDts &dts) {
-  if ((*dts.matchedServer)->getSessionConfig() == "on") *dts.is_session = true;
+  if ((*dts.matchedServer)->getSessionConfig() == "on") {
+    *dts.is_session = true;
+  }
 }
 
 /**
- * @brief validateHeaderKey;
- *
- * 헤더 키 값에 공백이 존재하면 400 에러를 발생시킵니다.
+ * @brief 헤더 키 값에 공백이 존재하면 400 에러를 발생시킵니다.
  *
  * @param key 헤더 키 값
  * @param RequestDts HTTP 관련 데이터
  *
  * @return void
  *
- * @author middlefitting
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::validateHeaderKey(std::string &key, RequestDts &dts) {
   std::string::size_type pos = 0;
-  while (pos < key.length() && !std::isspace(key[pos])) ++pos;
-  if (pos != key.length()) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  while (pos < key.length() && !std::isspace(key[pos])) {
+    ++pos;
+  }
+  if (pos != key.length()) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 /**
- * @brief removeNotAscii;
- *
- * 헤더 필드 값에 ASCII가 아닌 값이 존재하면 제거합니다.
+ * @brief 헤더 필드 값에 ASCII가 아닌 값이 존재하면 제거합니다.
  *
  * @param field 헤더 필드 값
  *
  * @return void
  *
- * @author middlefitting
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::removeNotAscii(std::string &field) {
@@ -579,35 +673,36 @@ void RequestParser::removeNotAscii(std::string &field) {
 }
 
 /**
- * @brief allHeaderRecieved;
+ * @brief 연속된 CRLF가 존재하는지 판별합니다.
  *
+ * @details
  * HTTP 프로토콜은 \r\n\r\n 을 기준으로 헤더가 끝난 것을 판단할 수 있습니다.
  * 해당 함수에서는 해당 존재를 확인하여 헤더가 모두 들어왔는지 판단합니다.
  *
- * @param RequestDts HTTP 관련 데이터
+ * @param dts
  *
- * @return request에 \r\n\r\n 존재여부를 반환합니다.
+ * @return bool
  *
- * @author middlefitting
+ * @author
  * @date 2023.07.16
  */
 bool RequestParser::allHeaderRecieved(RequestDts &dts) {
   size_t ret = dts.request->find("\r\n\r\n");
-  if (ret == std::string::npos) return false;
+  if (ret == std::string::npos) {
+    return false;
+  }
   return true;
 }
 
 /**
- * @brief parseRequest;
+ * @brief request 파싱을 위한 전체 순서를 제어합니다.
  *
- * request 파싱을 위한 전체 순서를 제어합니다.
- *
- * @param RequestDts HTTP 관련 데이터
+ * @param dts HTTP 관련 데이터
  * @param port 서버 포트 번호
  *
  * @return void
  *
- * @author middlefitting
+ * @author
  * @date 2023.07.18
  */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
@@ -631,16 +726,14 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
 }
 
 /**
- * @brief attackGuard;
- *
- * CRLF CRLF가 들어오지 않은 상황에서 클라이언트가 악의적으로 긴 데이터를 보내는
- * 것을 방지합니다.
+ * @brief CRLF CRLF가 들어오지 않은 상황에서 클라이언트가 악의적으로 긴 데이터를
+ * 보내는 것을 방지합니다.
  *
  * @param RequestDts HTTP 관련 데이터
  *
- * @return request에 \r\n\r\n 존재여부를 반환합니다.
+ * @return void
  *
- * @author middlefitting
+ * @author
  * @date 2023.07.18
  */
 void RequestParser::attackGuard(RequestDts &dts) {
@@ -670,21 +763,25 @@ void RequestParser::requestChecker(RequestDts &dts) {
 }
 
 /**
- * @brief validateHostHeader;
+ * @brief Host 헤더필드를 검사합니다.
  *
+ * @details
  * RFC 7230 5.4 Host
  * Host 헤더가 없다면 400 에러를 발생시킵니다.
  * Host 헤더에 포트가 존재하면 호스트명과 포트,
  * 존재하지 않는다면 호스트명만 체크합니다.
  *
  * @param RequestDts HTTP 요청 데이터.
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.19
  */
 void RequestParser::validateHostHeader(short port, RequestDts &dts) {
-  if ((*dts.headerFields)["host"].empty())
+  if ((*dts.headerFields)["host"].empty()) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   std::string hostHeader = (*dts.headerFields)["host"];
   std::string::size_type pos = hostHeader.find(':');
   std::string hostName;
@@ -700,21 +797,25 @@ void RequestParser::validateHostHeader(short port, RequestDts &dts) {
 }
 
 /**
- * @brief hostHeaderNameCheck;
+ * @brief 호스트명이 올바른 형식인지 체크합니다.
  *
- * 호스트명이 올바른 형식인지 체크합니다.
+ * @details
  * 호스트 명은 클라이언트가 알지 못해 비어서 오는 경우,
  * 영문, 숫자, ., - 만 허용합니다.
  * 올바르지 않다면 400 에러를 발생시킵니다.
  *
  * @param RequestDts HTTP 요청 데이터.
+ *
  * @return void
+ *
  * @author middlefitting
  * @date 2023.07.19
  */
 void RequestParser::hostHeaderNameCheck(std::string hostHeader,
                                         RequestDts &dts) {
-  if (ft_trim(hostHeader).empty()) return;
+  if (ft_trim(hostHeader).empty()) {
+    return;
+  }
   for (int i = 0; i < static_cast<int>(hostHeader.size()); i++) {
     if (!std::isalnum(hostHeader[i]) && hostHeader[i] != '.' &&
         hostHeader[i] != '-') {
@@ -724,36 +825,47 @@ void RequestParser::hostHeaderNameCheck(std::string hostHeader,
 }
 
 /**
- * @brief hostHeaderportCheck;
+ * @brief 호스트 포트가 올바른 형식인지 체크합니다.
  *
- * 호스트 포트가 올바른 형식인지 체크합니다.
+ * @details
  * 포트는 0 ~ 65535 사이의 숫자만 허용합니다.
  * 숫자의 첫자리가 0인 경우를 허용하지 않습니다.
  * 0번 포트는 일반적으로 예약된 포트로 사용하지 않습니다.
  * 올바르지 않다면 400 에러를 발생시킵니다.
  *
  * @param RequestDts HTTP 요청 데이터.
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.19
  */
 void RequestParser::hostHeaderportCheck(short port, std::string portName,
                                         RequestDts &dts) {
-  if (portName.empty()) throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.find_first_not_of("0123456789") != std::string::npos)
+  if (portName.empty()) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.find_first_of("123456789") != 0)
+  }
+  if (portName.find_first_not_of("0123456789") != std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.size() > 5) throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (std::atoi(portName.c_str()) != port)
+  }
+  if (portName.find_first_of("123456789") != 0) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (std::atoi(portName.c_str()) > 65535)
+  }
+  if (portName.size() > 5) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+  if (std::atoi(portName.c_str()) != port) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+  if (std::atoi(portName.c_str()) > 65535) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 /**
- * @brief validateContentLengthHeader;
+ * @brief Content-Length 헤더필드를 검사합니다.
  *
+ * @details
  * RFC 7230 3.3.2 Content-Length
  * Content-Length 헤더 필드의 value가 유효한지 검증합니다.
  * 해당 헤더가 없다면 검증하지 않습니다.
@@ -762,30 +874,40 @@ void RequestParser::hostHeaderportCheck(short port, std::string portName,
  * 발생시킵니다.
  *
  * @param RequestDts HTTP 요청 데이터.
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.18
  */
 void RequestParser::validateContentLengthHeader(RequestDts &dts) {
   std::string content_length = (*dts.headerFields)["content-length"];
-  if (content_length.empty()) return;
-  if (content_length.find_first_not_of("0123456789") != std::string::npos)
+  if (content_length.empty()) {
+    return;
+  }
+  if (content_length.find_first_not_of("0123456789") != std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   if (content_length.find_first_not_of("0") != std::string::npos &&
-      content_length.find_first_not_of("0") != 0)
+      content_length.find_first_not_of("0") != 0) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (content_length.size() >= 10)
+  }
+  if (content_length.size() >= 10) {
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+  }
 }
 
 /**
- * @brief checkRequestLine;
+ * @brief 요청 라인을 체크합니다.
  *
+ * @details
  * RFC 7230 3.1.1 Request Line
  *
  * @param RequestDts HTTP 요청 데이터.
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkRequestLine(RequestDts &dts) {
@@ -794,13 +916,16 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
 }
 
 /**
- * @brief checkMethod;
+ * @brief 서버가 지원하는 메서드인지 검사합니다.
  *
+ * @details
  * 구현하지 못한 메서드를 수신하면 501(Not Implemented) 응답 (SHOULD)
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkMethod(RequestDts &dts) {
@@ -811,39 +936,52 @@ void RequestParser::checkMethod(RequestDts &dts) {
 }
 
 /**
- * @brief checkProtocolVersion;
+ * @brief 프로토콜 버전을 검사합니다.
  *
+ * @details
  * 유효하지 않은 request-line을 수신하면 400(Bad Request) 응답 (SHOULD)
  * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported) 응답
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
+ *
  * @author
  * @date 2023.07.17
  */
 void RequestParser::checkProtocolVersion(RequestDts &dts) {
   const std::string &protocol = *dts.protocol;
-  if (protocol.substr(0, 5) != "HTTP/" || protocol.size() != 8)
+  if (protocol.substr(0, 5) != "HTTP/" || protocol.size() != 8) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   const std::string versionStr = protocol.substr(5, 3);
-  if (versionStr == "1.1" || versionStr == "1.0") return;
-  if (versionStr.find(".") != 1) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (versionStr == "1.1" || versionStr == "1.0") {
+    return;
+  }
+  if (versionStr.find(".") != 1) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   char *endPtr;
   double versionVal = std::strtod(versionStr.c_str(), &endPtr);
-  if (*endPtr != '\0') throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (*endPtr != '\0') {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   if (versionVal > 1.1 || versionVal < 1.0) {
     throw(*dts.statusCode = E_505_HTTP_VERSION_NOT_SUPPORTED);
   }
 }
 
 /**
- * @brief checkRequestUriLimitLength;
+ * @brief 요청의 URI 길이를 체크합니다.
  *
+ * @details
  * request-target이 서버 URI보다 길면 414(URI Too Long) (MUST)
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
@@ -853,14 +991,17 @@ void RequestParser::checkRequestUriLimitLength(RequestDts &dts) {
 }
 
 /**
- * @brief checkContentLenghWithTransferEncoding;
+ * @brief Content-Length 헤더필드와 Transfer-Encoding 헤더필드를 검사합니다.
  *
+ * @details
  * 발신자는 Transfer-Encoding 과 Content-Length 같이 보내면 안 된다.(MUST NOT)
  * Transfer-Encoding 과 Content-Length이 둘 다 있으면 400 에러를 반환합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
@@ -870,52 +1011,93 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
 }
 
 /**
- * @brief checkHeaderLimitSize;
+ * @brief 헤더필드의 크기를 검사합니다.
  *
+ * @details
  * 헤더 길이가 서버 기준치를 넘으면 413(Request Entity Too Large) (MUST)
  * Body가 등장하기 이전까지의 길이를 기준으로 합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
   size_t pos = dts.request->find("\r\n\r\n");
-  if (pos == std::string::npos) return;
+  if (pos == std::string::npos) {
+    return;
+  }
   if (pos > Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 
+/**
+ * @brief 요청의 본문의 길이와 Location 블록에서 지정한 최대 허용 본문 크기를
+ * 비교합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::checkBodyLimitLength(RequestDts &dts) {
-  if (*dts.contentLength > ((*dts.matchedLocation)->getLimitClientBodySize()))
+  if (*dts.contentLength > ((*dts.matchedLocation)->getLimitClientBodySize())) {
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+  }
 }
 
+/**
+ * @brief 매치된 Location에 허용된 메소드인지 확인합니다.
+ *
+ * @param dts
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
   std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
-  if ((it != methodInfo.end() && it->second == true)) return;
+  if ((it != methodInfo.end() && it->second == true)) {
+    return;
+  }
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
+/**
+ * @brief CGI 호출에 허용된 HTTP 메소드인지 검사합니다.
+ *
+ * @param dts
+ *
+ * @return void
+ *
+ * @author
+ * @date 2023.07.30
+ */
 void RequestParser::checkCgiMethod(RequestDts &dts) {
   if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "PUT")
+      *dts.method != "PUT") {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 /**
- * @brief checkTE;
+ * @brief TE 헤더필드를 검사합니다.
  *
+ * @details
  * chunked는 항상 구현되어야 하기 때문에 TE 헤더에서 허용되지 않습니다.
  * TE 헤더에 chunked가 있으면 400 에러를 반환합니다.
  * 구현되지 않은 인코딩에 대해 501 에러를 반환합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.17
  */
 void RequestParser::checkTE(RequestDts &dts) {
@@ -926,14 +1108,17 @@ void RequestParser::checkTE(RequestDts &dts) {
 }
 
 /**
- * @brief checkContentRangeHeader;
+ * @brief Content-Range 헤더필드를 검사합니다.
  *
+ * @details
  * RFC 7231 4.3.4 PUT MUST
  * Content-Range가 PUT 요청에 사용되었을 때 400 응답을 보냅니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.21
  */
 void RequestParser::checkContentRangeHeader(RequestDts &dts) {
@@ -942,60 +1127,80 @@ void RequestParser::checkContentRangeHeader(RequestDts &dts) {
 }
 
 /**
- * @brief checkContentType;
+ * @brief Content-Type 헤더필드를 검사합니다.
  *
+ * @details
  * RFC 7231 3.1.1.5 Content-Type (MAY)
  * POST, PUT 메소드에는 Content-Type이 있어야 합니다.
  * Content-Type이 없으면 application/octet-stream으로 간주합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.18
  */
 void RequestParser::checkContentType(RequestDts &dts) {
-  if (!(*dts.headerFields)["content-type"].empty()) return;
-  if (*dts.method == "POST" || *dts.method == "PUT")
+  if (!(*dts.headerFields)["content-type"].empty()) {
+    return;
+  }
+  if (*dts.method == "POST" || *dts.method == "PUT") {
     (*dts.headerFields)["content-type"] = "application/octet-stream";
+  }
 }
 
 /**
- * @brief ValidateContentEncoding;
+ * @brief Content-Encoding 헤더필드를 검사합니다.
  *
+ * @details
  * RFC 7231 3.1.2.2 Content Encoding (MAY)
  * 서버는 인코딩을 지원하지 않기 때문에 해당 헤더가 존재시 415를 반환합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.20
  */
 void RequestParser::ValidateContentEncoding(RequestDts &dts) {
-  if ((*dts.headerFields)["content-encoding"].empty()) return;
+  if ((*dts.headerFields)["content-encoding"].empty()) {
+    return;
+  }
   throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
 }
 
 /**
- * @brief checkExpectHeader;
+ * @brief 100 상태코드의 응답을 보낼 지 판별합니다.
  *
+ * @details
  * RFC 7231 5.1.1 Expect (MUST)
  * expect 헤더의 존재에 따라 *dts.is_expect_100 상태를 true로 변경합니다.
  * content 가 존재하지 않을 경우 잘못된 요청으로 판단하고 400 에러를 반환합니다.
  *
  * @param RequestDts HTTP 관련 데이터
+ *
  * @return void
- * @author middlefitting
+ *
+ * @author
  * @date 2023.07.20
  */
 void RequestParser::checkExpectHeader(RequestDts &dts) {
-  if ((*dts.headerFields)["expect"].empty()) return;
-  if (*dts.protocol == "HTTP/1.0") return;
+  if ((*dts.headerFields)["expect"].empty()) {
+    return;
+  }
+  if (*dts.protocol == "HTTP/1.0") {
+    return;
+  }
 
-  if ((*dts.headerFields)["expect"] != "100-continue")
+  if ((*dts.headerFields)["expect"] != "100-continue") {
     throw(*dts.statusCode = E_417_EXPECTION_FAILED);
+  }
   if (((*dts.headerFields)["content-length"].empty() &&
        (*dts.headerFields)["transfer-encoding"].empty()) ||
-      (*dts.headerFields)["content-length"] == "0")
+      (*dts.headerFields)["content-length"] == "0") {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   *dts.is_expect_100 = true;
 }
