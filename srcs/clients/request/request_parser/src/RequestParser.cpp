@@ -47,12 +47,12 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
 
   std::list<std::string> &linesBuffer = *dts.linesBuffer;
   while (delimeter != std::string::npos) {
-    std::string chunk = dtsRequest.substr(pos, delimeter - pos + 2);
-    linesBuffer.push_back(chunk);
+    linesBuffer.push_back(dtsRequest.substr(pos, delimeter - pos + 2));
     pos = delimeter + 2;
     delimeter = dtsRequest.find("\r\n", pos);
     if (delimeter == pos) {
       *dts.body = dtsRequest.substr(pos + 2);
+      //*dts.body = &dtsRequest[pos + 2];
       break;
     }
   }
@@ -311,9 +311,10 @@ void RequestParser::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation,
     RequestDts &dts) {
   *dts.matchedLocation = *defaultLocation;
-  dts.path->erase(0, 1);
-  *dts.path = (*defaultLocation)->getRoot() + *dts.path;
-  dts.path->erase(0, 1);
+  std::string &dtsPath = *dts.path;
+  dtsPath.erase(0, 1);
+  dtsPath = (*defaultLocation)->getRoot() + dtsPath;
+  dtsPath.erase(0, 1);
 }
 
 void RequestParser::matchServerConf(short port, RequestDts &dts) {
@@ -329,8 +330,8 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
       *dts.matchedServer = *it;
       return;
-    } else
-      *dts.matchedServer = *it;
+    }
+    *dts.matchedServer = *it;
     ++it;
   }
   if (*dts.matchedServer == NULL) {
@@ -371,10 +372,14 @@ void RequestParser::validatePath(RequestDts &dts) {
       if (dts.path->size() != 0 && (*dts.path)[0] == '/') dts.path->erase(0, 1);
       dtsPath = (*it)->getRoot() + *dts.path;
       dtsPath.erase(0, 1);
-      if (checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
+      if (checkPathForm(dts) == false) {
+        throw(*dts.statusCode = E_404_NOT_FOUND);
+      }
       return;
     }
-    if (currRoute == "/") defaultLocation = it;
+    if (currRoute == "/") {
+      defaultLocation = it;
+    }
     ++it;
   }
   setDefaultLocation(defaultLocation, dts);
@@ -386,7 +391,9 @@ void RequestParser::checkAndParseRedirection(RequestDts &dts) {
     std::stringstream ss((*dts.matchedLocation)->getVariable("return"));
     std::string redirectLocation;
     ss >> value >> redirectLocation;
-    if (redirectLocation != "/") *dts.path = redirectLocation + *dts.path;
+    if (redirectLocation != "/") {
+      *dts.path = redirectLocation + *dts.path;
+    }
   } catch (ExceptionThrower::InvalidConfigException &e) {
     return;
   }
@@ -503,7 +510,7 @@ void RequestParser::removeNotAscii(std::string &field) {
  * @date 2023.07.16
  */
 bool RequestParser::allHeaderRecieved(RequestDts &dts) {
-  size_t ret = dts.request->find("\r\n\r\n");
+  size_t ret = dts.request->rfind("\r\n\r\n");
   if (ret == std::string::npos) {
     return false;
   }
@@ -548,8 +555,8 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
 /**
  * @brief attackGuard;
  *
- * CRLF CRLF가 들어오지 않은 상황에서 클라이언트가 악의적으로 긴 데이터를 보내는
- * 것을 방지합니다.
+ * CRLF CRLF가 들어오지 않은 상황에서 클라이언트가 악의적으로 긴 데이터를
+ * 보내는 것을 방지합니다.
  *
  * @param RequestDts HTTP 관련 데이터
  *
@@ -598,9 +605,11 @@ void RequestParser::requestChecker(RequestDts &dts) {
  * @date 2023.07.19
  */
 void RequestParser::validateHostHeader(short port, RequestDts &dts) {
-  if ((*dts.headerFields)["host"].empty())
+  std::string &hostHeader = (*dts.headerFields)["host"];
+
+  if (hostHeader.empty()) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  std::string hostHeader = (*dts.headerFields)["host"];
+  }
   std::string::size_type pos = hostHeader.find(':');
   std::string hostName;
   if (pos == std::string::npos) {
@@ -611,7 +620,7 @@ void RequestParser::validateHostHeader(short port, RequestDts &dts) {
     hostHeaderNameCheck(hostName, dts);
     hostHeaderportCheck(port, hostHeader.substr(pos + 1), dts);
   }
-  (*dts.headerFields)["host"] = hostName;
+  hostHeader = hostName;
 }
 
 /**
@@ -627,10 +636,11 @@ void RequestParser::validateHostHeader(short port, RequestDts &dts) {
  * @author middlefitting
  * @date 2023.07.19
  */
-void RequestParser::hostHeaderNameCheck(std::string hostHeader,
+void RequestParser::hostHeaderNameCheck(const std::string &hostHeader,
                                         RequestDts &dts) {
   if (ft_trim(hostHeader).empty()) return;
-  for (int i = 0; i < static_cast<int>(hostHeader.size()); i++) {
+  size_t length = hostHeader.size();
+  for (size_t i = 0; i < length; i++) {
     if (!std::isalnum(hostHeader[i]) && hostHeader[i] != '.' &&
         hostHeader[i] != '-') {
       throw(*dts.statusCode = E_400_BAD_REQUEST);
@@ -652,18 +662,26 @@ void RequestParser::hostHeaderNameCheck(std::string hostHeader,
  * @author middlefitting
  * @date 2023.07.19
  */
-void RequestParser::hostHeaderportCheck(short port, std::string portName,
+void RequestParser::hostHeaderportCheck(short port, const std::string &portName,
                                         RequestDts &dts) {
-  if (portName.empty()) throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.find_first_not_of("0123456789") != std::string::npos)
+  if (portName.empty()) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.find_first_of("123456789") != 0)
+  }
+  if (portName.find_first_not_of("0123456789") != std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (portName.size() > 5) throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (std::atoi(portName.c_str()) != port)
+  }
+  if (portName.find_first_of("123456789") != 0) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (std::atoi(portName.c_str()) > 65535)
+  }
+  if (portName.size() > 5) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+  if (std::atoi(portName.c_str()) != port) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+  if (std::atoi(portName.c_str()) > 65535) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 /**
@@ -682,18 +700,25 @@ void RequestParser::hostHeaderportCheck(short port, std::string portName,
  * @date 2023.07.18
  */
 void RequestParser::validateContentLengthHeader(RequestDts &dts) {
-  std::string content_length = (*dts.headerFields)["content-length"];
-  if (content_length.empty()) return;
-  if (content_length.find_first_not_of("0123456789") != std::string::npos)
+  const std::string &content_length = (*dts.headerFields)["content-length"];
+
+  if (content_length.empty()) {
+    return;
+  }
+  if (content_length.find_first_not_of("0123456789") != std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   if (content_length.find_first_not_of("0") != std::string::npos &&
-      content_length.find_first_not_of("0") != 0)
+      content_length.find_first_not_of("0") != 0) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
-  if (content_length.size() >= 10)
+  }
+  if (content_length.size() >= 10) {
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+  }
   if (static_cast<size_t>(std::atoi(content_length.c_str())) >
-      (*dts.matchedLocation)->getLimitClientBodySize())
+      (*dts.matchedLocation)->getLimitClientBodySize()) {
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+  }
 }
 
 /**
@@ -722,9 +747,9 @@ void RequestParser::checkRequestLine(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::checkMethod(RequestDts &dts) {
-  if (*dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "DELETE" && *dts.method != "PUT" &&
-      *dts.method != "HEAD" && *dts.method != "OPTION")
+  const std::string &method = *dts.method;
+  if (method != "GET" && method != "POST" && method != "DELETE" &&
+      method != "PUT" && method != "HEAD" && method != "OPTION")
     throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -732,7 +757,8 @@ void RequestParser::checkMethod(RequestDts &dts) {
  * @brief checkProtocolVersion;
  *
  * 유효하지 않은 request-line을 수신하면 400(Bad Request) 응답 (SHOULD)
- * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported) 응답
+ * 제공하지 못하는 프로토콜 버전에 대해서는 505(HTTP Version Not Supported)
+ * 응답
  *
  * @param RequestDts HTTP 관련 데이터
  * @return void
@@ -741,14 +767,25 @@ void RequestParser::checkMethod(RequestDts &dts) {
  */
 void RequestParser::checkProtocolVersion(RequestDts &dts) {
   const std::string &protocol = *dts.protocol;
-  if (protocol.substr(0, 5) != "HTTP/" || protocol.size() != 8)
+
+  if (protocol.compare(0, 5, "HTTP/") != 0 || protocol.size() != 8) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+
   const std::string versionStr = protocol.substr(5, 3);
-  if (versionStr == "1.1" || versionStr == "1.0") return;
-  if (versionStr.find(".") != 1) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (versionStr == "1.1" || versionStr == "1.0") {
+    return;
+  }
+  if (versionStr.find(".") != 1) {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
+
   char *endPtr;
   double versionVal = std::strtod(versionStr.c_str(), &endPtr);
-  if (*endPtr != '\0') throw(*dts.statusCode = E_400_BAD_REQUEST);
+
+  if (*endPtr != '\0') {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   if (versionVal > 1.1 || versionVal < 1.0) {
     throw(*dts.statusCode = E_505_HTTP_VERSION_NOT_SUPPORTED);
   }
@@ -800,7 +837,10 @@ void RequestParser::checkContentLenghWithTransferEncoding(RequestDts &dts) {
  */
 void RequestParser::checkHeaderLimitSize(RequestDts &dts) {
   size_t pos = dts.request->find("\r\n\r\n");
-  if (pos == std::string::npos) return;
+
+  if (pos == std::string::npos) {
+    return;
+  }
   if (pos > Config::getInstance().getProxyConfig().getRequestHeaderLimitSize())
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
@@ -813,14 +853,17 @@ void RequestParser::checkBodyLimitLength(RequestDts &dts) {
 void RequestParser::checkAllowedMethods(RequestDts &dts) {
   const std::map<std::string, bool> &methodInfo =
       (*dts.matchedLocation)->getAllowMethod();
+
   std::map<std::string, bool>::const_iterator it = methodInfo.find(*dts.method);
-  if ((it != methodInfo.end() && it->second == true)) return;
+  if ((it != methodInfo.end() && it->second == true)) {
+    return;
+  }
   throw(*dts.statusCode = E_405_METHOD_NOT_ALLOWED);
 }
 
 void RequestParser::checkCgiMethod(RequestDts &dts) {
-  if (*dts.is_cgi && *dts.method != "GET" && *dts.method != "POST" &&
-      *dts.method != "PUT")
+  const std::string &method = *dts.method;
+  if (*dts.is_cgi && method != "GET" && method != "POST" && method != "PUT")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
@@ -837,9 +880,12 @@ void RequestParser::checkCgiMethod(RequestDts &dts) {
  * @date 2023.07.17
  */
 void RequestParser::checkTE(RequestDts &dts) {
-  if (ft_trim((*dts.headerFields)["te"]).empty()) return;
-  if ((*dts.headerFields)["te"] == "chunked")
+  if (ft_trim((*dts.headerFields)["te"]).empty()) {
+    return;
+  }
+  if ((*dts.headerFields)["te"] == "chunked") {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   throw(*dts.statusCode = E_501_NOT_IMPLEMENTED);
 }
 
@@ -855,8 +901,12 @@ void RequestParser::checkTE(RequestDts &dts) {
  * @date 2023.07.21
  */
 void RequestParser::checkContentRangeHeader(RequestDts &dts) {
-  if (ft_trim((*dts.headerFields)["content-range"]).empty()) return;
-  if (*dts.method == "PUT") throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (ft_trim((*dts.headerFields)["content-range"]).empty()) {
+    return;
+  }
+  if (*dts.method == "PUT") {
+    throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 }
 
 /**
@@ -872,9 +922,12 @@ void RequestParser::checkContentRangeHeader(RequestDts &dts) {
  * @date 2023.07.18
  */
 void RequestParser::checkContentType(RequestDts &dts) {
-  if (!(*dts.headerFields)["content-type"].empty()) return;
-  if (*dts.method == "POST" || *dts.method == "PUT")
+  if (!(*dts.headerFields)["content-type"].empty()) {
+    return;
+  }
+  if (*dts.method == "POST" || *dts.method == "PUT") {
     (*dts.headerFields)["content-type"] = "application/octet-stream";
+  }
 }
 
 /**
@@ -889,7 +942,9 @@ void RequestParser::checkContentType(RequestDts &dts) {
  * @date 2023.07.20
  */
 void RequestParser::ValidateContentEncoding(RequestDts &dts) {
-  if ((*dts.headerFields)["content-encoding"].empty()) return;
+  if ((*dts.headerFields)["content-encoding"].empty()) {
+    return;
+  }
   throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
 }
 
@@ -898,7 +953,8 @@ void RequestParser::ValidateContentEncoding(RequestDts &dts) {
  *
  * RFC 7231 5.1.1 Expect (MUST)
  * expect 헤더의 존재에 따라 *dts.is_expect_100 상태를 true로 변경합니다.
- * content 가 존재하지 않을 경우 잘못된 요청으로 판단하고 400 에러를 반환합니다.
+ * content 가 존재하지 않을 경우 잘못된 요청으로 판단하고 400 에러를
+ * 반환합니다.
  *
  * @param RequestDts HTTP 관련 데이터
  * @return void
@@ -906,14 +962,21 @@ void RequestParser::ValidateContentEncoding(RequestDts &dts) {
  * @date 2023.07.20
  */
 void RequestParser::checkExpectHeader(RequestDts &dts) {
-  if ((*dts.headerFields)["expect"].empty()) return;
-  if (*dts.protocol == "HTTP/1.0") return;
+  std::map<std::string, std::string> &headerFields = *dts.headerFields;
 
-  if ((*dts.headerFields)["expect"] != "100-continue")
+  if (headerFields["expect"].empty()) {
+    return;
+  }
+  if (*dts.protocol == "HTTP/1.0") {
+    return;
+  }
+  if (headerFields["expect"] != "100-continue") {
     throw(*dts.statusCode = E_417_EXPECTION_FAILED);
-  if (((*dts.headerFields)["content-length"].empty() &&
-       (*dts.headerFields)["transfer-encoding"].empty()) ||
-      (*dts.headerFields)["content-length"] == "0")
+  }
+  if ((headerFields["content-length"].empty() &&
+       headerFields["transfer-encoding"].empty()) ||
+      headerFields["content-length"] == "0") {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
   *dts.is_expect_100 = true;
 }

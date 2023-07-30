@@ -43,8 +43,9 @@ class RequestParser : public IRequestParser {
   void validateHeaderKey(const std::string& key, RequestDts& dts);
   void validateHostHeader(short port, RequestDts& dts);
   void ValidateContentEncoding(RequestDts& dts);
-  void hostHeaderNameCheck(std::string hostName, RequestDts& dts);
-  void hostHeaderportCheck(short port, std::string portName, RequestDts& dts);
+  void hostHeaderNameCheck(const std::string& hostName, RequestDts& dts);
+  void hostHeaderportCheck(short port, const std::string& portName,
+                           RequestDts& dts);
 
   void removeNotAscii(std::string& field);
 

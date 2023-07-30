@@ -135,7 +135,7 @@ std::string ft_trimOWS(std::string &str) {
  * @param str
  * @return std::string
  */
-std::string ft_trim(std::string &str) {
+std::string ft_trim(const std::string &str) {
   if (str.empty()) return str;
   std::string result = str;
   size_t pos = 0;
