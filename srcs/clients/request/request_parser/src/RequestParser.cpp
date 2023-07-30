@@ -35,6 +35,15 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
 void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   size_t pos = 0;
   size_t delimeter = dts.request->find("\r\n");
+  //
+  if (delimeter == 0) {
+    pos = 2;
+    delimeter = dts.request->find("\r\n", 2);
+    _valid_flag = false;
+  } else {
+    _valid_flag = true;
+  }
+  //
   while (delimeter != std::string::npos) {
     std::string chunk = dts.request->substr(pos, delimeter - pos + 2);
     dts.linesBuffer->push_back(chunk);
@@ -519,6 +528,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseCgi(dts);
   parseSessionConfig(dts);
   requestChecker(dts);
+  if (!_valid_flag) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**
