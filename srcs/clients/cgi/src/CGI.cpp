@@ -58,6 +58,7 @@ void CGI::clearEvent() {
 }
 
 void CGI::closePipe(int& fd) {
+  // std::cout << "closePipe: " << fd << std::endl;
   if (fd > 0) {
     close(fd);
     fd = 0;
@@ -137,6 +138,7 @@ void CGI::generateErrorResponse(Status status) {
   _response->setStatusCode(status);
   _response->assembleResponse();
   _response->setResponseParsed();
+  clear();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 };
 
@@ -172,6 +174,7 @@ void CGI::generateResponse() {
   _response->setBody(body);
   _response->setHeaderField("Content-Length", itos(body.length()));
   _response->assembleResponse();
+  clear();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
 }
 
@@ -192,21 +195,23 @@ void CGI::execute() {
     throw ExceptionThrower::CGIPipeException();
   }
   if (pipe(_out_pipe) < 0) {
-    close(_in_pipe[0]);
-    close(_in_pipe[1]);
     throw ExceptionThrower::CGIPipeException();
   }
+  // std::cout << "pipe Id: " << _in_pipe[0] << " " << _in_pipe[1] << std::endl;
+  // std::cout << "pipe Id: " << _out_pipe[0] << " " << _out_pipe[1] <<
+  // std::endl;
   setPipeNonblock();
   if (_request->getMethod() == "POST" && _body.size() > 0) {
     Kqueue::setFdSet(_in_pipe[1], FD_CGI);
     Kqueue::addEvent(_in_pipe[1], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
                      static_cast<void*>(this));
+    _write_event = true;
   } else {
-    close(_in_pipe[1]);
-    _in_pipe[1] = -1;
+    closePipe(_in_pipe[1]);
     Kqueue::setFdSet(_in_pipe[0], FD_CGI);
     Kqueue::addEvent(_in_pipe[0], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
                      static_cast<void*>(this));
+    _wait_event = true;
   }
   _cgi_status = CGI_WRITE;
   makeChild();
@@ -227,9 +232,6 @@ void CGI::executeCGI() {
 void CGI::makeChild() {
   _pid = fork();
   if (_pid == -1) {
-    close(_out_pipe[0]);
-    close(_out_pipe[1]);
-    close(_in_pipe[0]);
     generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
   } else if (!_pid) {
     dup2(_in_pipe[0], STDIN_FILENO);
@@ -237,7 +239,6 @@ void CGI::makeChild() {
     close(_in_pipe[0]);
     close(_out_pipe[0]);
     close(_out_pipe[1]);
-
     execve(_request->getPath().c_str(), NULL, const_cast<char**>(_env.data()));
     std::cout << "cgi: execve failed" << std::endl;
     throw(4.2);
@@ -245,30 +246,25 @@ void CGI::makeChild() {
   Kqueue::setFdSet(_out_pipe[0], FD_CGI);
   Kqueue::addEvent(_out_pipe[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
                    static_cast<void*>(this));
+  _read_event = true;
   _cgi_status = CGI_WAIT_CHILD;
 }
 
 void CGI::writeCGI() {
-  if (_in_pipe[1] == -1) {
+  if (_in_pipe[1] == 0) {
     waitChild();
     if (_cgi_status != CGI_RECEIVING) return;
     Kqueue::deleteFdSet(_in_pipe[0], FD_CGI);
     Kqueue::deleteEvent(_in_pipe[0], EVFILT_WRITE, static_cast<void*>(this));
-    close(_in_pipe[0]);
-    close(_out_pipe[1]);
+    _wait_event = false;
+    closePipe(_in_pipe[0]);
+    closePipe(_out_pipe[1]);
     return;
   }
   if (_request->getMethod() == "POST") {
     ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
     if (ret != static_cast<ssize_t>(_body.size())) {
       if (ret == -1) {
-        Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
-        Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE,
-                            static_cast<void*>(this));
-        close(_out_pipe[0]);
-        close(_out_pipe[1]);
-        close(_in_pipe[0]);
-        close(_in_pipe[1]);
         generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
         return;
       };
@@ -278,11 +274,12 @@ void CGI::writeCGI() {
   }
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
-  if (_in_pipe[1] > 0) close(_in_pipe[1]);
-  _in_pipe[1] = -1;
+  _write_event = false;
+  closePipe(_in_pipe[1]);
   Kqueue::setFdSet(_in_pipe[0], FD_CGI);
   Kqueue::addEvent(_in_pipe[0], EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0,
                    static_cast<void*>(this));
+  _wait_event = true;
 }
 
 void CGI::waitChild() {
@@ -293,14 +290,10 @@ void CGI::waitChild() {
       break;
     case -1: {
       generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
-      close(_in_pipe[0]);
-      close(_out_pipe[1]);
-      Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
-      Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
-      close(_out_pipe[0]);
       break;
     }
     default:
+      _pid = 0;
       _cgi_status = CGI_RECEIVING;
       break;
   }
@@ -322,8 +315,8 @@ void CGI::waitAndReadCGI() {
   if (!readChildFinish()) return;
   Kqueue::deleteFdSet(_out_pipe[0], FD_CGI);
   Kqueue::deleteEvent(_out_pipe[0], EVFILT_READ, static_cast<void*>(this));
-  close(_out_pipe[0]);
-
+  _read_event = false;
+  closePipe(_out_pipe[0]);
   generateResponse();
 }
 
