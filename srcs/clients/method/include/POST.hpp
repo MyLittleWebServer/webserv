@@ -7,6 +7,7 @@
 
 class POST : public IMethod {
  private:
+  std::string _location;
   std::string _contentType;
   std::string _boundary;
   std::string _title;
