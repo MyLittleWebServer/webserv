@@ -40,7 +40,7 @@ class RequestParser : public IRequestParser {
   void setConnectionClose(RequestDts& dts);
   void validateDuplicateInvalidHeaders(std::string key, RequestDts& dts);
   void validateContentLengthHeader(RequestDts& dts);
-  void validateHeaderKey(std::string& key, RequestDts& dts);
+  void validateHeaderKey(const std::string& key, RequestDts& dts);
   void validateHostHeader(short port, RequestDts& dts);
   void ValidateContentEncoding(RequestDts& dts);
   void hostHeaderNameCheck(std::string hostName, RequestDts& dts);
