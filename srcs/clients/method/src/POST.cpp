@@ -41,10 +41,10 @@ void POST::generateResource(RequestDts& dts) {
     generateMultipart(dts);
   } else {
     std::string mimeType = "bin";
-    MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
-        Config::getInstance().getMimeTypesConfig());
+    // MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
+    //     Config::getInstance().getMimeTypesConfig());
     try {
-      std::string mimeType = mime.getVariable(parsedContent);
+      // std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);

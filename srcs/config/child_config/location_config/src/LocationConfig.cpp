@@ -5,7 +5,7 @@ const std::string LocationConfig::DEFAULT_ROOT = "/YoupiBanane/";
 const std::string LocationConfig::DEFAULT_ALLOW_METHOD = "";
 const std::string LocationConfig::DEFAULT_INDEX = "";
 const std::string LocationConfig::DEFAULT_AUTO_INDEX = "off";
-const std::string LocationConfig::DEFAULT_LIMIT_CLIENT_BODY_SIZE = "1000000";
+const std::string LocationConfig::DEFAULT_LIMIT_CLIENT_BODY_SIZE = "200000000";
 
 void LocationConfig::init() {
   _data.insert(std::pair<std::string, std::string>("route", DEFAULT_ROUTE));
