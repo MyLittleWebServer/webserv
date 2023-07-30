@@ -41,15 +41,18 @@ void POST::generateResource(RequestDts& dts) {
     generateMultipart(dts);
   } else {
     std::string mimeType = "bin";
-    // MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
-    //     Config::getInstance().getMimeTypesConfig());
+    MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
+        Config::getInstance().getMimeTypesConfig());
     try {
-      // std::string mimeType = mime.getVariable(parsedContent);
+      std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
     } catch (ExceptionThrower::InvalidConfigException& e) {
-      throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
+      _content = (*dts.body);
+      _title = makeRandomFileName(dts);
+      writeTextBody(dts, mimeType);
+      // throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
 }
@@ -138,13 +141,12 @@ void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  _title.clear();
-  _content.clear();
-
-  if ((*dts.path)[dts.path->length() - 1] != '/')
+  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
     _location = *dts.originalPath + "/" + _title + "." + mimeType;
   else
     _location = *dts.originalPath + _title + "." + mimeType;
+  _title.clear();
+  _content.clear();
 }
 
 void POST::writeBinaryBody(RequestDts& dts) {
@@ -162,10 +164,10 @@ void POST::writeBinaryBody(RequestDts& dts) {
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 
-  if ((*dts.path)[dts.path->length() - 1] != '/')
-    _location = *dts.path + "/" + _title;
+  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
+    _location = *dts.originalPath + "/" + _title;
   else
-    _location = *dts.path + _title;
+    _location = *dts.originalPath + _title;
 }
 
 void POST::createSuccessResponse(IResponse& response) {
