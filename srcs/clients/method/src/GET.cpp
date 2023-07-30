@@ -46,9 +46,9 @@ void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
     autoindex = (*dts.matchedLocation)->getAutoindex();
   }
 
-  std::cout << "path::" << path << std::endl;
-  std::cout << "pathIndex::" << pathIndex << std::endl;
-  std::cout << "autoindex::" << autoindex << std::endl;
+  // std::cout << "path::" << path << std::endl;
+  // std::cout << "pathIndex::" << pathIndex << std::endl;
+  // std::cout << "autoindex::" << autoindex << std::endl;
 
   if (checkFile(path)) {
     std::cout << "checkFile" << std::endl;
