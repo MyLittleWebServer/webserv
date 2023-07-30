@@ -140,9 +140,8 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     end = (*lineIt).find("\r\n");
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
-    key = std::string(toLowerString((*lineIt).substr(0, pos)));
-    value =
-        std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
+    key = toLowerString((*lineIt).substr(0, pos));
+    value = toLowerString((*lineIt).substr(pos + 1, end - pos - 1));
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
@@ -375,8 +374,7 @@ void RequestParser::validatePath(RequestDts &dts) {
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (checkPathForm(dts) == false)
-        throw(*dts.statusCode = E_404_NOT_FOUND);
+      if (checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
