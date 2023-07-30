@@ -491,6 +491,7 @@ void Client::errorPageCheck() {
   if (_response.getStatus() >= E_308_PERMANENT_REDIRECT) {
     if (_response.getBody().empty() || _response.getBody().size() == 0) {
       RequestDts &dts = _request.getRequestParserDts();
+      _request.setStatusCode(_response.getStatus());
       _response.createEmptyExceptionResponse(dts);
     }
   }

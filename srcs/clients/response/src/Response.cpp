@@ -98,6 +98,7 @@ void Response::assembleResponse(void) {
   assembleResponseLine();
   putHeaderFields();
   putBody();
+  std::cout << _response << std::endl;
 }
 
 void Response::putHeaderFields(void) {

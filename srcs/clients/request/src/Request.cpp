@@ -181,3 +181,5 @@ void Request::setHeaderField(std::string key, std::string value) {
 }
 
 const bool &Request::isExpect100() const { return _is_expect_100; }
+
+void Request::setStatusCode(Status code) { _statusCode = code; }

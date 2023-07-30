@@ -505,10 +505,10 @@ bool RequestParser::allHeaderRecieved(RequestDts &dts) {
  * @date 2023.07.18
  */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
-  // std::cout << "//////////////////" << std::endl;
-  // std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
-  //           << std::endl;
-  // std::cout << "//////////////////" << std::endl;
+  std::cout << "//////////////////" << std::endl;
+  std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
+            << std::endl;
+  std::cout << "//////////////////" << std::endl;
 
   if (!allHeaderRecieved(dts)) {
     attackGuard(dts);
