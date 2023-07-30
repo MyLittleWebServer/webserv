@@ -139,10 +139,9 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
  */
 void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
-
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) throwWithErrorMessage("kevent error on deleteEvent");
+  if (ret == -1) std::cout << "kevent error on deleteEvent" << std::endl;
 }
 
 /**
@@ -267,18 +266,26 @@ void Kqueue::setFdSet(uintptr_t ident, e_fd_type type) {
  */
 void Kqueue::deleteFdSet(uintptr_t ident, e_fd_type type) {
   switch (type) {
-    case FD_SERVER:
+    case FD_SERVER: {
+      // std::cout << "deleteFdSet: " << ident << "FD_SERVER" << std::endl;
       FD_CLR(ident, &Kqueue::_server_fds);
       break;
-    case FD_CLIENT:
+    }
+    case FD_CLIENT: {
+      // std::cout << "deleteFdSet: " << ident << "FD_CLIENT" << std::endl;
       FD_CLR(ident, &Kqueue::_client_fds);
       break;
-    case FD_METHOD:
+    }
+    case FD_METHOD: {
+      // std::cout << "deleteFdSet: " << ident << "FD_METHOD" << std::endl;
       FD_CLR(ident, &Kqueue::_method_fds);
       break;
-    case FD_CGI:
+    }
+    case FD_CGI: {
+      // std::cout << "deleteFdSet: " << ident << "FD_CGI" << std::endl;
       FD_CLR(ident, &Kqueue::_cgi_fds);
       break;
+    }
     default:
       break;
   }

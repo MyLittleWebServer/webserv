@@ -85,6 +85,7 @@ class Client {
   void setResponseConnection();
   void reassembleResponse();
   void methodNotAllowCheck();
+  void errorPageCheck();
 
  public:
   Client();

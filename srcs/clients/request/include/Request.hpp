@@ -52,6 +52,7 @@ class Request : public IRequest {
  public:
   void parseRequest(short port);
   void parseRequest(const std::string &request, short port);
+  void setStatusCode(Status code);
 
   RequestDts &getRequestParserDts(void);
   const std::string &getRequest(void) const;

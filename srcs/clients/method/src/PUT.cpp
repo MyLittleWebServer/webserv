@@ -20,11 +20,11 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   initUniqueIdandPath(dts);
 
   if (stat(dts.path->c_str(), &fileinfo) < 0) {
-    generateResource(dts);
+    // generateResource(dts);
+    replaceContent(dts);
     response.setStatusCode(E_201_CREATED);
   } else {
-    if (checkBodyContent(dts))
-      throw(*dts.statusCode = E_204_NO_CONTENT);
+    if (checkBodyContent(dts)) throw(*dts.statusCode = E_204_NO_CONTENT);
     replaceContent(dts);
     response.setStatusCode(E_200_OK);
   }
@@ -52,7 +52,7 @@ bool PUT::checkBodyContent(RequestDts& dts) {
     ret = checkForMultipart(dts);
   } else if (parsedContent == "application/x-www-form-urlencoded") {
     ret = checkForUrlEncoded(dts);
-  } else {                          
+  } else {
     ret = checkForPlainText(dts);
   }
   return ret;
@@ -84,7 +84,7 @@ bool PUT::checkForMultipart(RequestDts& dts) {
   cmpBin += (buf.str());
   file.close();
   if (cmpContent.compare(cmpBin) != 0) {
-      return false;
+    return false;
   }
   return true;
 }
@@ -98,7 +98,7 @@ bool PUT::checkForUrlEncoded(RequestDts& dts) {
   std::getline(file, buf);
   urlContent += buf;
 
-  std::string compStr = "title=" + urlTitle + "&" + "content=" + urlContent;  
+  std::string compStr = "title=" + urlTitle + "&" + "content=" + urlContent;
   size_t andPos = (*dts.body).find('&');
   size_t equalPos = (*dts.body).find('=', andPos + 1);
   std::string bodyContent = (*dts.body).substr(equalPos + 1);
@@ -157,8 +157,7 @@ void PUT::replaceContent(RequestDts& dts) {
     size_t equalPos = splitbyAnd[1].find('=');
     _content = splitbyAnd[1].substr(equalPos + 1);
     writeTextBody(dts);
-  }
-  else {
+  } else {
     _content = (*dts.body).data();
     writeTextBody(dts);
   }

@@ -66,6 +66,13 @@ void Response::createExceptionResponse(RequestDts &dts) {
   _responseFlag = true;
 }
 
+void Response::createEmptyExceptionResponse(RequestDts &dts) {
+  resetResponse();
+  _statusCode = *dts.statusCode;
+  if (_statusCode > E_308_PERMANENT_REDIRECT) create400And500Response(dts);
+  _responseFlag = true;
+}
+
 void Response::assembleResponseLine(void) {
   _response = "HTTP/1.1 ";
   _response += statusInfo[_statusCode].code;
@@ -91,6 +98,7 @@ void Response::assembleResponse(void) {
   assembleResponseLine();
   putHeaderFields();
   putBody();
+  std::cout << _response << std::endl;
 }
 
 void Response::putHeaderFields(void) {

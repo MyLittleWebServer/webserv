@@ -5,6 +5,7 @@
 
 class RequestParser : public IRequestParser {
  private:
+  bool _valid_flag;
   RequestParser();
   virtual ~RequestParser();
   RequestParser(const RequestParser& src);

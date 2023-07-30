@@ -120,7 +120,14 @@ void Client::parseRequest(short port) {
   }
 }
 
-bool Client::isCgi() { return _request.isCgi(); }
+bool Client::isCgi() {
+  // if (_request.getMethod() == "POST") {
+  //   std::cout << "//////////////////" << std::endl;
+  //   std::cout << _recvBuff.substr(0, _recvBuff.find("\r\n\r\n")) <<
+  //   std::endl; std::cout << "//////////////////" << std::endl;
+  // }
+  return _request.isCgi();
+}
 
 void Client::doRequest() {
   RequestDts &dts = _request.getRequestParserDts();
@@ -147,16 +154,30 @@ void Client::doRequest() {
  * 연결을 끊었음을 나타냅니다.
  */
 void Client::sendResponse() {
+  size_t send_size = 1460;
+  if (_response.getResponse().size() - _lastSentPos < send_size)
+    send_size = _response.getResponse().size() - _lastSentPos;
   const std::string &response = _response.getResponse();
-  ssize_t n = send(_sd, response.c_str() + _lastSentPos,
-                   response.size() - _lastSentPos, 0);
-  if (n == -1) throw Client::SendFailException();
-  if (n <= 0) throw Client::DisconnectedDuringSendException();
+  ssize_t n = send(_sd, response.c_str() + _lastSentPos, send_size, 0);
+  // if (n == -1) return;
+  if (n == -1) {
+    std::cout << "FAILED:::: " << _lastSentPos << std::endl;
+    // throw Client::SendFailException();
+    return;
+  }
+  if (n <= 0) {
+    std::cout << "CLOSED:::: " << _lastSentPos << std::endl;
+    throw Client::DisconnectedDuringSendException();
+  }
 
   if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
     _lastSentPos += n;
     return;
   }
+
+  // std::cout << "SENT:::: " << _lastSentPos + static_cast<size_t>(n)
+  //           << std::endl;
+
   if (_state == EXPECT_CONTINUE_PROCESS_RESPONSE) {
     _state = RECEIVING;
     return;
@@ -458,7 +479,18 @@ void Client::methodNotAllowCheck() {
 void Client::responseFinalCheck() {
   // contentNegotiation();
   methodNotAllowCheck();
+  errorPageCheck();
   headMethodBodyCheck();
   setResponseConnection();
   reassembleResponse();
+}
+
+void Client::errorPageCheck() {
+  if (_response.getStatus() >= E_308_PERMANENT_REDIRECT) {
+    if (_response.getBody().empty() || _response.getBody().size() == 0) {
+      RequestDts &dts = _request.getRequestParserDts();
+      _request.setStatusCode(_response.getStatus());
+      _response.createEmptyExceptionResponse(dts);
+    }
+  }
 }

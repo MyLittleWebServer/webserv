@@ -130,8 +130,10 @@ void EventHandler::branchCondition(void) {
  */
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
-  if ((clientSocket = accept(_currentEvent->ident, NULL, NULL)) == -1)
-    throwWithErrorMessage("accept error");
+  if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1) {
+    std::cout << "accept error" << std::endl;
+    return;
+  }
   std::cout << "accept ... : " << clientSocket << std::endl;
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
   registClient(clientSocket);
@@ -298,7 +300,7 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == START) {
       setRequestTimeOutTimer(currClient);
     }
-    std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
+    // std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent->ident));
     if (currClient.getState() == EXPECT_CONTINUE) {

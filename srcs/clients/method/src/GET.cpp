@@ -82,7 +82,6 @@ void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
                                                      : "/" + matchedIndex);
     autoindex = (*dts.matchedLocation)->getAutoindex();
   }
-
   if (checkFile(path)) {
     *dts.statusCode = E_200_OK;
     prepareBody(path, response);
