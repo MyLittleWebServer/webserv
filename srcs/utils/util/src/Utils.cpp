@@ -90,8 +90,19 @@ int getTimeOfDay() { return std::time(NULL); }
  */
 std::string toLowerString(std::string str) {
   std::string::iterator it = str.begin();
-  std::string::iterator end = str.end();
+  std::string::iterator end;
+  if (str.size() > 4) {
+    end = str.end() - 4;
 
+    while (it < end) {
+      *it = std::tolower(*it);
+      *(it + 1) = std::tolower(*(it + 1));
+      *(it + 2) = std::tolower(*(it + 2));
+      *(it + 3) = std::tolower(*(it + 3));
+      it += 4;
+    }
+  }
+  end = str.end();
   while (it != end) {
     *it = std::tolower(*it);
     ++it;
