@@ -168,7 +168,7 @@ void RequestParser::parseCookie(RequestDts &dts) {
       (*dts.cookieMap)[keyValue[0]] = keyValue[1];
     }
   }
-  (*dts.headerFields).erase("cookie");
+  // (*dts.headerFields).erase("cookie");
 }
 
 /**
