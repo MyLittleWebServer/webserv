@@ -57,7 +57,8 @@ sources1 :=	main.cpp
 sources1 += FileChecker.cpp \
 						Reader.cpp \
 						Utils.cpp \
-						Status.cpp
+						Status.cpp \
+						Logger.cpp
 
 # ---- Network ---- #
 
@@ -66,7 +67,7 @@ sources1 +=	Client.cpp
 sources1 +=	ServerManager.cpp \
 						Server.cpp \
 						Kqueue.cpp \
-						EventHandler.cpp 
+						EventHandler.cpp
 
 # ---- HTTP ---- #
 
