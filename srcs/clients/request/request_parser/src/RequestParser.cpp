@@ -143,7 +143,7 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
     key = toLowerString(line.substr(0, pos));
-    value = toLowerString(line.substr(pos + 1, end - pos - 1));
+    value = line.substr(pos + 1, end - pos - 1);
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
