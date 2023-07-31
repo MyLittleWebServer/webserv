@@ -165,8 +165,6 @@ void CGI::generateResponse() {
   }
   ssize_t start = _cgiResult.find("\r\n");
   ret = _cgiResult.find("\r\n\r\n", start + 2);
-  // std::string header = _cgiResult.substr(start + 2, ret - start);
-  // std::string body = _cgiResult.substr(ret + 4);
 
   size_t headerPos = start + 2;
   size_t headerLength = ret - headerPos;
@@ -179,21 +177,15 @@ void CGI::generateResponse() {
   _response->clear();
   _response->setStatusCode(E_200_OK);
   while (true) {
-      // ret = header.find("\r\n");
-      lineEnd = _cgiResult.find("\r\n", headerPos);
-      if (lineEnd == std::string::npos) break;
-      // std::string line = header.substr(0, ret);
-      colonPos = _cgiResult.find(":", headerPos);
-      if (colonPos == std::string::npos) break;
-      _response->setHeaderField(
-          _cgiResult.substr(headerPos, colonPos - headerPos),
-          _cgiResult.substr(colonPos + 1, lineEnd - colonPos - 1));
-      // std::string key = line.substr(0, colon);
-      // std::string value = line.substr(colon + 1);
-      //_response->setHeaderField(key, value);
-      headerPos = lineEnd + 2;
-      headerLength -= (lineEnd - headerPos);
-      // header = header.substr(ret + 2);
+    lineEnd = _cgiResult.find("\r\n", headerPos, headerLength);
+    if (lineEnd == std::string::npos) break;
+    colonPos = _cgiResult.find(":", headerPos, lineEnd - headerPos);
+    if (colonPos == std::string::npos) break;
+    _response->setHeaderField(
+        _cgiResult.substr(headerPos, colonPos - headerPos),
+        _cgiResult.substr(colonPos + 1, lineEnd - colonPos - 1));
+    headerPos = lineEnd + 2;
+    headerLength -= (lineEnd - headerPos);
   }
   _response->setBody(_cgiResult.substr(bodyPos, bodyLength));
   _response->setHeaderField("Content-Length", itos(bodyLength));
