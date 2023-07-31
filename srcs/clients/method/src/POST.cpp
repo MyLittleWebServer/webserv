@@ -15,20 +15,37 @@ POST::POST(void) {}
 
 POST::~POST(void) {}
 
+/**
+ * @brief POST 메소드를 실행합니다.
+ *
+ * @details
+ * body에 내용이 없으면 204 No Content를 던집니다.
+ * handlePath 메소드를 통해 특정 URL의 엔드포인트에서 POST요청을 합니다.
+ *
+ * @param RequestDts
+ * @param IResponse
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::doRequest(RequestDts& dts, IResponse& response) {
-  // #ifndef DEBUG_MSG
-  //   std::cout << " >> POST\n";
-  //   std::cout << "path: " << *dts.path << "\n";
-  //   std::cout << "original path: " << *dts.originalPath << "\n";
-  //   std::cout << "content-type: " << (*dts.headerFields)["content-type"] <<
-  //   "\n"; std::cout << "content-length: " <<
-  //   (*dts.headerFields)["content-length"]
-  //             << "\n";
-  // #endif
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   handlePath(dts, response);
 }
 
+/**
+ * @brief content-type에 따라 리소스를 생성합니다.
+ *
+ * @details
+ * content-type이 application/x-www-form-urlencoded이면 generateUrlEncoded를
+ * content-type이 multipart/form-data이면 generateMultipart를
+ * content-type이 그 외의 경우에는 mime-type에 따른 writeTextBody를 실행합니다.
+ *
+ * @param RequestDts
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::generateResource(RequestDts& dts) {
   std::string parsedContent;
   _contentType = (*dts.headerFields)["content-type"].c_str();
@@ -42,10 +59,10 @@ void POST::generateResource(RequestDts& dts) {
     generateMultipart(dts);
   } else {
     std::string mimeType = "bin";
-    // MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
-    //     Config::getInstance().getMimeTypesConfig());
+    MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
+        Config::getInstance().getMimeTypesConfig());
     try {
-      // std::string mimeType = mime.getVariable(parsedContent);
+      std::string mimeType = mime.getVariable(parsedContent);
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
@@ -55,6 +72,20 @@ void POST::generateResource(RequestDts& dts) {
   }
 }
 
+/**
+ * @brief application/x-www-form-urlencoded의 body를 파싱합니다.
+ *
+ * @details
+ * body에는 querystring으로 title과 content가 들어옵니다.
+ * title과 content가 key로 들어오지 않으면 400 Bad Request를 던집니다.
+ * title의 value값이 없으면 랜덤한 파일명을 생성합니다.
+ * mime-type을 text/plain으로 설정하고 writeTextBody를 실행합니다.
+ *
+ * @param dts
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::generateUrlEncoded(RequestDts& dts) {
   std::string decodedBody = decodeURL(*dts.body);
 
@@ -73,14 +104,24 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   }
   size_t equalPos2 = decodedBody.find('=', andPos + 1);
   _content = decodedBody.substr(equalPos2 + 1);
-#ifdef DEBUG_MSG
-  std::cout << "title: " << _title << "\n";
-  std::cout << "content: " << _content << "\n";
-  std::cout << "path: " << *dts.path << "\n";
-#endif
   writeTextBody(dts, "txt");
 }
 
+/**
+ * @brief multipart/form-data의 body를 파싱합니다.
+ *
+ * @details
+ * body에는 boundary가 들어옵니다.
+ * boundary를 기준으로 파일명과 파일내용을 파싱합니다.
+ * filename 없으면 랜덤한 파일명을 생성합니다.
+ * body에 있는 이진데이터를 writeBinaryBody를 통해 파일에 씁니다.
+ * boundary 마지막에 --가 있으면 멀티파트의 파일생성을 종료합니다.
+ *
+ * @param dts
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::generateMultipart(RequestDts& dts) {
   std::string binBody = (*dts.body).data();
 
@@ -125,6 +166,20 @@ void POST::generateMultipart(RequestDts& dts) {
   }
 }
 
+/**
+ * @brief mimeType에 따라 파일을 생성합니다.
+ *
+ * @details
+ * 파일이 존재하는지 확인하고 존재하면 403 Forbidden을 던집니다.
+ * path에 /가 없으면 /를 붙여서 파일명을 생성합니다.
+ * mimeType에 따라 파일을 생성하고 파일에 내용을 씁니다.
+ *
+ * @param dts
+ * @param mimeType
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
   std::string filename;
   if (stat(dts.path->c_str(), &fileinfo) != 0)
@@ -148,6 +203,19 @@ void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
     _location = *dts.originalPath + _title + "." + mimeType;
 }
 
+/**
+ * @brief 이진데이터를 파일에 씁니다.
+ *
+ * @details
+ * 파일이 존재하는지 확인하고 존재하면 403 Forbidden을 던집니다.
+ * path에 /가 없으면 /를 붙여서 파일명을 생성합니다.
+ * 이진데이터를 담고있는 _content를 파일에 씁니다.
+ *
+ * @param dts
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::writeBinaryBody(RequestDts& dts) {
   std::string filename;
   if (stat(dts.path->c_str(), &fileinfo) != 0)
@@ -169,6 +237,14 @@ void POST::writeBinaryBody(RequestDts& dts) {
     _location = *dts.path + _title;
 }
 
+/**
+ * @brief RFC POST의 맞게 응답 객체를 설정합니다. 응답 객체를 파싱합니다.
+ *
+ * @param response
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::createSuccessResponse(IResponse& response) {
   response.setHeaderField("Location", _location);
   response.setBody("File has been successfully uploaded.\r\npath: /directory/" +
@@ -177,6 +253,18 @@ void POST::createSuccessResponse(IResponse& response) {
   response.setResponseParsed();
 }
 
+/**
+ * @brief URL 디코딩을 합니다.
+ *
+ * @details
+ * 16진수로 인코딩된 문자열을 디코딩합니다.
+ *
+ * @param encoded_string
+ * @return std::string
+ *
+ * @author
+ * @date 2023.07.29
+ */
 std::string POST::decodeURL(std::string encoded_string) {
   std::replace(encoded_string.begin(), encoded_string.end(), '+', ' ');
   size_t len = encoded_string.length();
@@ -221,6 +309,19 @@ std::string POST::makeRandomFileName(RequestDts& dts) {
   return result;
 }
 
+/**
+ * @brief 특정 URL의 엔드포인트와 세션을 체크하고 POST하는 함수
+ *
+ * @details
+ * 엔드포인트와 세션의 체크를 하고 해당하는 엔드포인트가 없거나 세션이 없으면
+ * 리소스를 생성합니다. 리소스를 생성하면 201 Created를 던집니다.
+ *
+ * @param RequestDts
+ * @param IResponse
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::handlePath(RequestDts& dts, IResponse& response) {
   if (getSpecificEndpoint(dts, response))
     return;
@@ -231,15 +332,16 @@ void POST::handlePath(RequestDts& dts, IResponse& response) {
 }
 
 /**
- * @brief 특정 URL의 엔드포인트를 POST하는 함수
+ * @brief 세션체크를 하고 특정 URL의 엔드포인트를 실행합니다.
  *
- * @details
+ * @param RequestDts
+ * @param IResponse
  *
- *
- * @param dts
- * @param response
  * @return true : true를 리턴하면 해당 POST요청을 더이상 진행하지 않음.
  * @return false : false를 리턴하면 해당 함수를 종료.
+ *
+ * @author
+ * @date 2023.07.29
  */
 bool POST::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
   if (*dts.is_session == false) return false;
@@ -255,14 +357,26 @@ bool POST::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
       return true;
     }
   } catch (ExceptionThrower::SessionDataNotFound& e) {
-#ifdef DEBUG_MSG
-    std::cout << "session not found " << e.what() << std::endl;
-#endif
     throw(*dts.statusCode = E_401_UNAUTHORIZED);
   }
   return false;
 }
 
+/**
+ * @brief 로그인과 동시에 세션id를 생성하고 처리합니다.
+ *
+ * @details
+ * 세션 id를 생성하고 발급한 세션아이디로 응답에다 쿠키를 설정해줍니다.
+ * 세션 데이터에 패스워드를 제외한 로그인 정보를 저장합니다.
+ * 로그인이 완료되면 302 Found를 던집니다.
+ *
+ * @param RequestDts
+ * @param IResponse
+ * @param Session
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::login(RequestDts& dts, IResponse& response, Session& session) {
   std::string session_id = session.createSession(getTimeOfDay() + 60);
 
@@ -281,6 +395,20 @@ void POST::login(RequestDts& dts, IResponse& response, Session& session) {
   throw(*dts.statusCode = E_302_FOUND);
 }
 
+/**
+ * @brief 페이지 입장과 동시에 세션 데이터를 생성하고 세션 정보를 저장합니다.
+ *
+ * @details
+ * 세션 데이터에 로그인 정보를 저장합니다.
+ * 로그인이 완료되면 302 Found를 던집니다.
+ *
+ * @param RequestDts
+ * @param IResponse
+ * @param Session
+ *
+ * @author
+ * @date 2023.07.29
+ */
 void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
   std::string session_id = session.createSession(getTimeOfDay() + 300);
 
@@ -298,6 +426,19 @@ void POST::enter(RequestDts& dts, IResponse& response, Session& session) {
   throw(*dts.statusCode = E_302_FOUND);
 }
 
+/**
+ * @brief 세션 데이터 저장
+ *
+ * @details
+ * 세션 데이터에 로그인 정보를 저장합니다.
+ *
+ * @param RequestDts
+ * @param Session
+ *
+ * @author
+ * @date 2023.07.29
+ *
+ */
 void POST::submit(RequestDts& dts, Session& session) {
   SessionData& sessionData =
       session.getSessionData((*dts.cookieMap)["session_id"]);
