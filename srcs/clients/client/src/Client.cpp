@@ -1,7 +1,6 @@
 #include "Client.hpp"
 
 #include "DELETE.hpp"
-#include "DummyMethod.hpp"
 #include "ExceptionThrower.hpp"
 #include "GET.hpp"
 #include "HEAD.hpp"
