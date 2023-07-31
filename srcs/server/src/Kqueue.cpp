@@ -44,13 +44,6 @@ Kqueue::~Kqueue() {}
 void Kqueue::addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                       uint32_t fflags, intptr_t data, void* udata) {
   struct kevent temp_event;
-
-#ifdef DEBUG_MSG
-  std::cout << "addEvent: ident: " << ident << " filter: " << filter
-            << " flags: " << flags << " fflags: " << fflags << " data: " << data
-            << " udata: " << udata << " " << std::endl;
-#endif
-
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
   Kqueue::__eventsToAdd.push_back(temp_event);
 }
@@ -206,29 +199,14 @@ void Kqueue::init(void) {
  */
 e_fd_type Kqueue::getFdType(uintptr_t ident) {
   if (FD_ISSET(ident, &Kqueue::_server_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in server" << std::endl;
-#endif
     return (FD_SERVER);
   } else if (FD_ISSET(ident, &Kqueue::_client_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in client" << std::endl;
-#endif
     return (FD_CLIENT);
   } else if (FD_ISSET(ident, &Kqueue::_method_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in method" << std::endl;
-#endif
     return (FD_METHOD);
   } else if (FD_ISSET(ident, &Kqueue::_cgi_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in cgi" << std::endl;
-#endif
     return (FD_CGI);
   }
-#ifdef DEBUG_MSG
-  std::cout << "getFdType: " << ident << " is none" << std::endl;
-#endif
   return (FD_NONE);
 }
 
@@ -272,29 +250,22 @@ void Kqueue::setFdSet(uintptr_t ident, e_fd_type type) {
 void Kqueue::deleteFdSet(uintptr_t ident, e_fd_type type) {
   switch (type) {
     case FD_SERVER: {
-      // std::cout << "deleteFdSet: " << ident << "FD_SERVER" << std::endl;
       FD_CLR(ident, &Kqueue::_server_fds);
       break;
     }
     case FD_CLIENT: {
-      // std::cout << "deleteFdSet: " << ident << "FD_CLIENT" << std::endl;
       FD_CLR(ident, &Kqueue::_client_fds);
       break;
     }
     case FD_METHOD: {
-      // std::cout << "deleteFdSet: " << ident << "FD_METHOD" << std::endl;
       FD_CLR(ident, &Kqueue::_method_fds);
       break;
     }
     case FD_CGI: {
-      // std::cout << "deleteFdSet: " << ident << "FD_CGI" << std::endl;
       FD_CLR(ident, &Kqueue::_cgi_fds);
       break;
     }
     default:
       break;
   }
-#ifdef DEBUG_MSG
-  getFdType(ident);
-#endif
 }
