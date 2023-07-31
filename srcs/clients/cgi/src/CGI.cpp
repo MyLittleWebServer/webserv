@@ -285,16 +285,6 @@ void CGI::writeCGI() {
       _lastSentPos += ret;
       return;
     }
-    // if (_request->getMethod() == "POST") {
-    //   ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
-    //   if (ret != static_cast<ssize_t>(_body.size())) {
-    //     if (ret == -1) {
-    //       generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
-    //       return;
-    //     };
-    //     _body = _body.substr(ret);
-    //     return;
-    //   }
   }
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));
