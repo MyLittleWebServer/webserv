@@ -35,6 +35,15 @@ RequestParser &RequestParser::operator=(const RequestParser &src) {
 void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   size_t pos = 0;
   size_t delimeter = dts.request->find("\r\n");
+  //
+  if (delimeter == 0) {
+    pos = 2;
+    delimeter = dts.request->find("\r\n", 2);
+    _valid_flag = false;
+  } else {
+    _valid_flag = true;
+  }
+  //
   while (delimeter != std::string::npos) {
     std::string chunk = dts.request->substr(pos, delimeter - pos + 2);
     dts.linesBuffer->push_back(chunk);
@@ -65,10 +74,6 @@ void RequestParser::parseRequestLine(RequestDts &dts) {
   if (anchorPos != std::string::npos) parseAnchor(dts, anchorPos);
   size_t qMarkPos = dts.path->find("?");
   if (qMarkPos != std::string::npos) parseQueryString(dts, qMarkPos);
-
-  std::cout << "method: " << *dts.method << std::endl;
-  std::cout << "path: " << *dts.path << std::endl;
-  std::cout << "protocol: " << *dts.protocol << std::endl;
   if (*dts.method == "" || *dts.path == "" || *dts.protocol == "")
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   checkRequestUriLimitLength(dts);
@@ -136,8 +141,9 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
     key = std::string(toLowerString((*lineIt).substr(0, pos)));
-    value =
-        std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
+    // value =
+    //     std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
+    value = (*lineIt).substr(pos + 1, end - pos - 1);
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
@@ -162,7 +168,7 @@ void RequestParser::parseCookie(RequestDts &dts) {
       (*dts.cookieMap)[keyValue[0]] = keyValue[1];
     }
   }
-  (*dts.headerFields).erase("cookie");
+  // (*dts.headerFields).erase("cookie");
 }
 
 /**
@@ -273,6 +279,7 @@ void RequestParser::parseChunkedEncoding(RequestDts &dts) {
 
   while (pos != std::string::npos) {
     end = body.find("\r\n", pos);
+    if (end == std::string::npos) break;
     chunkSize = std::strtol(body.substr(pos, end - pos).c_str(), NULL, 16);
     if (chunkSize == 0) {
       *dts.isParsed = true;
@@ -300,7 +307,7 @@ void RequestParser::setDefaultLocation(
     std::list<ILocationConfig *>::const_iterator defaultLocation,
     RequestDts &dts) {
   *dts.matchedLocation = *defaultLocation;
-  dts.path->erase(0, 1);  // remove the first '/'
+  dts.path->erase(0, 1);
   *dts.path = (*defaultLocation)->getRoot() + *dts.path;
   dts.path->erase(0, 1);
 }
@@ -340,10 +347,8 @@ std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
   return (dts.path->substr(0, end));
 }
 
-// /root//dir/test.txt
-// GET /dir/test.txt/ hTML/1.1
 void RequestParser::validatePath(RequestDts &dts) {
-  *dts.originalPath = *dts.path;  // for GET file list
+  *dts.originalPath = *dts.path;
   std::string firstToken = getFirstTokenOfPath(dts);
   if (firstToken == "/health") {
     throw(*dts.statusCode = E_200_OK);
@@ -365,16 +370,13 @@ void RequestParser::validatePath(RequestDts &dts) {
       *dts.matchedLocation = *it;
       dts.path->erase(0, firstToken.size());
       checkAndParseRedirection(dts);
-      if (dts.path->size() != 0 && (*dts.path)[0] == '/')
-        dts.path->erase(0, 1);  // remove this because there is already a
-                                // slash at the end of root path
+      if (dts.path->size() != 0 && (*dts.path)[0] == '/') dts.path->erase(0, 1);
       *dts.path = (*it)->getRoot() + *dts.path;
-      dts.path->erase(0, 1);  // remove the first '/'
+      dts.path->erase(0, 1);
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (checkPathForm(dts) == false)
-        throw(*dts.statusCode = E_404_NOT_FOUND);
+      if (checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
@@ -503,6 +505,11 @@ bool RequestParser::allHeaderRecieved(RequestDts &dts) {
  * @date 2023.07.18
  */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
+  // std::cout << "//////////////////" << std::endl;
+  // std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
+  //           << std::endl;
+  // std::cout << "//////////////////" << std::endl;
+
   if (!allHeaderRecieved(dts)) {
     attackGuard(dts);
     return;
@@ -511,15 +518,17 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseRequestLine(dts);
   parseHeaderFields(dts);
   parseCookie(dts);
-  validateContentLengthHeader(dts);
   validateHostHeader(port, dts);
   ValidateContentEncoding(dts);
-  parseContent(dts);
   matchServerConf(port, dts);
   validatePath(dts);
+  validateContentLengthHeader(dts);
+  parseContent(dts);
+  if (!(*dts.isParsed)) return;
   parseCgi(dts);
   parseSessionConfig(dts);
   requestChecker(dts);
+  if (!_valid_flag) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**
@@ -667,6 +676,9 @@ void RequestParser::validateContentLengthHeader(RequestDts &dts) {
       content_length.find_first_not_of("0") != 0)
     throw(*dts.statusCode = E_400_BAD_REQUEST);
   if (content_length.size() >= 10)
+    throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
+  if (static_cast<size_t>(std::atoi(content_length.c_str())) >
+      (*dts.matchedLocation)->getLimitClientBodySize())
     throw(*dts.statusCode = E_413_REQUEST_ENTITY_TOO_LARGE);
 }
 

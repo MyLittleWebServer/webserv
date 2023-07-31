@@ -62,9 +62,16 @@ class ExceptionThrower {
     virtual const char* what() const throw();
   };
 
-  class FileAcccessFailedException : public std::runtime_error {
+  class FileAccessFailedException : public std::runtime_error {
    public:
-    FileAcccessFailedException();
+    FileAccessFailedException();
+
+    virtual const char* what() const throw();
+  };
+
+  class CGIBodyTooLongException : public std::runtime_error {
+   public:
+    CGIBodyTooLongException();
 
     virtual const char* what() const throw();
   };

@@ -28,6 +28,8 @@ typedef enum CGI_STATUS {
 
 class CGI : public ICGI {
  private:
+  size_t _lastSentPos;
+  std::string _x_header;
   std::string _content_type;
   std::string _content_length;
   std::string _http_user_agent;
@@ -38,6 +40,7 @@ class CGI : public ICGI {
   std::string _remote_addr;
   std::string _request_method;
   std::string _script_filename;
+  std::string _cookie;
 
  private:
   CGI_STATUS _cgi_status;
@@ -47,6 +50,11 @@ class CGI : public ICGI {
   pid_t _pid;
   int _in_pipe[2];
   int _out_pipe[2];
+
+  bool _write_event;
+  bool _read_event;
+  bool _wait_event;
+
   IRequest* _request;
   IResponse* _response;
   std::vector<const char*> _env;
@@ -72,6 +80,12 @@ class CGI : public ICGI {
 
   void generateErrorResponse(Status status);
   void generateResponse();
+
+  void clear();
+  void clearChild();
+  void closePipe(int& fd);
+  void clearPipe();
+  void clearEvent();
 
  public:
   CGI(IRequest* request, IResponse* response, uintptr_t client_fd,

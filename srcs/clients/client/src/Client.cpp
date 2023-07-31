@@ -1,11 +1,11 @@
 #include "Client.hpp"
 
 #include "DELETE.hpp"
-#include "DummyMethod.hpp"
 #include "ExceptionThrower.hpp"
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
+#include "Logger.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
 #include "PUT.hpp"
@@ -122,7 +122,11 @@ void Client::parseRequest(short port) {
   }
 }
 
-bool Client::isCgi() { return _request.isCgi(); }
+bool Client::isCgi() {
+  Logger::requestCoutNoEndl("Parsed Complete: ");
+  Logger::requestCoutOnlyMsgWithEndl(_sd);
+  return _request.isCgi();
+}
 
 void Client::doRequest() {
   RequestDts &dts = _request.getRequestParserDts();
@@ -149,16 +153,32 @@ void Client::doRequest() {
  * 연결을 끊었음을 나타냅니다.
  */
 void Client::sendResponse() {
+  size_t send_size = 1460;
+  if (_response.getResponse().size() - _lastSentPos < send_size)
+    send_size = _response.getResponse().size() - _lastSentPos;
   const std::string &response = _response.getResponse();
-  ssize_t n = send(_sd, response.c_str() + _lastSentPos,
-                   response.size() - _lastSentPos, 0);
-  if (n == -1) throw Client::SendFailException();
-  if (n <= 0) throw Client::DisconnectedDuringSendException();
+  ssize_t n = send(_sd, response.c_str() + _lastSentPos, send_size, 0);
+  if (n == -1) {
+    Logger::warningCoutNoEndl("Client ");
+    Logger::warningCoutOnlyMsg(_sd);
+    Logger::warningCoutOnlyMsgWithEndl(" Socket Send Fail");
+    return;
+  }
+  if (n <= 0) {
+    Logger::warningCoutNoEndl("Client ");
+    Logger::warningCoutOnlyMsg(_sd);
+    Logger::warningCoutOnlyMsgWithEndl(" Socket Close While Sending");
+    throw Client::DisconnectedDuringSendException();
+  }
 
   if (static_cast<size_t>(n) != response.size() - _lastSentPos) {
     _lastSentPos += n;
     return;
   }
+
+  Logger::responseCoutNoEndl("Response sent: ");
+  Logger::responseCoutOnlyMsgWithEndl(_sd);
+
   if (_state == EXPECT_CONTINUE_PROCESS_RESPONSE) {
     _state = RECEIVING;
     return;
@@ -460,7 +480,18 @@ void Client::methodNotAllowCheck() {
 void Client::responseFinalCheck() {
   // contentNegotiation();
   methodNotAllowCheck();
+  errorPageCheck();
   headMethodBodyCheck();
   setResponseConnection();
   reassembleResponse();
+}
+
+void Client::errorPageCheck() {
+  if (_response.getStatus() >= E_308_PERMANENT_REDIRECT) {
+    if (_response.getBody().empty() || _response.getBody().size() == 0) {
+      RequestDts &dts = _request.getRequestParserDts();
+      _request.setStatusCode(_response.getStatus());
+      _response.createEmptyExceptionResponse(dts);
+    }
+  }
 }

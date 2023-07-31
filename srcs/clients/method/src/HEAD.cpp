@@ -4,16 +4,16 @@ HEAD::HEAD() : GET() {}
 HEAD::~HEAD() {}
 
 /**
- * @brief createSuccessResponse;
+ * @brief HEAD 메소드를 처리합니다.
  *
- * GET에서 진행한 작업에서 body를 제외한 response를 생성합니다.
+ * @details
+ * HEAD 는 GET과 동일한 동작을 하지만, body를 제외한 response를 생성합니다.
+ * 따라서, GET에서 진행한 작업에서 body를 제외한 response를 생성합니다.
  *
  * @param IResponse 응답 객체
  *
- * @return void
- *
- * @author middlefitting
- * @date 2023.07.21
+ * @author
+ * @date 2023.07.29
  */
 void HEAD::createSuccessResponse(IResponse& response) {
   validateContentType(response);

@@ -41,6 +41,7 @@ class Response : public IResponse {
 
  public:
   virtual void createExceptionResponse(RequestDts &dts);
+  void createEmptyExceptionResponse(RequestDts &dts);
   bool getResponseFlag(void) const;
   Status getStatus(void);
   const std::string &getResponse(void) const;

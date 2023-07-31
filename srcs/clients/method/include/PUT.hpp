@@ -39,7 +39,7 @@ class PUT : public IMethod {
 
   bool checkBodyContent(RequestDts& dts);
   bool checkForUrlEncoded(RequestDts& dts);
-  bool checkForPlainText(RequestDts& dts);
+  bool checkForTextFile(RequestDts& dts);
   bool checkForMultipart(RequestDts& dts);
 
   void replaceContent(RequestDts& dts);

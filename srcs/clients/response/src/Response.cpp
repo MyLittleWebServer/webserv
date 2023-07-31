@@ -109,8 +109,9 @@ void Response::create400And500Response(RequestDts &dts) {
  * @brief 예외 응답을 생성합니다.
  *
  * @details
- *
- *
+ * 각각의 status code에 맞춰서 response를 생성합니다.
+ * 생성후 responseFlag를 on하여 response의 생성을 알립니다.
+ * 
  * @param dts
  */
 void Response::createExceptionResponse(RequestDts &dts) {
@@ -122,6 +123,22 @@ void Response::createExceptionResponse(RequestDts &dts) {
   } else {
     create400And500Response(dts);
   }
+  _responseFlag = true;
+}
+
+/**
+ * @brief 비어있는 예외 응답을 생성합니다.
+ *
+ * @details
+ * 400번대 status code들을 조건으로 response를 생성합니다.
+ * 생성후 responseFlag를 on하여 response의 생성을 알립니다.
+ *
+ * @param dts
+ */
+void Response::createEmptyExceptionResponse(RequestDts &dts) {
+  resetResponse();
+  _statusCode = *dts.statusCode;
+  if (_statusCode > E_308_PERMANENT_REDIRECT) create400And500Response(dts);
   _responseFlag = true;
 }
 
@@ -171,6 +188,7 @@ void Response::assembleResponse(void) {
   assembleResponseLine();
   putHeaderFields();
   putBody();
+  // std::cout << _response << std::endl;
 }
 
 /**
