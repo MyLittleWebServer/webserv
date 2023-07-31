@@ -17,7 +17,6 @@ CGI::CGI() {
   _write_event = false;
   _read_event = false;
   _wait_event = false;
-
   initEnv();
 }
 
@@ -36,6 +35,7 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
   _out_pipe[0] = 0;
   _out_pipe[1] = 0;
   _pid = 0;
+  _lastSentPos = 0;
   initEnv();
 }
 
@@ -164,24 +164,31 @@ void CGI::generateResponse() {
     return;
   }
   ssize_t start = _cgiResult.find("\r\n");
-  ret = _cgiResult.find("\r\n\r\n");
-  std::string header = _cgiResult.substr(start + 2, ret + 2);
-  std::string body = _cgiResult.substr(ret + 4);
+  ret = _cgiResult.find("\r\n\r\n", start + 2);
+
+  size_t headerPos = start + 2;
+  size_t headerLength = ret - headerPos;
+  size_t bodyPos = ret + 4;
+  size_t totalSize = _cgiResult.size();
+  size_t bodyLength = totalSize - bodyPos;
+  size_t lineEnd;
+  size_t colonPos;
+
   _response->clear();
   _response->setStatusCode(E_200_OK);
   while (true) {
-    ret = header.find("\r\n");
-    if (ret == std::string::npos) break;
-    std::string line = header.substr(0, ret);
-    size_t colon = line.find(":");
-    if (colon == std::string::npos) break;
-    std::string key = line.substr(0, colon);
-    std::string value = line.substr(colon + 1);
-    _response->setHeaderField(key, value);
-    header = header.substr(ret + 2);
+    lineEnd = _cgiResult.find("\r\n", headerPos, headerLength);
+    if (lineEnd == std::string::npos) break;
+    colonPos = _cgiResult.find(":", headerPos, lineEnd - headerPos);
+    if (colonPos == std::string::npos) break;
+    _response->setHeaderField(
+        _cgiResult.substr(headerPos, colonPos - headerPos),
+        _cgiResult.substr(colonPos + 1, lineEnd - colonPos - 1));
+    headerPos = lineEnd + 2;
+    headerLength -= (lineEnd - headerPos);
   }
-  _response->setBody(body);
-  _response->setHeaderField("Content-Length", itos(body.length()));
+  _response->setBody(_cgiResult.substr(bodyPos, bodyLength));
+  _response->setHeaderField("Content-Length", itos(bodyLength));
   _response->assembleResponse();
   clear();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
@@ -278,16 +285,6 @@ void CGI::writeCGI() {
       _lastSentPos += ret;
       return;
     }
-    // if (_request->getMethod() == "POST") {
-    //   ssize_t ret = write(_in_pipe[1], _body.c_str(), _body.size());
-    //   if (ret != static_cast<ssize_t>(_body.size())) {
-    //     if (ret == -1) {
-    //       generateErrorResponse(E_500_INTERNAL_SERVER_ERROR);
-    //       return;
-    //     };
-    //     _body = _body.substr(ret);
-    //     return;
-    //   }
   }
   Kqueue::deleteFdSet(_in_pipe[1], FD_CGI);
   Kqueue::deleteEvent(_in_pipe[1], EVFILT_WRITE, static_cast<void*>(this));

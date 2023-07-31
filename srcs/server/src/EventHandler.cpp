@@ -71,6 +71,7 @@ void EventHandler::checkFlags(void) {
   if (_currentEvent->flags & EV_EOF &&
       Kqueue::getFdType(_currentEvent->ident) == FD_CLIENT) {
     _errorFlag = true;
+    deleteTimerEvent();
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
   }
 }
