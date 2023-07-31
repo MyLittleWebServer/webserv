@@ -70,7 +70,6 @@ void POST::generateResource(RequestDts& dts) {
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
-      // throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
 }
@@ -193,7 +192,7 @@ void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
     filename = *dts.path + _title + "." + mimeType;
   std::ofstream file(filename, std::ios::out);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  file << _content << "\n";
+  file << _content;
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
