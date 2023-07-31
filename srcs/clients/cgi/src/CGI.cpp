@@ -17,7 +17,6 @@ CGI::CGI() {
   _write_event = false;
   _read_event = false;
   _wait_event = false;
-
   initEnv();
 }
 
@@ -36,6 +35,7 @@ CGI::CGI(IRequest* request, IResponse* response, uintptr_t client_fd,
   _out_pipe[0] = 0;
   _out_pipe[1] = 0;
   _pid = 0;
+  _lastSentPos = 0;
   initEnv();
 }
 
