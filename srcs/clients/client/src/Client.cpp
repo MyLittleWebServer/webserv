@@ -37,9 +37,6 @@ Client &Client::operator=(const Client &client) {
 }
 
 Client::~Client(void) {
-#ifdef DEBUG_MSG
-  std ::cout << " Client destructor called " << getSD() << " !" << std::endl;
-#endif
   close(_sd);
   if (_method != NULL) delete _method;
   if (_cgi != NULL) delete _cgi;
@@ -82,10 +79,6 @@ void Client::receiveRequest(void) {
     _recvBuff.insert(_recvBuff.end(), Client::_buf, Client::_buf + n);
     std::memset(Client::_buf, 0, RECEIVE_LEN);
     if (checkIfReceiveFinished(n) == true) {
-#ifdef DEBUG_MSG
-      std::cout << "received data from " << _sd << ": " << _request
-                << std::endl;
-#endif
       break;
     }
   }

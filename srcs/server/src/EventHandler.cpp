@@ -311,7 +311,6 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == START) {
       setRequestTimeOutTimer(currClient);
     }
-    // std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent->ident));
     if (currClient.getState() == EXPECT_CONTINUE) {
@@ -437,9 +436,6 @@ void EventHandler::processRequestTimeOut(Client &currClient) {
 void EventHandler::timerCondition() {
   if (_currentEvent->filter == EVFILT_TIMER &&
       _currentEvent->ident == SESSION_TIMER) {
-#ifdef DEBUG_MSG
-    std::cout << "expired sessions cleared" << std::endl;
-#endif
     Session::getInstance().deleteExpiredSessions();
   }
 }
