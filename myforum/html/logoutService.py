@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/python3
+#!/Users/chanheki/.brew/bin/python3.11
 
 import os
 import sys
