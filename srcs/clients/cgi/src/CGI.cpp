@@ -164,24 +164,39 @@ void CGI::generateResponse() {
     return;
   }
   ssize_t start = _cgiResult.find("\r\n");
-  ret = _cgiResult.find("\r\n\r\n");
-  std::string header = _cgiResult.substr(start + 2, ret + 2);
-  std::string body = _cgiResult.substr(ret + 4);
+  ret = _cgiResult.find("\r\n\r\n", start + 2);
+  // std::string header = _cgiResult.substr(start + 2, ret - start);
+  // std::string body = _cgiResult.substr(ret + 4);
+
+  size_t headerPos = start + 2;
+  size_t headerLength = ret - headerPos;
+  size_t bodyPos = ret + 4;
+  size_t totalSize = _cgiResult.size();
+  size_t bodyLength = totalSize - bodyPos;
+  size_t lineEnd;
+  size_t colonPos;
+
   _response->clear();
   _response->setStatusCode(E_200_OK);
   while (true) {
-    ret = header.find("\r\n");
-    if (ret == std::string::npos) break;
-    std::string line = header.substr(0, ret);
-    size_t colon = line.find(":");
-    if (colon == std::string::npos) break;
-    std::string key = line.substr(0, colon);
-    std::string value = line.substr(colon + 1);
-    _response->setHeaderField(key, value);
-    header = header.substr(ret + 2);
+      // ret = header.find("\r\n");
+      lineEnd = _cgiResult.find("\r\n", headerPos);
+      if (lineEnd == std::string::npos) break;
+      // std::string line = header.substr(0, ret);
+      colonPos = _cgiResult.find(":", headerPos);
+      if (colonPos == std::string::npos) break;
+      _response->setHeaderField(
+          _cgiResult.substr(headerPos, colonPos - headerPos),
+          _cgiResult.substr(colonPos + 1, lineEnd - colonPos - 1));
+      // std::string key = line.substr(0, colon);
+      // std::string value = line.substr(colon + 1);
+      //_response->setHeaderField(key, value);
+      headerPos = lineEnd + 2;
+      headerLength -= (lineEnd - headerPos);
+      // header = header.substr(ret + 2);
   }
-  _response->setBody(body);
-  _response->setHeaderField("Content-Length", itos(body.length()));
+  _response->setBody(_cgiResult.substr(bodyPos, bodyLength));
+  _response->setHeaderField("Content-Length", itos(bodyLength));
   _response->assembleResponse();
   clear();
   Kqueue::enableEvent(_client_fd, EVFILT_WRITE, _client_info);
