@@ -21,6 +21,7 @@ class Request : public IRequest {
   bool _is_cgi;
   bool _is_expect_100;
   bool _is_session;
+  bool _valid_flag;
 
   size_t _contentLength;
 

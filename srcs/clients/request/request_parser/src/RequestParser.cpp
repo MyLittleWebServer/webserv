@@ -40,9 +40,9 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   if (delimeter == 0) {
     pos = 2;
     delimeter = dtsRequest.find("\r\n", 2);
-    _valid_flag = false;
+    (*dts.valid_flag) = false;
   } else {
-    _valid_flag = true;
+    (*dts.valid_flag) = true;
   }
 
   std::list<std::string> &linesBuffer = *dts.linesBuffer;
@@ -548,7 +548,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseCgi(dts);
   parseSessionConfig(dts);
   requestChecker(dts);
-  if (!_valid_flag) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (!(*dts.valid_flag)) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**

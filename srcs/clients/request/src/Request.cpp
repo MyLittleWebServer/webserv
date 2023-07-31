@@ -43,6 +43,7 @@ Request &Request::operator=(const Request &src) {
     _is_session = src._is_session;
     _originalPath = src._originalPath;
     _is_expect_100 = src._is_expect_100;
+    _valid_flag = src._valid_flag;
   }
   initDts();
   return *this;
@@ -53,7 +54,7 @@ void Request::initMember() {
   _is_cgi = false;
   _is_expect_100 = false;
   _is_session = false;
-
+  _valid_flag = false;
   _contentLength = 0;
 
   _request.clear();
@@ -80,6 +81,7 @@ void Request::initDts() {
   _request_parser_dts.isParsed = &_isParsed;
   _request_parser_dts.is_cgi = &_is_cgi;
   _request_parser_dts.is_session = &_is_session;
+  _request_parser_dts.valid_flag = &_valid_flag;
 
   _request_parser_dts.contentLength = &_contentLength;
 
