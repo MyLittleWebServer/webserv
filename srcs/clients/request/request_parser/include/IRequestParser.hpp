@@ -28,6 +28,7 @@ typedef struct RequestDts {
   std::map<std::string, std::string>* serverConf;
   IServerConfig** matchedServer;
   ILocationConfig** matchedLocation;
+  bool* valid_flag;
   bool* isParsed;
   bool* is_cgi;
   bool* is_expect_100;

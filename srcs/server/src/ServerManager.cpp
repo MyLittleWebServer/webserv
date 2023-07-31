@@ -16,6 +16,7 @@
 #include "ServerManager.hpp"
 
 #include "Color.hpp"
+#include "Logger.hpp"
 #include "Session.hpp"
 
 /**
@@ -102,7 +103,7 @@ void ServerManager::initServer(void) {
       Kqueue::setFdSet(serverVector.back().getSocket(), FD_SERVER);
     }
   } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
+    Logger::errorCout(e.what());
   }
   promptServer(serverVector);
 }
@@ -175,6 +176,6 @@ void ServerManager::startServer(void) {
       }
     }
   } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
+    Logger::errorCout(e.what());
   }
 }

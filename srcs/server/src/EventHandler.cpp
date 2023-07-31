@@ -225,7 +225,7 @@ void EventHandler::disconnectClient(Client *client) {
  */
 void EventHandler::checkErrorOnSocket() {
   if (getFdType(_currentEvent->ident) == FD_SERVER) {
-    throwWithErrorMessage("server socket error");
+    Logger::errorCout("server socket error");
   } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
     Logger::connectCoutNoEndl("Client Socket Error: ");
     Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
@@ -311,7 +311,6 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == START) {
       setRequestTimeOutTimer(currClient);
     }
-    // std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent->ident));
     if (currClient.getState() == EXPECT_CONTINUE) {
@@ -335,7 +334,7 @@ void EventHandler::processRequest(Client &currClient) {
     handleExceptionStatusCode(currClient);
   } catch (std::exception &e) {
     disconnectClient(&currClient);
-    std::cerr << e.what() << '\n';
+    Logger::errorCout(e.what());
     return;
   }
 }
@@ -437,9 +436,6 @@ void EventHandler::processRequestTimeOut(Client &currClient) {
 void EventHandler::timerCondition() {
   if (_currentEvent->filter == EVFILT_TIMER &&
       _currentEvent->ident == SESSION_TIMER) {
-#ifdef DEBUG_MSG
-    std::cout << "expired sessions cleared" << std::endl;
-#endif
     Session::getInstance().deleteExpiredSessions();
   }
 }

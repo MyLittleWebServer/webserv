@@ -91,8 +91,8 @@ void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1)
-    throwWithErrorMessage("kevent() error on registEvent()\n" +
-                          std::string(strerror(errno)));
+    Logger::errorCout("kevent() error on registEvent()\n" +
+                      std::string(strerror(errno)));
 }
 
 /**
@@ -113,7 +113,7 @@ void Kqueue::disableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_DISABLE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) throwWithErrorMessage("kevent error on disableEvent");
+  if (ret == -1) Logger::errorCout("kevent error on disableEvent");
 }
 
 /**
@@ -129,7 +129,7 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) throwWithErrorMessage("kevent error on enableEvent");
+  if (ret == -1) Logger::errorCout("kevent error on enableEvent");
 }
 
 /**
@@ -169,7 +169,7 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
 int Kqueue::newEvents() {
   int new_events = kevent(__kq, &__eventsToAdd[0], __eventsToAdd.size(),
                           __eventList, CONCURRENT_EVENTS, NULL);
-  if (new_events == -1) throwWithErrorMessage("kevent error on newEvents");
+  if (new_events == -1) Logger::errorCout("kevent error on newEvents");
   __eventsToAdd.clear();
   return (new_events);
 }

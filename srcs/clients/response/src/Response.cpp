@@ -111,7 +111,7 @@ void Response::create400And500Response(RequestDts &dts) {
  * @details
  * 각각의 status code에 맞춰서 response를 생성합니다.
  * 생성후 responseFlag를 on하여 response의 생성을 알립니다.
- * 
+ *
  * @param dts
  */
 void Response::createExceptionResponse(RequestDts &dts) {
@@ -188,7 +188,6 @@ void Response::assembleResponse(void) {
   assembleResponseLine();
   putHeaderFields();
   putBody();
-  // std::cout << _response << std::endl;
 }
 
 /**
@@ -292,10 +291,8 @@ void Response::configureErrorPages(RequestDts &dts) {
   if (path[0] == '/') {
     path = path.substr(1);
   }
-  std::cout << "path : " << path << std::endl;
   std::ifstream file(path.c_str(), std::ios::in);
   if (file.is_open() == false) {
-    std::cout << "FAIL path : " << path << std::endl;
     setHeaderField("Content-Type", "text/plain");
     addBody(statusInfo[*dts.statusCode].body);
     addBody("\r\n");
