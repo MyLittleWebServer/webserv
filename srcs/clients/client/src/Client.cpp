@@ -6,6 +6,7 @@
 #include "GET.hpp"
 #include "HEAD.hpp"
 #include "Kqueue.hpp"
+#include "Logger.hpp"
 #include "OPTIONS.hpp"
 #include "POST.hpp"
 #include "PUT.hpp"
@@ -123,11 +124,8 @@ void Client::parseRequest(short port) {
 }
 
 bool Client::isCgi() {
-  // if (_request.getMethod() == "POST") {
-  //   std::cout << "//////////////////" << std::endl;
-  //   std::cout << _recvBuff.substr(0, _recvBuff.find("\r\n\r\n")) <<
-  //   std::endl; std::cout << "//////////////////" << std::endl;
-  // }
+  Logger::requestCoutNoEndl("Parsed Complete: ");
+  Logger::requestCoutOnlyMsgWithEndl(_sd);
   return _request.isCgi();
 }
 
@@ -161,14 +159,16 @@ void Client::sendResponse() {
     send_size = _response.getResponse().size() - _lastSentPos;
   const std::string &response = _response.getResponse();
   ssize_t n = send(_sd, response.c_str() + _lastSentPos, send_size, 0);
-  // if (n == -1) return;
   if (n == -1) {
-    std::cout << "FAILED:::: " << _lastSentPos << std::endl;
-    // throw Client::SendFailException();
+    Logger::warningCoutNoEndl("Client ");
+    Logger::warningCoutOnlyMsg(_sd);
+    Logger::warningCoutOnlyMsgWithEndl(" Socket Send Fail");
     return;
   }
   if (n <= 0) {
-    std::cout << "CLOSED:::: " << _lastSentPos << std::endl;
+    Logger::warningCoutNoEndl("Client ");
+    Logger::warningCoutOnlyMsg(_sd);
+    Logger::warningCoutOnlyMsgWithEndl(" Socket Close While Sending");
     throw Client::DisconnectedDuringSendException();
   }
 
@@ -177,8 +177,8 @@ void Client::sendResponse() {
     return;
   }
 
-  // std::cout << "SENT:::: " << _lastSentPos + static_cast<size_t>(n)
-  //           << std::endl;
+  Logger::responseCoutNoEndl("Response sent: ");
+  Logger::responseCoutOnlyMsgWithEndl(_sd);
 
   if (_state == EXPECT_CONTINUE_PROCESS_RESPONSE) {
     _state = RECEIVING;

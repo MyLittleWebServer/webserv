@@ -8,6 +8,8 @@
 
 #include "Kqueue.hpp"
 
+#include "Logger.hpp"
+
 fd_set Kqueue::_server_fds;
 fd_set Kqueue::_client_fds;
 fd_set Kqueue::_method_fds;
@@ -141,7 +143,10 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
   struct kevent temp_event;
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) std::cout << "kevent error on deleteEvent" << std::endl;
+  if (ret == -1) {
+    Logger::errorCoutNoEndl("Kevent Error On DeleteEvent: ");
+    Logger::errorCoutOnlyMsgWithEndl(ident);
+  };
 }
 
 /**
