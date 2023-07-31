@@ -141,8 +141,9 @@ void RequestParser::parseHeaderFields(RequestDts &dts) {
     if (pos == std::string::npos || end == std::string::npos)
       throw(*dts.statusCode = E_400_BAD_REQUEST);
     key = std::string(toLowerString((*lineIt).substr(0, pos)));
-    value =
-        std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
+    // value =
+    //     std::string(toLowerString((*lineIt).substr(pos + 1, end - pos - 1)));
+    value = (*lineIt).substr(pos + 1, end - pos - 1);
     value = ft_trimOWS(value);
     validateHeaderKey(key, dts);
     removeNotAscii(key);
@@ -167,7 +168,7 @@ void RequestParser::parseCookie(RequestDts &dts) {
       (*dts.cookieMap)[keyValue[0]] = keyValue[1];
     }
   }
-  (*dts.headerFields).erase("cookie");
+  // (*dts.headerFields).erase("cookie");
 }
 
 /**
@@ -375,8 +376,7 @@ void RequestParser::validatePath(RequestDts &dts) {
 #ifdef DEBUG_MSG
       std::cout << "actual path: " << *dts.path << '\n';
 #endif
-      if (checkPathForm(dts) == false)
-        throw(*dts.statusCode = E_404_NOT_FOUND);
+      if (checkPathForm(dts) == false) throw(*dts.statusCode = E_404_NOT_FOUND);
       return;
     }
     if (currRoute == "/") defaultLocation = it;
@@ -505,10 +505,10 @@ bool RequestParser::allHeaderRecieved(RequestDts &dts) {
  * @date 2023.07.18
  */
 void RequestParser::parseRequest(RequestDts &dts, short port) {
-  std::cout << "//////////////////" << std::endl;
-  std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
-            << std::endl;
-  std::cout << "//////////////////" << std::endl;
+  // std::cout << "//////////////////" << std::endl;
+  // std::cout << (*dts.request).substr(0, (*dts.request).find("\r\n\r\n"))
+  //           << std::endl;
+  // std::cout << "//////////////////" << std::endl;
 
   if (!allHeaderRecieved(dts)) {
     attackGuard(dts);

@@ -67,7 +67,10 @@ void POST::generateResource(RequestDts& dts) {
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
     } catch (ExceptionThrower::InvalidConfigException& e) {
-      throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
+      _content = (*dts.body);
+      _title = makeRandomFileName(dts);
+      writeTextBody(dts, mimeType);
+      // throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
 }
@@ -194,13 +197,12 @@ void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  _title.clear();
-  _content.clear();
-
-  if ((*dts.path)[dts.path->length() - 1] != '/')
+  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
     _location = *dts.originalPath + "/" + _title + "." + mimeType;
   else
     _location = *dts.originalPath + _title + "." + mimeType;
+  _title.clear();
+  _content.clear();
 }
 
 /**
@@ -231,10 +233,10 @@ void POST::writeBinaryBody(RequestDts& dts) {
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 
-  if ((*dts.path)[dts.path->length() - 1] != '/')
-    _location = *dts.path + "/" + _title;
+  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
+    _location = *dts.originalPath + "/" + _title;
   else
-    _location = *dts.path + _title;
+    _location = *dts.originalPath + _title;
 }
 
 /**
@@ -249,6 +251,8 @@ void POST::createSuccessResponse(IResponse& response) {
   response.setHeaderField("Location", _location);
   response.setBody("File has been successfully uploaded.\r\npath: /directory/" +
                    _title + "\r\n");
+  response.setHeaderField("Content-Type", "text/plain");
+  response.setHeaderField("Content-Length", itos(response.getBody().size()));
   response.assembleResponse();
   response.setResponseParsed();
 }
