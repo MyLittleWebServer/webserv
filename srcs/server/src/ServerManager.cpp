@@ -103,7 +103,6 @@ void ServerManager::initServer(void) {
       Kqueue::setFdSet(serverVector.back().getSocket(), FD_SERVER);
     }
   } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
     Logger::errorCout(e.what());
   }
   promptServer(serverVector);
