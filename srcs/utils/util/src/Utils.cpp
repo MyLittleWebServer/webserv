@@ -49,9 +49,6 @@ short getBoundPort(const uintptr_t ident) {
   socklen_t addr_len = sizeof(addr);
   if (getsockname(ident, (struct sockaddr *)&addr, &addr_len) == -1)
     throw std::runtime_error("getsockname() error\n");
-#ifdef DEBUG_MSG
-  std::cout << "getsockname: " << ntohs(addr.sin_port) << std::endl;
-#endif
   return (ntohs(addr.sin_port));
 }
 
