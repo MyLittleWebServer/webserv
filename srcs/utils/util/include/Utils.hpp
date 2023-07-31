@@ -28,7 +28,7 @@ short getBoundPort(const uintptr_t ident);
 std::string getCurrentTime();
 int getTimeOfDay();
 std::string toLowerString(std::string str);
-std::string ft_trim(std::string &str);
+std::string ft_trim(const std::string &str);
 std::string ft_trimOWS(std::string &str);
 
 std::vector<std::string> ft_split(const std::string &str, char delim);

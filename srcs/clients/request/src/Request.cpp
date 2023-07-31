@@ -67,6 +67,7 @@ void Request::initMember() {
   _query_string.clear();
 
   _headerFields.clear();
+  _headerFields["dummy"] = "";
   _cookieMap.clear();
   _queryStringElements.clear();
   _serverConf.clear();
@@ -107,54 +108,46 @@ void Request::initDts() {
 
 void Request::parseRequest(short port) {
   initMember();
-  initDts();
   _parser.parseRequest(_request_parser_dts, port);
 }
 
 void Request::parseRequest(const std::string &request, short port) {
   initMember();
   _request += request;
-  initDts();
   _parser.parseRequest(_request_parser_dts, port);
 }
 
-RequestDts &Request::getRequestParserDts(void) {
-  return _request_parser_dts;
-}
+RequestDts &Request::getRequestParserDts(void) { return _request_parser_dts; }
 
-const std::string &Request::getRequest(void) const { return (_request); }
-const std::string &Request::getMethod(void) const { return (_method); }
-const std::string &Request::getPath(void) const { return (_path); }
-const std::string &Request::getProtocol(void) const {
-  return (_protocol);
-}
-const std::string &Request::getCgiPath(void) const { return (_cgi_path); }
-const std::string &Request::getBody(void) const { return (_body); }
+const std::string &Request::getRequest(void) const { return _request; }
+const std::string &Request::getMethod(void) const { return _method; }
+const std::string &Request::getPath(void) const { return _path; }
+const std::string &Request::getProtocol(void) const { return _protocol; }
+const std::string &Request::getCgiPath(void) const { return _cgi_path; }
+const std::string &Request::getBody(void) const { return _body; }
 const std::string &Request::getQueryString(void) const { return _query_string; }
 
-size_t Request::getContentLength(void) const { return (_contentLength); }
+size_t Request::getContentLength(void) const { return _contentLength; }
 
-Status Request::getStatusCode(void) const { return (_statusCode); }
+Status Request::getStatusCode(void) const { return _statusCode; }
 std::map<std::string, std::string> &Request::getHeaderFields(void) {
-  return (_headerFields);
+  return _headerFields;
 }
-const std::string Request::getHeaderField(std::string key) const {
-  key = toLowerString(key).substr(0, key.length());
+const std::string &Request::getHeaderField(const std::string &key) const {
   std::map<std::string, std::string>::const_iterator iter =
-      _headerFields.find(key);
+      _headerFields.find(toLowerString(key));
   if (iter != _headerFields.end()) {
     return iter->second;
-  } else {
-    return "";
   }
+  return _headerFields.at("dummy");
 }
 const std::map<std::string, std::string> &Request::getQueryStringElements(
     void) const {
-  return (_queryStringElements);
+  return _queryStringElements;
 }
 
 IServerConfig *Request::getMatchedServer(void) const {
-  return (*_request_parser_dts.matchedServer);
+  return *_request_parser_dts.matchedServer;
 }
 
 const bool &Request::isParsed() const { return _isParsed; }
@@ -170,14 +163,10 @@ std::ostream &operator<<(std::ostream &os, const Request &request) {
   return os;
 }
 
-void Request::clear() {
-  initMember();
-  initDts();
-}
+void Request::clear() { initMember(); }
 
-void Request::setHeaderField(std::string key, std::string value) {
-  key = toLowerString(key).substr(0, key.length());
-  _headerFields[key] = value;
+void Request::setHeaderField(const std::string &key, const std::string &value) {
+  _headerFields[toLowerString(key)] = value;
 }
 
 const bool &Request::isExpect100() const { return _is_expect_100; }
