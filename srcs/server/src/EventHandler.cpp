@@ -225,7 +225,7 @@ void EventHandler::disconnectClient(Client *client) {
  */
 void EventHandler::checkErrorOnSocket() {
   if (getFdType(_currentEvent->ident) == FD_SERVER) {
-    throwWithErrorMessage("server socket error");
+    Logger::errorCout("server socket error");
   } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
     Logger::connectCoutNoEndl("Client Socket Error: ");
     Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
@@ -335,7 +335,7 @@ void EventHandler::processRequest(Client &currClient) {
     handleExceptionStatusCode(currClient);
   } catch (std::exception &e) {
     disconnectClient(&currClient);
-    std::cerr << e.what() << '\n';
+    Logger::errorCout(e.what());
     return;
   }
 }
