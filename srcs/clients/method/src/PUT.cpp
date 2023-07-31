@@ -27,7 +27,6 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   initUniqueIdandPath(dts);
 
   if (stat(dts.path->c_str(), &fileinfo) < 0) {
-    // generateResource(dts);
     replaceContent(dts);
     response.setStatusCode(E_201_CREATED);
   } else {
@@ -379,7 +378,7 @@ void PUT::writeTextBody(RequestDts& dts) {
     filename = _pathFinder + _uniqueID;
   std::ofstream file(filename.c_str(), std::ios::out);
   if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  file << _content << "\n";
+  file << _content;
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   file.close();
   if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
