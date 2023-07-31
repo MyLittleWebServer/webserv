@@ -126,9 +126,6 @@ void CGI::initEnv() {
   if (_request->getMethod() == "POST") _env.push_back(_content_length.c_str());
   if (_request->getMethod() == "GET") _env.push_back(_query_string.c_str());
   if (!_request->getHeaderField("X-Secret-Header-For-Test").empty()) {
-    std::cout << "X-Secret-Header-For-Test: "
-              << _request->getHeaderField("X-Secret-Header-For-Test")
-              << std::endl;
     _x_header = "HTTP_X_SECRET_HEADER_FOR_TEST=" +
                 _request->getHeaderField("X-Secret-Header-For-Test");
     _env.push_back(_x_header.c_str());
@@ -209,9 +206,6 @@ void CGI::execute() {
   if (pipe(_out_pipe) < 0) {
     throw ExceptionThrower::CGIPipeException();
   }
-  // std::cout << "pipe Id: " << _in_pipe[0] << " " << _in_pipe[1] << std::endl;
-  // std::cout << "pipe Id: " << _out_pipe[0] << " " << _out_pipe[1] <<
-  // std::endl;
   setPipeNonblock();
   if (_request->getMethod() == "POST" && _body.size() > 0) {
     Kqueue::setFdSet(_in_pipe[1], FD_CGI);

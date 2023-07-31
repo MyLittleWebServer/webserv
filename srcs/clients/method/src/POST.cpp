@@ -16,14 +16,15 @@ POST::POST(void) {}
 POST::~POST(void) {}
 
 void POST::doRequest(RequestDts& dts, IResponse& response) {
-#ifndef DEBUG_MSG
-  std::cout << " >> POST\n";
-  std::cout << "path: " << *dts.path << "\n";
-  std::cout << "original path: " << *dts.originalPath << "\n";
-  std::cout << "content-type: " << (*dts.headerFields)["content-type"] << "\n";
-  std::cout << "content-length: " << (*dts.headerFields)["content-length"]
-            << "\n";
-#endif
+  // #ifndef DEBUG_MSG
+  //   std::cout << " >> POST\n";
+  //   std::cout << "path: " << *dts.path << "\n";
+  //   std::cout << "original path: " << *dts.originalPath << "\n";
+  //   std::cout << "content-type: " << (*dts.headerFields)["content-type"] <<
+  //   "\n"; std::cout << "content-length: " <<
+  //   (*dts.headerFields)["content-length"]
+  //             << "\n";
+  // #endif
   if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
   handlePath(dts, response);
 }

@@ -10,7 +10,6 @@ void DELETE::doRequest(RequestDts& dts, IResponse& response) {
     throw(*dts.statusCode = E_404_NOT_FOUND);
   if (fileInfo.st_mode & S_IFDIR) throw(*dts.statusCode = E_403_FORBIDDEN);
   if (std::remove(dts.path->c_str()) != 0) {
-    std::cout << *dts.path << '\n';
     throw(*dts.statusCode = E_404_NOT_FOUND);
   }
   *dts.statusCode = E_200_OK;
