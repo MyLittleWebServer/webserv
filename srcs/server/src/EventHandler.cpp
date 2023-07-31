@@ -132,12 +132,16 @@ void EventHandler::branchCondition(void) {
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
   if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1) {
-    Logger::errorCoutNoEndl("Accept Error: ");
-    Logger::errorCoutOnlyMsgWithEndl(_currentEvent->ident);
+    Logger::errorCoutNoEndl(" Server Accept Error: ");
+    Logger::errorCoutOnlyMsg(_currentEvent->ident);
+    Logger::errorCoutOnlyMsg(" Server Failed to Accept Client ");
+    Logger::errorCoutOnlyMsgWithEndl(clientSocket);
     return;
   }
-  Logger::connectCoutNoEndl("Accept Client: ");
-  Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
+  Logger::connectCoutNoEndl("Accept Server: ");
+  Logger::connectCoutOnlyMsg(_currentEvent->ident);
+  Logger::connectCoutOnlyMsg(" Server Success to Accept Client ");
+  Logger::connectCoutOnlyMsgWithEndl(clientSocket);
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
   registClient(clientSocket);
 }
