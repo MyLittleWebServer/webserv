@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "Logger.hpp"
 #include "Session.hpp"
 
 /**
@@ -131,10 +132,12 @@ void EventHandler::branchCondition(void) {
 void EventHandler::acceptClient() {
   uintptr_t clientSocket;
   if ((clientSocket = accept(this->_currentEvent->ident, NULL, NULL)) == -1) {
-    std::cout << "accept error" << std::endl;
+    Logger::errorCoutNoEndl("Accept Error: ");
+    Logger::errorCoutOnlyMsgWithEndl(_currentEvent->ident);
     return;
   }
-  std::cout << "accept ... : " << clientSocket << std::endl;
+  Logger::connectCoutNoEndl("Accept Client: ");
+  Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
   fcntl(clientSocket, F_SETFL, O_NONBLOCK);
   registClient(clientSocket);
 }
@@ -197,7 +200,9 @@ void EventHandler::disconnectClient(Client *client) {
   deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
               static_cast<void *>(client));
   deleteFdSet((uintptr_t)client->getSD(), FD_CLIENT);
-  std::cout << "Client " << client->getSD() << " disconnected!" << std::endl;
+  Logger::connectCoutNoEndl("Client ");
+  Logger::connectCoutOnlyMsg(" disconnected: ");
+  Logger::connectCoutOnlyMsgWithEndl(client->getSD());
   delete client;
 }
 
@@ -217,7 +222,8 @@ void EventHandler::checkErrorOnSocket() {
   if (getFdType(_currentEvent->ident) == FD_SERVER) {
     throwWithErrorMessage("server socket error");
   } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
-    std::cout << " client socket error" << std::endl;
+    Logger::connectCoutNoEndl("Client Socket Error: ");
+    Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
   }
 }

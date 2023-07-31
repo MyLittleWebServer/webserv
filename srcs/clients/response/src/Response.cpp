@@ -79,7 +79,7 @@ void Response::assembleResponseLine(void) {
   _response += " ";
   _response += statusInfo[_statusCode].message;
   _response += "\r\n";
-  std::cout << _response << std::endl;
+  // std::cout << _response << std::endl;
 }
 
 void Response::resetResponse(void) {
@@ -98,7 +98,7 @@ void Response::assembleResponse(void) {
   assembleResponseLine();
   putHeaderFields();
   putBody();
-  std::cout << _response << std::endl;
+  // std::cout << _response << std::endl;
 }
 
 void Response::putHeaderFields(void) {
