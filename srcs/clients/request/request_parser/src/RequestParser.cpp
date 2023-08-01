@@ -320,19 +320,26 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
   Config &config = Config::getInstance();
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
+  std::list<IServerConfig *>::iterator firstServer;
+  bool firstFlag = true;
   if (serverInfo.empty()) throw(42.42);
   while (it != serverInfo.end()) {
     if ((*it)->getListen() != port) {
       ++it;
       continue;
     }
+    if (firstFlag == true) {
+      firstServer = it;
+      firstFlag = false;
+    }
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
       *dts.matchedServer = *it;
+      std::cout << (*dts.matchedServer)->getServerName() << '\n';
       return;
     }
-    *dts.matchedServer = *it;
     ++it;
   }
+  *dts.matchedServer = *firstServer;
   if (*dts.matchedServer == NULL) {
     throw(*dts.statusCode = E_404_NOT_FOUND);
   }
