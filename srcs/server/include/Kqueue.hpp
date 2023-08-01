@@ -62,6 +62,7 @@ class Kqueue {
 
  protected:
   static int __kq;
+  static int __new_events_cnt;
   static std::vector<struct kevent> __eventsToAdd;
   static struct kevent __eventList[CONCURRENT_EVENTS];
 
@@ -83,7 +84,7 @@ class Kqueue {
   static void disableEvent(uintptr_t ident, int16_t filter, void* udata);
   static void deleteEvent(uintptr_t ident, int16_t filter, void* udata);
 
-  int newEvents(void);
+  static int newEvents(void);
 
   static e_fd_type getFdType(uintptr_t ident);
   static void setFdSet(uintptr_t ident, e_fd_type type);

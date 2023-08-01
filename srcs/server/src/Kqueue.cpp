@@ -16,6 +16,7 @@ fd_set Kqueue::_method_fds;
 fd_set Kqueue::_cgi_fds;
 
 int Kqueue::__kq = 0;
+int Kqueue::__new_events_cnt = 0;
 std::vector<struct kevent> Kqueue::__eventsToAdd = std::vector<struct kevent>();
 struct kevent Kqueue::__eventList[CONCURRENT_EVENTS] = {};
 
@@ -133,6 +134,21 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
  * 함수가 이벤트를 반환할 때 변경되지 않습니다.
  */
 void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
+  bool flag = false;
+  for (int i = 0; i < Kqueue::__new_events_cnt; i++) {
+    if (Kqueue::__eventList[i].ident == ident &&
+        Kqueue::__eventList[i].filter == filter) {
+      struct kevent& temp_event = Kqueue::__eventList[i];
+      EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
+      int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
+      if (ret == -1) {
+        Logger::errorCoutNoEndl("Kevent Error On DeleteEvent: ");
+        Logger::errorCoutOnlyMsgWithEndl(ident);
+      };
+      flag = true;
+    }
+  }
+  if (flag) return;
   struct kevent temp_event;
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
@@ -164,6 +180,7 @@ int Kqueue::newEvents() {
                           __eventList, CONCURRENT_EVENTS, NULL);
   if (new_events == -1) Logger::errorCout("kevent error on newEvents");
   __eventsToAdd.clear();
+  Kqueue::__new_events_cnt = new_events;
   return (new_events);
 }
 

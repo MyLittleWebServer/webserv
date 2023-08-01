@@ -73,6 +73,10 @@ void EventHandler::checkFlags(void) {
     _errorFlag = true;
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
   }
+  if (_currentEvent->flags & EV_DELETE) {
+    Logger::warningCout("Event Already Delete");
+    _errorFlag = true;
+  }
 }
 
 /**
