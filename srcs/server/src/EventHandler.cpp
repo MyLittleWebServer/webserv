@@ -187,7 +187,6 @@ void EventHandler::setKeepAliveTimeOutTimer(Client &client) {
 }
 
 void EventHandler::setRequestTimeOutTimer(Client &client) {
-  deleteTimerEvent();
   registEvent(client.getSD(), EVFILT_TIMER, EV_ADD | EV_ONESHOT,
               client.getRequestTimeOutUnit(), client.getRequestTimeOutLimit(),
               static_cast<void *>(&client));
