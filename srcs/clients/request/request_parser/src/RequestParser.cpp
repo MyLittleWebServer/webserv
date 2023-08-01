@@ -334,7 +334,6 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
     }
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
       *dts.matchedServer = *it;
-      std::cout << (*dts.matchedServer)->getServerName() << '\n';
       return;
     }
     ++it;
