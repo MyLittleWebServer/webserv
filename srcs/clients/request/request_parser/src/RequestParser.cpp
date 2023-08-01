@@ -322,7 +322,6 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
   std::list<IServerConfig *>::iterator firstServer;
   bool firstFlag = true;
-  if (serverInfo.empty()) throw(42.42);
   while (it != serverInfo.end()) {
     if ((*it)->getListen() != port) {
       ++it;
@@ -339,9 +338,6 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
     ++it;
   }
   *dts.matchedServer = *firstServer;
-  if (*dts.matchedServer == NULL) {
-    throw(*dts.statusCode = E_404_NOT_FOUND);
-  }
 }
 
 std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
