@@ -71,7 +71,9 @@ void EventHandler::checkFlags(void) {
   if (_currentEvent->flags & EV_EOF &&
       Kqueue::getFdType(_currentEvent->ident) == FD_CLIENT) {
     _errorFlag = true;
+    deleteTimerEvent();
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
+    return;
   }
   if (_currentEvent->flags & EV_DELETE) {
     Logger::warningCout("Event Already Delete");
@@ -202,7 +204,6 @@ void EventHandler::setRequestTimeOutTimer(Client &client) {
  * @param client
  */
 void EventHandler::disconnectClient(Client *client) {
-  deleteTimerEvent();
   deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
               static_cast<void *>(client));
   deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
@@ -232,6 +233,7 @@ void EventHandler::checkErrorOnSocket() {
   } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
     Logger::connectCoutNoEndl("Client Socket Error: ");
     Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
+    deleteTimerEvent();
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
   }
 }
@@ -329,7 +331,6 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == RECEIVING) {
       return;
     }
-    // deleteTimerEvent();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -338,6 +339,7 @@ void EventHandler::processRequest(Client &currClient) {
   } catch (enum Status &code) {
     handleExceptionStatusCode(currClient);
   } catch (std::exception &e) {
+    deleteTimerEvent();
     disconnectClient(&currClient);
     Logger::errorCout(e.what());
     return;
@@ -394,6 +396,7 @@ void EventHandler::processResponse(Client &currClient) {
     currClient.sendResponse();
   } catch (std::exception &e) {
     std::cerr << e.what() << '\n';
+    deleteTimerEvent();
     disconnectClient(&currClient);
     return;
   }
@@ -406,7 +409,6 @@ void EventHandler::validateConnection(Client &currClient) {
                 static_cast<void *>(&currClient));
   }
   if (currClient.getState() == END_KEEP_ALIVE) {
-    deleteTimerEvent();
     disableEvent(currClient.getSD(), EVFILT_WRITE,
                  static_cast<void *>(&currClient));
     enableEvent(currClient.getSD(), EVFILT_READ,
@@ -414,6 +416,7 @@ void EventHandler::validateConnection(Client &currClient) {
     currClient.clear();
     setKeepAliveTimeOutTimer(currClient);
   } else if (currClient.getState() == END_CLOSE) {
+    deleteTimerEvent();
     disconnectClient(&currClient);
   }
 }
