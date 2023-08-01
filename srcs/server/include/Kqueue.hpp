@@ -9,7 +9,7 @@
 
 #include "Utils.hpp"
 
-#define CONCURRENT_EVENTS 1024
+#define CONCURRENT_EVENTS 64
 
 /**
  * @brief fd type
