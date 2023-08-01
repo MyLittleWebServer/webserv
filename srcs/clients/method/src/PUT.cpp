@@ -27,7 +27,6 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
   initUniqueIdandPath(dts);
 
   if (stat(dts.path->c_str(), &fileinfo) < 0) {
-    // generateResource(dts);
     replaceContent(dts);
     response.setStatusCode(E_201_CREATED);
   } else {

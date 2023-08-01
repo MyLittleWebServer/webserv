@@ -70,7 +70,6 @@ void POST::generateResource(RequestDts& dts) {
       _content = (*dts.body);
       _title = makeRandomFileName(dts);
       writeTextBody(dts, mimeType);
-      // throw(*dts.statusCode = E_415_UNSUPPORTED_MEDIA_TYPE);
     }
   }
 }

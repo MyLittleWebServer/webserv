@@ -80,8 +80,8 @@ void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
     matchedIndex = (*dts.matchedLocation)->getIndex();
     pathIndex = path + (path[path.size() - 1] == '/' ? matchedIndex
                                                      : "/" + matchedIndex);
-    autoindex = (*dts.matchedLocation)->getAutoindex();
   }
+  autoindex = (*dts.matchedLocation)->getAutoindex();
   if (checkFile(path)) {
     *dts.statusCode = E_200_OK;
     prepareBody(path, response);
@@ -218,7 +218,7 @@ std::string GET::generateHTML(const std::string& path,
   std::string html = HTML_HEAD_TITLE(path) + STYLE + HTML_BODY(path);
   for (std::vector<std::string>::const_iterator it = files.begin();
        it != files.end(); ++it) {
-    html += "<a href=\"" + *it + "\" style =\"font-size:1.5rem;\">" +
+    html += "<a href=\"" + *it + "\" style =\"font-size:1rem;\">" +
             ((*it)[it->size() - 1] == '/' ? "📁 " : "📄 ") + *it + "</a>";
   }
   html += HTML_BODY_END;

@@ -16,6 +16,7 @@ fd_set Kqueue::_method_fds;
 fd_set Kqueue::_cgi_fds;
 
 int Kqueue::__kq = 0;
+int Kqueue::__new_events_cnt = 0;
 std::vector<struct kevent> Kqueue::__eventsToAdd = std::vector<struct kevent>();
 struct kevent Kqueue::__eventList[CONCURRENT_EVENTS] = {};
 
@@ -44,13 +45,6 @@ Kqueue::~Kqueue() {}
 void Kqueue::addEvent(uintptr_t ident, int16_t filter, uint16_t flags,
                       uint32_t fflags, intptr_t data, void* udata) {
   struct kevent temp_event;
-
-#ifdef DEBUG_MSG
-  std::cout << "addEvent: ident: " << ident << " filter: " << filter
-            << " flags: " << flags << " fflags: " << fflags << " data: " << data
-            << " udata: " << udata << " " << std::endl;
-#endif
-
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
   Kqueue::__eventsToAdd.push_back(temp_event);
 }
@@ -91,8 +85,8 @@ void Kqueue::registEvent(uintptr_t ident, int16_t filter, uint16_t flags,
   EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1)
-    throwWithErrorMessage("kevent() error on registEvent()\n" +
-                          std::string(strerror(errno)));
+    Logger::errorCout("kevent() error on registEvent()\n" +
+                      std::string(strerror(errno)));
 }
 
 /**
@@ -113,7 +107,7 @@ void Kqueue::disableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_DISABLE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) throwWithErrorMessage("kevent error on disableEvent");
+  if (ret == -1) Logger::errorCout("kevent error on disableEvent");
 }
 
 /**
@@ -129,7 +123,7 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
 
   EV_SET(&temp_event, ident, filter, EV_ENABLE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
-  if (ret == -1) throwWithErrorMessage("kevent error on enableEvent");
+  if (ret == -1) Logger::errorCout("kevent error on enableEvent");
 }
 
 /**
@@ -140,8 +134,25 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
  * 함수가 이벤트를 반환할 때 변경되지 않습니다.
  */
 void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
+  (void)udata;
+  bool flag = false;
+  for (int i = 0; i < Kqueue::__new_events_cnt; i++) {
+    if (Kqueue::__eventList[i].ident == ident &&
+        Kqueue::__eventList[i].filter == filter) {
+      struct kevent& temp_event = Kqueue::__eventList[i];
+      temp_event.udata = 0;
+      EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, 0);
+      int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
+      if (ret == -1) {
+        Logger::errorCoutNoEndl("Kevent Error On DeleteEvent: ");
+        Logger::errorCoutOnlyMsgWithEndl(ident);
+      };
+      flag = true;
+    }
+  }
+  if (flag) return;
   struct kevent temp_event;
-  EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
+  EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, 0);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
   if (ret == -1) {
     Logger::errorCoutNoEndl("Kevent Error On DeleteEvent: ");
@@ -169,8 +180,9 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
 int Kqueue::newEvents() {
   int new_events = kevent(__kq, &__eventsToAdd[0], __eventsToAdd.size(),
                           __eventList, CONCURRENT_EVENTS, NULL);
-  if (new_events == -1) throwWithErrorMessage("kevent error on newEvents");
+  if (new_events == -1) Logger::errorCout("kevent error on newEvents");
   __eventsToAdd.clear();
+  Kqueue::__new_events_cnt = new_events;
   return (new_events);
 }
 
@@ -206,29 +218,14 @@ void Kqueue::init(void) {
  */
 e_fd_type Kqueue::getFdType(uintptr_t ident) {
   if (FD_ISSET(ident, &Kqueue::_server_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in server" << std::endl;
-#endif
     return (FD_SERVER);
   } else if (FD_ISSET(ident, &Kqueue::_client_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in client" << std::endl;
-#endif
     return (FD_CLIENT);
   } else if (FD_ISSET(ident, &Kqueue::_method_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in method" << std::endl;
-#endif
     return (FD_METHOD);
   } else if (FD_ISSET(ident, &Kqueue::_cgi_fds)) {
-#ifdef DEBUG_MSG
-    std::cout << "getFdType: " << ident << " in cgi" << std::endl;
-#endif
     return (FD_CGI);
   }
-#ifdef DEBUG_MSG
-  std::cout << "getFdType: " << ident << " is none" << std::endl;
-#endif
   return (FD_NONE);
 }
 
@@ -272,29 +269,22 @@ void Kqueue::setFdSet(uintptr_t ident, e_fd_type type) {
 void Kqueue::deleteFdSet(uintptr_t ident, e_fd_type type) {
   switch (type) {
     case FD_SERVER: {
-      // std::cout << "deleteFdSet: " << ident << "FD_SERVER" << std::endl;
       FD_CLR(ident, &Kqueue::_server_fds);
       break;
     }
     case FD_CLIENT: {
-      // std::cout << "deleteFdSet: " << ident << "FD_CLIENT" << std::endl;
       FD_CLR(ident, &Kqueue::_client_fds);
       break;
     }
     case FD_METHOD: {
-      // std::cout << "deleteFdSet: " << ident << "FD_METHOD" << std::endl;
       FD_CLR(ident, &Kqueue::_method_fds);
       break;
     }
     case FD_CGI: {
-      // std::cout << "deleteFdSet: " << ident << "FD_CGI" << std::endl;
       FD_CLR(ident, &Kqueue::_cgi_fds);
       break;
     }
     default:
       break;
   }
-#ifdef DEBUG_MSG
-  getFdType(ident);
-#endif
 }

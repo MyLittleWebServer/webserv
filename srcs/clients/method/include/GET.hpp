@@ -9,7 +9,7 @@
 #define STYLE                                               \
   "<style> body { padding: 2rem; line-height : "            \
   "2.5rem; } h1 { margin-bottom : 2rem; } a { margin-top: " \
-  "0.5rem; "                                                \
+  "0.3rem; "                                                \
   "margin-bottom: 0.5rem; display: block;}</style></head>\r\n "
 #define HTML_BODY_END "\r\n</body>\r\n</html>"
 

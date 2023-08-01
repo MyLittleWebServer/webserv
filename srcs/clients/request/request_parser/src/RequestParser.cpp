@@ -40,9 +40,9 @@ void RequestParser::splitLinesByCRLF(RequestDts &dts) {
   if (delimeter == 0) {
     pos = 2;
     delimeter = dtsRequest.find("\r\n", 2);
-    _valid_flag = false;
+    (*dts.valid_flag) = false;
   } else {
-    _valid_flag = true;
+    (*dts.valid_flag) = true;
   }
 
   std::list<std::string> &linesBuffer = *dts.linesBuffer;
@@ -320,22 +320,24 @@ void RequestParser::matchServerConf(short port, RequestDts &dts) {
   Config &config = Config::getInstance();
   std::list<IServerConfig *> serverInfo = config.getServerConfigs();
   std::list<IServerConfig *>::iterator it = serverInfo.begin();
-  if (serverInfo.empty()) throw(42.42);
+  std::list<IServerConfig *>::iterator firstServer;
+  bool firstFlag = true;
   while (it != serverInfo.end()) {
     if ((*it)->getListen() != port) {
       ++it;
       continue;
     }
+    if (firstFlag == true) {
+      firstServer = it;
+      firstFlag = false;
+    }
     if ((*it)->getServerName() == (*dts.headerFields)["host"]) {
       *dts.matchedServer = *it;
       return;
     }
-    *dts.matchedServer = *it;
     ++it;
   }
-  if (*dts.matchedServer == NULL) {
-    throw(*dts.statusCode = E_404_NOT_FOUND);
-  }
+  *dts.matchedServer = *firstServer;
 }
 
 std::string RequestParser::getFirstTokenOfPath(RequestDts &dts) const {
@@ -548,7 +550,7 @@ void RequestParser::parseRequest(RequestDts &dts, short port) {
   parseCgi(dts);
   parseSessionConfig(dts);
   requestChecker(dts);
-  if (!_valid_flag) throw(*dts.statusCode = E_400_BAD_REQUEST);
+  if (!(*dts.valid_flag)) throw(*dts.statusCode = E_400_BAD_REQUEST);
 }
 
 /**

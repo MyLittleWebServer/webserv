@@ -71,8 +71,11 @@ void EventHandler::checkFlags(void) {
   if (_currentEvent->flags & EV_EOF &&
       Kqueue::getFdType(_currentEvent->ident) == FD_CLIENT) {
     _errorFlag = true;
-    deleteTimerEvent();
     disconnectClient(static_cast<Client *>(_currentEvent->udata));
+  }
+  if (_currentEvent->flags & EV_DELETE) {
+    Logger::warningCout("Event Already Delete");
+    _errorFlag = true;
   }
 }
 
@@ -200,6 +203,7 @@ void EventHandler::setRequestTimeOutTimer(Client &client) {
  * @param client
  */
 void EventHandler::disconnectClient(Client *client) {
+  deleteTimerEvent();
   deleteEvent((uintptr_t)client->getSD(), EVFILT_WRITE,
               static_cast<void *>(client));
   deleteEvent((uintptr_t)client->getSD(), EVFILT_READ,
@@ -225,7 +229,7 @@ void EventHandler::disconnectClient(Client *client) {
  */
 void EventHandler::checkErrorOnSocket() {
   if (getFdType(_currentEvent->ident) == FD_SERVER) {
-    throwWithErrorMessage("server socket error");
+    Logger::errorCout("server socket error");
   } else if (getFdType(_currentEvent->ident) == FD_CLIENT) {
     Logger::connectCoutNoEndl("Client Socket Error: ");
     Logger::connectCoutOnlyMsgWithEndl(_currentEvent->ident);
@@ -247,6 +251,7 @@ void EventHandler::checkErrorOnSocket() {
  *
  */
 void EventHandler::clientCondition() {
+  if (_currentEvent->udata == 0) return;
   Client &currClient = *(static_cast<Client *>(_currentEvent->udata));
   if (_currentEvent->filter == EVFILT_READ) {
     processRequest(currClient);
@@ -266,6 +271,7 @@ void EventHandler::clientCondition() {
  * filter가 EVFILT_WRITE라면 writeCGI() 함수를 호출합니다.
  */
 void EventHandler::cgiCondition() {
+  if (_currentEvent->udata == 0) return;
   ICGI &cgi = *(static_cast<ICGI *>(_currentEvent->udata));
   if (_currentEvent->filter == EVFILT_READ) {
     cgi.waitAndReadCGI();
@@ -311,7 +317,6 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == START) {
       setRequestTimeOutTimer(currClient);
     }
-    // std::cout << "socket descriptor : " << currClient.getSD() << std::endl;
     currClient.receiveRequest();
     currClient.parseRequest(getBoundPort(_currentEvent->ident));
     if (currClient.getState() == EXPECT_CONTINUE) {
@@ -325,7 +330,7 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == RECEIVING) {
       return;
     }
-    deleteTimerEvent();
+    // deleteTimerEvent();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -335,7 +340,7 @@ void EventHandler::processRequest(Client &currClient) {
     handleExceptionStatusCode(currClient);
   } catch (std::exception &e) {
     disconnectClient(&currClient);
-    std::cerr << e.what() << '\n';
+    Logger::errorCout(e.what());
     return;
   }
 }
@@ -402,6 +407,7 @@ void EventHandler::validateConnection(Client &currClient) {
                 static_cast<void *>(&currClient));
   }
   if (currClient.getState() == END_KEEP_ALIVE) {
+    deleteTimerEvent();
     disableEvent(currClient.getSD(), EVFILT_WRITE,
                  static_cast<void *>(&currClient));
     enableEvent(currClient.getSD(), EVFILT_READ,
@@ -437,9 +443,6 @@ void EventHandler::processRequestTimeOut(Client &currClient) {
 void EventHandler::timerCondition() {
   if (_currentEvent->filter == EVFILT_TIMER &&
       _currentEvent->ident == SESSION_TIMER) {
-#ifdef DEBUG_MSG
-    std::cout << "expired sessions cleared" << std::endl;
-#endif
     Session::getInstance().deleteExpiredSessions();
   }
 }
