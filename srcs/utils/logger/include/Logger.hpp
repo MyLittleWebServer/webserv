@@ -4,6 +4,11 @@
 #include <iostream>
 #include <string>
 
+template <typename T>
+inline std::string brackets(const T &x) {
+  return "[" + x + "]";
+}
+
 class Logger {
  private:
   Logger();
