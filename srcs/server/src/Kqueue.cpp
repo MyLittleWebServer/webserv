@@ -134,6 +134,7 @@ void Kqueue::enableEvent(uintptr_t ident, int16_t filter, void* udata) {
  * 함수가 이벤트를 반환할 때 변경되지 않습니다.
  */
 void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
+  bool flag = false;
   for (int i = 0; i < Kqueue::__new_events_cnt; i++) {
     if (Kqueue::__eventList[i].ident == ident &&
         Kqueue::__eventList[i].filter == filter) {
@@ -144,9 +145,10 @@ void Kqueue::deleteEvent(uintptr_t ident, int16_t filter, void* udata) {
         Logger::errorCoutNoEndl("Kevent Error On DeleteEvent: ");
         Logger::errorCoutOnlyMsgWithEndl(ident);
       };
-      return;
+      flag = true;
     }
   }
+  if (flag) return;
   struct kevent temp_event;
   EV_SET(&temp_event, ident, filter, EV_DELETE, 0, 0, udata);
   int ret = kevent(Kqueue::__kq, &temp_event, 1, NULL, 0, NULL);
