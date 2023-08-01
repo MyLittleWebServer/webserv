@@ -251,6 +251,7 @@ void EventHandler::checkErrorOnSocket() {
  *
  */
 void EventHandler::clientCondition() {
+  if (_currentEvent->udata == 0) return;
   Client &currClient = *(static_cast<Client *>(_currentEvent->udata));
   if (_currentEvent->filter == EVFILT_READ) {
     processRequest(currClient);
@@ -270,6 +271,7 @@ void EventHandler::clientCondition() {
  * filter가 EVFILT_WRITE라면 writeCGI() 함수를 호출합니다.
  */
 void EventHandler::cgiCondition() {
+  if (_currentEvent->udata == 0) return;
   ICGI &cgi = *(static_cast<ICGI *>(_currentEvent->udata));
   if (_currentEvent->filter == EVFILT_READ) {
     cgi.waitAndReadCGI();
@@ -328,7 +330,7 @@ void EventHandler::processRequest(Client &currClient) {
     if (currClient.getState() == RECEIVING) {
       return;
     }
-    deleteTimerEvent();
+    // deleteTimerEvent();
     if (currClient.isCgi()) {
       currClient.makeAndExecuteCgi();
     } else {
@@ -405,6 +407,7 @@ void EventHandler::validateConnection(Client &currClient) {
                 static_cast<void *>(&currClient));
   }
   if (currClient.getState() == END_KEEP_ALIVE) {
+    deleteTimerEvent();
     disableEvent(currClient.getSD(), EVFILT_WRITE,
                  static_cast<void *>(&currClient));
     enableEvent(currClient.getSD(), EVFILT_READ,
