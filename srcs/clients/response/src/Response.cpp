@@ -301,6 +301,9 @@ void Response::configureErrorPages(RequestDts &dts) {
     setHeaderField("Content-Type", "text/html; charset=UTF-8");
     std::string buff;
     while (std::getline(file, buff)) {
+      if (file.fail()) {
+        throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+      }
       addBody(buff);
       addBody("\r\n");
     }
