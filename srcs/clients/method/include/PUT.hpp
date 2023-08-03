@@ -10,14 +10,10 @@ class PUT : public IMethod {
   std::string _path;
   std::string _uniqueID;
 
-  std::string _contentType;
-  std::string _boundary;
   std::string _title;
   std::string _content;
 
   std::string _pathFinder;
-
-  struct stat fileinfo;
 
   void generateResource(RequestDts& dts);
 
@@ -33,7 +29,7 @@ class PUT : public IMethod {
   void writeTextBody(RequestDts& dts);
   void writeBinaryBody(RequestDts& dts);
 
-  std::string decodeURL(std::string encoded_string);
+  std::string decodeURL(std::string encodedString);
 
   void initUniqueIdandPath(RequestDts& dts);
 
