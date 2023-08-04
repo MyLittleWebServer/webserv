@@ -22,11 +22,12 @@ class GET : public IMethod {
   void handlePath(RequestDts& dts, IResponse& response);
   void getPublicEndpoint(RequestDts& dts, IResponse& response);
   bool getSpecificEndpoint(RequestDts& dts, IResponse& response);
-  bool checkFile(std::string& path);
-  bool checkDirectory(std::string& path);
-  bool checkIndexFile(std::string& pathIndex);
+  bool checkFile(const std::string& path);
+  bool checkDirectory(const std::string& path);
+  bool checkIndexFile(const std::string& pathIndex);
   bool checkAutoIndex(std::string& pathIndex, const std::string& autoindex);
-  void prepareBody(const std::string& pathIndex, IResponse& response);
+  void prepareBody(RequestDts& dts, const std::string& pathIndex,
+                   IResponse& response);
   void prepareFileList(const std::string& path, RequestDts& dts,
                        IResponse& response);
   std::vector<std::string> getFileList(const std::string& path,
@@ -34,8 +35,10 @@ class GET : public IMethod {
   std::string generateHTML(const std::string& path,
                            const std::vector<std::string>& files);
   void getContentType(const std::string& path, IResponse& response);
-  void prepareTextBody(const std::string& path, IResponse& response);
-  void prepareBinaryBody(const std::string& path, IResponse& response);
+  void prepareTextBody(RequestDts& dts, const std::string& path,
+                       IResponse& response);
+  void prepareBinaryBody(RequestDts& dts, const std::string& path,
+                         IResponse& response);
   void bodyCheck(RequestDts& dts, IResponse& response);
 
  private:

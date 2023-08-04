@@ -8,13 +8,8 @@
 class POST : public IMethod {
  private:
   std::string _location;
-  std::string _contentType;
-  std::string _boundary;
   std::string _title;
   std::string _content;
-  std::string _randName;
-
-  struct stat fileinfo;
 
   void generateResource(RequestDts& dts);
 
@@ -26,10 +21,10 @@ class POST : public IMethod {
   void createSuccessResponse(IResponse& response);
   void generateUrlEncoded(RequestDts& dts);
   void generateMultipart(RequestDts& dts);
-  void writeTextBody(RequestDts& dts, std::string mimeType);
+  void writeTextBody(RequestDts& dts, const std::string& mimeType);
   void writeBinaryBody(RequestDts& dts);
 
-  std::string decodeURL(std::string encoded_string);
+  std::string decodeURL(std::string encodedString);
 
   std::string makeRandomFileName(RequestDts& dts);
 

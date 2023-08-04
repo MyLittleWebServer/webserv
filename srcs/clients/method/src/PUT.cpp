@@ -23,14 +23,18 @@ PUT::~PUT(void) {}
  * @date 2023.07.30
  */
 void PUT::doRequest(RequestDts& dts, IResponse& response) {
-  if (*dts.body == "") throw(*dts.statusCode = E_200_OK);
+  if (*dts.body == "") {
+    throw(*dts.statusCode = E_200_OK);
+  }
   initUniqueIdandPath(dts);
-
-  if (stat(dts.path->c_str(), &fileinfo) < 0) {
+  struct stat fileInfo;
+  if (stat(dts.path->c_str(), &fileInfo) < 0) {
     replaceContent(dts);
     response.setStatusCode(E_201_CREATED);
   } else {
-    if (checkBodyContent(dts)) throw(*dts.statusCode = E_204_NO_CONTENT);
+    if (checkBodyContent(dts)) {
+      throw(*dts.statusCode = E_204_NO_CONTENT);
+    }
     replaceContent(dts);
     response.setStatusCode(E_200_OK);
   }
@@ -50,11 +54,11 @@ void PUT::doRequest(RequestDts& dts, IResponse& response) {
  */
 void PUT::initUniqueIdandPath(RequestDts& dts) {
   _uniqueID = "";
-  std::string uniquePath = *dts.path;
-  size_t slashPos = uniquePath.rfind('/');
+  const std::string& dtsPath = *dts.path;
+  size_t slashPos = dtsPath.rfind('/');
   _pathFinder = (*dts.path).substr(0, slashPos) + "/";
-  if (slashPos != std::string::npos && uniquePath[slashPos + 1] != '\0') {
-    _uniqueID = uniquePath.substr(slashPos + 1);
+  if (slashPos != std::string::npos && dtsPath[slashPos + 1] != '\0') {
+    _uniqueID = dtsPath.substr(slashPos + 1);
   }
 }
 
@@ -73,12 +77,14 @@ void PUT::initUniqueIdandPath(RequestDts& dts) {
  * @date 2023.07.30
  */
 bool PUT::checkBodyContent(RequestDts& dts) {
+  const std::string& contentType = (*dts.headerFields)["content-type"];
   std::string parsedContent;
   bool ret;
-  _contentType = (*dts.headerFields)["content-type"].c_str();
-  parsedContent = _contentType;
-  if (_contentType.find(';') != std::string::npos) {
-    parsedContent = _contentType.substr(0, _contentType.find(';'));
+
+  if (contentType.find(';') != std::string::npos) {
+    parsedContent = contentType.substr(0, contentType.find(';'));
+  } else {
+    parsedContent = contentType;
   }
   if (parsedContent == "multipart/form-data") {
     ret = checkForMultipart(dts);
@@ -123,12 +129,17 @@ bool PUT::checkForMultipart(RequestDts& dts) {
                     (*dts.body).begin() + boundary2EndPos);
 
   std::ifstream file(dts.path->c_str(), std::ios::binary);
+  if (!file.is_open()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   std::stringstream buf;
-  std::string cmpBin;
   buf << file.rdbuf();
-  cmpBin += (buf.str());
+  if (file.fail()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   file.close();
-  if (cmpContent.compare(cmpBin) != 0) {
+
+  if (cmpContent.compare(buf.str()) != 0) {
     return false;
   }
   return true;
@@ -150,21 +161,26 @@ bool PUT::checkForMultipart(RequestDts& dts) {
  */
 
 bool PUT::checkForUrlEncoded(RequestDts& dts) {
-  std::string urlTitle = _uniqueID;
-  std::string urlContent;
-  std::string buf;
   std::ifstream file(dts.path->c_str(), std ::ios::in);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  std::getline(file, buf);
-  urlContent += buf;
+  if (!file.is_open()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
+  std::string urlContent;
+  std::getline(file, urlContent);
+  if (file.fail()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
+  file.close();
 
-  std::string compStr = "title=" + urlTitle + "&" + "content=" + urlContent;
+  std::string compStr = "title=" + _uniqueID + "&" + "content=" + urlContent;
   size_t andPos = (*dts.body).find('&');
   size_t equalPos = (*dts.body).find('=', andPos + 1);
   std::string bodyContent = (*dts.body).substr(equalPos + 1);
-  std::string bodyStr = "title=" + urlTitle + "&" + "content=" + bodyContent;
+  std::string bodyStr = "title=" + _uniqueID + "&" + "content=" + bodyContent;
 
-  if (compStr == bodyStr) return true;
+  if (compStr == bodyStr) {
+    return true;
+  }
   return false;
 }
 
@@ -180,15 +196,22 @@ bool PUT::checkForUrlEncoded(RequestDts& dts) {
  */
 bool PUT::checkForTextFile(RequestDts& dts) {
   std::ifstream file(dts.path->c_str(), std::ios::in);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (!file.is_open()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
   std::string cmpContent;
   std::string buf;
   while (std::getline(file, buf)) {
     cmpContent += buf;
-    if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+    if (file.fail()) {
+      throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+    }
   }
   file.close();
-  if (cmpContent == (*dts.body)) return true;
+
+  if (cmpContent == (*dts.body)) {
+    return true;
+  }
   return false;
 }
 
@@ -205,38 +228,43 @@ bool PUT::checkForTextFile(RequestDts& dts) {
  * @date 2023.07.30
  */
 void PUT::replaceContent(RequestDts& dts) {
+  std::string& dtsBody = *dts.body;
   std::string cmpBoundary;
-  std::string binBody = (*dts.body).data();
   std::string parsedContent;
-  _contentType = (*dts.headerFields)["content-type"].c_str();
-  parsedContent = _contentType;
-  if (_contentType.find(';') != std::string::npos) {
-    parsedContent = _contentType.substr(0, _contentType.find(';'));
+
+  const std::string& contentType = (*dts.headerFields)["content-type"];
+  if (contentType.find(';') != std::string::npos) {
+    parsedContent = contentType.substr(0, contentType.find(';'));
+  } else {
+    parsedContent = contentType;
   }
 
   if (parsedContent == "multipart/form-data") {
-    std::string binBody = (*dts.body).data();
+    std::string binBody = dtsBody.data();
     size_t boundaryEndPos = binBody.find("\r\n");
-    if (boundaryEndPos == std::string::npos)
+    if (boundaryEndPos == std::string::npos) {
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
+    }
     cmpBoundary = binBody.substr(0, boundaryEndPos);
 
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
-    size_t binStart = (*dts.body).find("\r\n\r\n");
-    size_t boundary2EndPos = (*dts.body).find(cmpBoundary, fileEndPos);
-    if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
-      throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
-                    (*dts.body).begin() + boundary2EndPos);
+    size_t binStart = dtsBody.find("\r\n\r\n");
+    size_t boundary2EndPos = dtsBody.find(cmpBoundary, fileEndPos);
+
+    if (binStart == std::string::npos || boundary2EndPos == std::string::npos) {
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
+    }
+    _content.insert(_content.end(), dtsBody.begin() + binStart + 4,
+                    dtsBody.begin() + boundary2EndPos);
     writeBinaryBody(dts);
   } else if (parsedContent == "application/x-www-form-urlencoded") {
-    std::vector<std::string> splitbyAnd = ft_split(*dts.body, '&');
+    std::vector<std::string> splitbyAnd = ft_split(dtsBody, '&');
     size_t equalPos = splitbyAnd[1].find('=');
     _content = splitbyAnd[1].substr(equalPos + 1);
     writeTextBody(dts);
   } else {
-    _content = (*dts.body).data();
+    _content = dtsBody.data();
     writeTextBody(dts);
   }
 }
@@ -255,10 +283,12 @@ void PUT::replaceContent(RequestDts& dts) {
  */
 void PUT::generateResource(RequestDts& dts) {
   std::string parsedContent;
-  _contentType = (*dts.headerFields)["content-type"].c_str();
-  parsedContent = _contentType;
-  if (_contentType.find(';') != std::string::npos) {
-    parsedContent = _contentType.substr(0, _contentType.find(';'));
+  const std::string& contentType = (*dts.headerFields)["content-type"];
+
+  if (contentType.find(';') != std::string::npos) {
+    parsedContent = contentType.substr(0, contentType.find(';'));
+  } else {
+    parsedContent = contentType;
   }
   if (parsedContent == "application/x-www-form-urlencoded") {
     generateUrlEncoded(dts);
@@ -287,8 +317,9 @@ void PUT::generateUrlEncoded(RequestDts& dts) {
   std::string decodedBody = decodeURL(*dts.body);
 
   if (decodedBody.find("title") == std::string::npos ||
-      decodedBody.find("content") == std::string::npos)
+      decodedBody.find("content") == std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 
   size_t andPos = decodedBody.find('&');
   size_t equalPos1 = decodedBody.find('=');
@@ -317,15 +348,17 @@ void PUT::generateUrlEncoded(RequestDts& dts) {
  * @date 2023.07.30
  */
 void PUT::generateMultipart(RequestDts& dts) {
-  std::string binBody = (*dts.body).data();
+  std::string& dtsBody = *dts.body;
 
-  size_t boundaryEndPos = binBody.find("\r\n");
-  if (boundaryEndPos == std::string::npos)
+  size_t boundaryEndPos = dtsBody.find("\r\n");
+
+  if (boundaryEndPos == std::string::npos) {
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
-  _boundary = binBody.substr(0, boundaryEndPos);
+  }
+  std::string boundary = dtsBody.substr(0, boundaryEndPos);
 
   while (true) {
-    std::string binBody = (*dts.body).data();
+    std::string binBody = dtsBody.data();
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
@@ -335,20 +368,21 @@ void PUT::generateMultipart(RequestDts& dts) {
       return;
     }
     _title = _uniqueID;
-    size_t binStart = (*dts.body).find("\r\n\r\n");
-    size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
-    if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
-      throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
-                    (*dts.body).begin() + boundary2EndPos);
+    size_t binStart = dtsBody.find("\r\n\r\n");
+    size_t boundary2EndPos = dtsBody.find(boundary, fileEndPos);
+    if (binStart == std::string::npos || boundary2EndPos == std::string::npos) {
+      throw(*dts.statusCode = E_400_BAD_REQUEST);
+    }
+    _content.insert(_content.end(), dtsBody.begin() + binStart + 4,
+                    dtsBody.begin() + boundary2EndPos);
     writeBinaryBody(dts);
-    size_t isEOFCRLF = (*dts.body).find("\r\n", boundary2EndPos);
+    size_t isEOFCRLF = dtsBody.find("\r\n", boundary2EndPos);
     std::string isEOF =
-        (*dts.body).substr(boundary2EndPos, isEOFCRLF - boundary2EndPos);
-    if (isEOF == _boundary + "--") {
+        dtsBody.substr(boundary2EndPos, isEOFCRLF - boundary2EndPos);
+    if (isEOF == boundary + "--") {
       _title.clear();
       _content.clear();
-      (*dts.body).clear();
+      dtsBody.clear();
       return;
     }
     _title.clear();
@@ -372,16 +406,22 @@ void PUT::generateMultipart(RequestDts& dts) {
  */
 void PUT::writeTextBody(RequestDts& dts) {
   std::string filename;
-  if (_pathFinder[_pathFinder.length() - 1] != '/')
+
+  if (_pathFinder[_pathFinder.length() - 1] != '/') {
     filename = _pathFinder + "/" + _uniqueID;
-  else
+  } else {
     filename = _pathFinder + _uniqueID;
+  }
+
   std::ofstream file(filename.c_str(), std::ios::out);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (!file.is_open()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
   file << _content;
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (file.fail()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
   file.close();
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
   _title.clear();
   _content.clear();
 }
@@ -401,16 +441,22 @@ void PUT::writeTextBody(RequestDts& dts) {
  */
 void PUT::writeBinaryBody(RequestDts& dts) {
   std::string filename;
-  if (_pathFinder[_pathFinder.length() - 1] != '/')
+
+  if (_pathFinder[_pathFinder.length() - 1] != '/') {
     filename = _pathFinder + "/" + _uniqueID;
-  else
+  } else {
     filename = _pathFinder + _uniqueID;
+  }
+
   std::ofstream file(filename.c_str(), std::ios::binary);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (!file.is_open()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
   file << _content;
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (file.fail()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
   file.close();
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
 }
 
 /**
@@ -438,18 +484,18 @@ void PUT::createSuccessResponse(IResponse& response) {
  * URL을 디코딩합니다.
  * URL을 디코딩한 결과를 반환합니다.
  *
- * @param encoded_string 디코딩할 URL
+ * @param encodedString 디코딩할 URL
  * @return std::string 디코딩된 URL
  *
  * @author
  * @date 2023.07.30
  */
-std::string PUT::decodeURL(std::string encoded_string) {
-  std::replace(encoded_string.begin(), encoded_string.end(), '+', ' ');
-  size_t len = encoded_string.length();
+std::string PUT::decodeURL(std::string encodedString) {
+  std::replace(encodedString.begin(), encodedString.end(), '+', ' ');
+  size_t len = encodedString.length();
   int buf_len = 0;
   for (size_t i = 0; i < len; ++i) {
-    if (encoded_string.at(i) == '%') {
+    if (encodedString.at(i) == '%') {
       i += 2;
     }
     ++buf_len;
@@ -459,21 +505,23 @@ std::string PUT::decodeURL(std::string encoded_string) {
   char c = 0;
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j) {
-    if (encoded_string.at(i) == '%') {
+    if (encodedString.at(i) == '%') {
       c = 0;
-      c += encoded_string.at(i + 1) >= 'A'
-               ? 16 * (encoded_string.at(i + 1) - 55)
-               : 16 * (encoded_string.at(i + 1) - 48);
-      c += encoded_string.at(i + 2) >= 'A' ? (encoded_string.at(i + 2) - 55)
-                                           : (encoded_string.at(i + 2) - 48);
+      c += encodedString.at(i + 1) >= 'A' ? 16 * (encodedString.at(i + 1) - 55)
+                                          : 16 * (encodedString.at(i + 1) - 48);
+      c += encodedString.at(i + 2) >= 'A' ? (encodedString.at(i + 2) - 55)
+                                          : (encodedString.at(i + 2) - 48);
       i += 2;
     } else {
-      c = encoded_string.at(i);
+      c = encodedString.at(i);
     }
     buf[j] = c;
   }
+
   std::string decoded_string;
-  for (int i = 0; i < buf_len; ++i) decoded_string.push_back(buf[i]);
+  for (int i = 0; i < buf_len; ++i) {
+    decoded_string.push_back(buf[i]);
+  }
 
   delete[] buf;
   return decoded_string;

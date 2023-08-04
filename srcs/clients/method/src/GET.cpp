@@ -46,10 +46,11 @@ void GET::doRequest(RequestDts& dts, IResponse& response) {
  * @param response
  */
 void GET::handlePath(RequestDts& dts, IResponse& response) {
-  if (getSpecificEndpoint(dts, response))
+  if (getSpecificEndpoint(dts, response)) {
     return;
-  else
+  } else {
     getPublicEndpoint(dts, response);
+  }
 }
 
 /**
@@ -71,24 +72,23 @@ void GET::handlePath(RequestDts& dts, IResponse& response) {
  * @param response
  */
 void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
-  std::string path = *dts.path;
+  const std::string& path = *dts.path;
   std::string pathIndex;
   std::string matchedIndex;
-  std::string autoindex;
+  const std::string& autoindex = (*dts.matchedLocation)->getAutoindex();
 
   if ((*dts.matchedLocation)->getIndex() != "") {
     matchedIndex = (*dts.matchedLocation)->getIndex();
     pathIndex = path + (path[path.size() - 1] == '/' ? matchedIndex
                                                      : "/" + matchedIndex);
   }
-  autoindex = (*dts.matchedLocation)->getAutoindex();
   if (checkFile(path)) {
     *dts.statusCode = E_200_OK;
-    prepareBody(path, response);
+    prepareBody(dts, path, response);
   } else if (checkDirectory(path)) {
     if (checkIndexFile(pathIndex)) {
       *dts.statusCode = E_200_OK;
-      prepareBody(pathIndex, response);
+      prepareBody(dts, pathIndex, response);
     } else if (checkAutoIndex(pathIndex, autoindex)) {
       *dts.statusCode = E_200_OK;
       prepareFileList(path, dts, response);
@@ -110,11 +110,12 @@ void GET::getPublicEndpoint(RequestDts& dts, IResponse& response) {
  * @return true
  * @return false
  */
-bool GET::checkFile(std::string& path) {
+bool GET::checkFile(const std::string& path) {
   struct stat fileStat;
 
-  if (stat(path.c_str(), &fileStat) == 0 && (S_ISREG(fileStat.st_mode)))
+  if (stat(path.c_str(), &fileStat) == 0 && (S_ISREG(fileStat.st_mode))) {
     return true;
+  }
   return false;
 }
 
@@ -128,11 +129,12 @@ bool GET::checkFile(std::string& path) {
  * @return true
  * @return false
  */
-bool GET::checkDirectory(std::string& path) {
+bool GET::checkDirectory(const std::string& path) {
   struct stat fileStat;
 
-  if (stat(path.c_str(), &fileStat) == 0 && (S_ISDIR(fileStat.st_mode)))
+  if (stat(path.c_str(), &fileStat) == 0 && (S_ISDIR(fileStat.st_mode))) {
     return true;
+  }
   return false;
 }
 
@@ -146,10 +148,12 @@ bool GET::checkDirectory(std::string& path) {
  * @return true
  * @return false
  */
-bool GET::checkIndexFile(std::string& pathIndex) {
+bool GET::checkIndexFile(const std::string& pathIndex) {
   struct stat fileStat;
-  if (stat(pathIndex.c_str(), &fileStat) == 0 && (S_ISREG(fileStat.st_mode)))
+
+  if (stat(pathIndex.c_str(), &fileStat) == 0 && (S_ISREG(fileStat.st_mode))) {
     return true;
+  }
   return false;
 }
 
@@ -187,16 +191,21 @@ std::vector<std::string> GET::getFileList(const std::string& path,
   DIR* dir;
   struct dirent* ent;
   std::vector<std::string> files;
+  std::string& originalPath = *dts.originalPath;
 
-  if ((*dts.originalPath)[(*dts.originalPath).size() - 1] != '/')
-    *dts.originalPath += '/';
+  if (originalPath[originalPath.size() - 1] != '/') {
+    originalPath += '/';
+  }
   if ((dir = opendir(path.c_str())) != NULL) {
     while ((ent = readdir(dir)) != NULL) {
-      if (ent->d_name[0] == '.' && ent->d_namlen == 1) continue;
-      if (ent->d_type == DT_DIR)
-        files.push_back((*dts.originalPath + ent->d_name + '/'));
-      else
-        files.push_back((*dts.originalPath + ent->d_name));
+      if (ent->d_name[0] == '.' && ent->d_namlen == 1) {
+        continue;
+      }
+      if (ent->d_type == DT_DIR) {
+        files.push_back(originalPath + ent->d_name + '/');
+      } else {
+        files.push_back(originalPath + ent->d_name);
+      }
     }
     closedir(dir);
   } else {
@@ -252,14 +261,15 @@ void GET::prepareFileList(const std::string& path, RequestDts& dts,
  * @param path
  * @param response
  */
-void GET::prepareBody(const std::string& path, IResponse& response) {
+void GET::prepareBody(RequestDts& dts, const std::string& path,
+                      IResponse& response) {
   getContentType(path, response);
   const std::string& value = response.getFieldValue("Content-Type");
   if (value == "text/html" || value == "text/css" ||
       value == "application/json") {
-    prepareTextBody(path, response);
+    prepareTextBody(dts, path, response);
   } else {
-    prepareBinaryBody(path, response);
+    prepareBinaryBody(dts, path, response);
   }
 }
 
@@ -274,10 +284,17 @@ void GET::prepareBody(const std::string& path, IResponse& response) {
  * @param path
  * @param response
  */
-void GET::prepareTextBody(const std::string& path, IResponse& response) {
+void GET::prepareTextBody(RequestDts& dts, const std::string& path,
+                          IResponse& response) {
   std::ifstream file(path.c_str(), std::ios::in);
+  if (!file.is_open()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   std::string buff;
   while (std::getline(file, buff)) {
+    if (file.fail()) {
+      throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+    }
     response.addBody(buff);
     response.addBody("\r\n");
   }
@@ -292,10 +309,17 @@ void GET::prepareTextBody(const std::string& path, IResponse& response) {
  * @param path
  * @param response
  */
-void GET::prepareBinaryBody(const std::string& path, IResponse& response) {
+void GET::prepareBinaryBody(RequestDts& dts, const std::string& path,
+                            IResponse& response) {
   std::ifstream file(path.c_str(), std::ios::binary);
+  if (!file.is_open()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   std::stringstream buffer;
   buffer << file.rdbuf();
+  if (file.fail()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   response.addBody(buffer.str());
   file.close();
 }
@@ -394,7 +418,9 @@ void GET::getContentType(const std::string& path, IResponse& response) {
  * @return false : false를 리턴하면 해당 트랜잭션을 퍼블릭으로 넘어가서 진행.
  */
 bool GET::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
-  if (*dts.is_session == false) return false;
+  if (*dts.is_session == false) {
+    return false;
+  }
   const std::string& originalPath = *dts.originalPath;
   try {
     SessionData& sessionData =

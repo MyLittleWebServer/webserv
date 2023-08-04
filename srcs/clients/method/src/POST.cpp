@@ -6,7 +6,6 @@
 #include <cstring>
 #include <ctime>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #include "Utils.hpp"
@@ -29,8 +28,32 @@ POST::~POST(void) {}
  * @date 2023.07.29
  */
 void POST::doRequest(RequestDts& dts, IResponse& response) {
-  if (*dts.body == "") throw(*dts.statusCode = E_204_NO_CONTENT);
+  if (*dts.body == "") {
+    throw(*dts.statusCode = E_204_NO_CONTENT);
+  }
   handlePath(dts, response);
+}
+
+/**
+ * @brief 특정 URL의 엔드포인트와 세션을 체크하고 POST하는 함수
+ *
+ * @details
+ * 엔드포인트와 세션의 체크를 하고 해당하는 엔드포인트가 없거나 세션이 없으면
+ * 리소스를 생성합니다. 리소스를 생성하면 201 Created를 던집니다.
+ *
+ * @param RequestDts
+ * @param IResponse
+ *
+ * @author
+ * @date 2023.07.29
+ */
+void POST::handlePath(RequestDts& dts, IResponse& response) {
+  if (getSpecificEndpoint(dts, response)) {
+    return;
+  } else {
+    generateResource(dts);
+    response.setStatusCode(E_201_CREATED);
+  }
 }
 
 /**
@@ -47,30 +70,27 @@ void POST::doRequest(RequestDts& dts, IResponse& response) {
  * @date 2023.07.29
  */
 void POST::generateResource(RequestDts& dts) {
-  std::string parsedContent;
-  _contentType = (*dts.headerFields)["content-type"].c_str();
-  parsedContent = _contentType;
-  if (_contentType.find(';') != std::string::npos) {
-    parsedContent = _contentType.substr(0, _contentType.find(';'));
+  std::string contentType = (*dts.headerFields)["content-type"];
+
+  if (contentType.find(';') != std::string::npos) {
+    contentType = contentType.substr(0, contentType.find(';'));
   }
-  if (parsedContent == "application/x-www-form-urlencoded") {
+  if (contentType == "application/x-www-form-urlencoded") {
     generateUrlEncoded(dts);
-  } else if (parsedContent == "multipart/form-data") {
+  } else if (contentType == "multipart/form-data") {
     generateMultipart(dts);
   } else {
-    std::string mimeType = "bin";
     MimeTypesConfig& mime = dynamic_cast<MimeTypesConfig&>(
         Config::getInstance().getMimeTypesConfig());
+    std::string mimeType;
     try {
-      std::string mimeType = mime.getVariable(parsedContent);
-      _content = (*dts.body);
-      _title = makeRandomFileName(dts);
-      writeTextBody(dts, mimeType);
+      mimeType = mime.getVariable(contentType);
     } catch (ExceptionThrower::InvalidConfigException& e) {
-      _content = (*dts.body);
-      _title = makeRandomFileName(dts);
-      writeTextBody(dts, mimeType);
+      mimeType = "bin";
     }
+    _content = (*dts.body);
+    _title = makeRandomFileName(dts);
+    writeTextBody(dts, mimeType);
   }
 }
 
@@ -92,8 +112,9 @@ void POST::generateUrlEncoded(RequestDts& dts) {
   std::string decodedBody = decodeURL(*dts.body);
 
   if (decodedBody.find("title") == std::string::npos ||
-      decodedBody.find("content") == std::string::npos)
+      decodedBody.find("content") == std::string::npos) {
     throw(*dts.statusCode = E_400_BAD_REQUEST);
+  }
 
   size_t andPos = decodedBody.find('&');
   size_t equalPos1 = decodedBody.find('=');
@@ -125,15 +146,16 @@ void POST::generateUrlEncoded(RequestDts& dts) {
  * @date 2023.07.29
  */
 void POST::generateMultipart(RequestDts& dts) {
-  std::string binBody = (*dts.body).data();
+  std::string& dtsBody = *dts.body;
+  size_t boundaryEndPos = dtsBody.find("\r\n");
 
-  size_t boundaryEndPos = binBody.find("\r\n");
-  if (boundaryEndPos == std::string::npos)
+  if (boundaryEndPos == std::string::npos) {
     throw((*dts.statusCode) = E_400_BAD_REQUEST);
-  _boundary = binBody.substr(0, boundaryEndPos);
+  }
+  std::string boundary = dtsBody.substr(0, boundaryEndPos);
 
   while (true) {
-    std::string binBody = (*dts.body).data();
+    std::string binBody = dtsBody.data();
     size_t filePos = binBody.find("filename=\"");
     size_t fileEndPos = binBody.find('\"', filePos + 11);
     if (filePos == std::string::npos || fileEndPos == std::string::npos) {
@@ -146,23 +168,24 @@ void POST::generateMultipart(RequestDts& dts) {
     if (_title == "") {
       _title = makeRandomFileName(dts);
     }
-    size_t binStart = (*dts.body).find("\r\n\r\n");
-    size_t boundary2EndPos = (*dts.body).find(_boundary, fileEndPos);
-    if (binStart == std::string::npos || boundary2EndPos == std::string::npos)
+    size_t binStart = dtsBody.find("\r\n\r\n");
+    size_t boundary2EndPos = dtsBody.find(boundary, fileEndPos);
+    if (binStart == std::string::npos || boundary2EndPos == std::string::npos) {
       throw((*dts.statusCode) = E_400_BAD_REQUEST);
-    _content.insert(_content.end(), (*dts.body).begin() + binStart + 4,
-                    (*dts.body).begin() + boundary2EndPos);
+    }
+    _content.insert(_content.end(), dtsBody.begin() + binStart + 4,
+                    dtsBody.begin() + boundary2EndPos);
     writeBinaryBody(dts);
-    size_t isEOFCRLF = (*dts.body).find("\r\n", boundary2EndPos);
+    size_t isEOFCRLF = dtsBody.find("\r\n", boundary2EndPos);
     std::string isEOF =
-        (*dts.body).substr(boundary2EndPos, isEOFCRLF - boundary2EndPos);
-    if (isEOF == _boundary + "--") {
+        dtsBody.substr(boundary2EndPos, isEOFCRLF - boundary2EndPos);
+    if (isEOF == boundary + "--") {
       _title.clear();
       _content.clear();
-      (*dts.body).clear();
+      dtsBody.clear();
       return;
     }
-    (*dts.body) = (*dts.body).substr(boundary2EndPos);
+    dtsBody = dtsBody.substr(boundary2EndPos);
     _title.clear();
     _content.clear();
   }
@@ -182,24 +205,36 @@ void POST::generateMultipart(RequestDts& dts) {
  * @author
  * @date 2023.07.29
  */
-void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
+void POST::writeTextBody(RequestDts& dts, const std::string& mimeType) {
   std::string filename;
-  if (stat(dts.path->c_str(), &fileinfo) != 0)
-    throw((*dts.statusCode) = E_403_FORBIDDEN);
-  if ((*dts.path)[dts.path->length() - 1] != '/')
-    filename = *dts.path + "/" + _title + "." + mimeType;
-  else
-    filename = *dts.path + _title + "." + mimeType;
+
+  const std::string& dtsPath = *dts.path;
+  struct stat fileInfo;
+  if (stat(dtsPath.c_str(), &fileInfo) != 0) {
+    throw(*dts.statusCode = E_403_FORBIDDEN);
+  }
+  if (dtsPath[dtsPath.length() - 1] != '/') {
+    filename = dtsPath + "/" + _title + "." + mimeType;
+  } else {
+    filename = dtsPath + _title + "." + mimeType;
+  }
+
   std::ofstream file(filename, std::ios::out);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (!file.is_open()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   file << _content;
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  if (file.fail()) {
+    throw(*dts.statusCode = E_500_INTERNAL_SERVER_ERROR);
+  }
   file.close();
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
-    _location = *dts.originalPath + "/" + _title + "." + mimeType;
-  else
-    _location = *dts.originalPath + _title + "." + mimeType;
+
+  const std::string& originalPath = *dts.originalPath;
+  if (originalPath[originalPath.length() - 1] != '/') {
+    _location = originalPath + "/" + _title + "." + mimeType;
+  } else {
+    _location = originalPath + _title + "." + mimeType;
+  }
   _title.clear();
   _content.clear();
 }
@@ -218,24 +253,35 @@ void POST::writeTextBody(RequestDts& dts, std::string mimeType) {
  * @date 2023.07.29
  */
 void POST::writeBinaryBody(RequestDts& dts) {
-  std::string filename;
-  if (stat(dts.path->c_str(), &fileinfo) != 0)
+  const std::string& dtsPath = *dts.path;
+  struct stat fileInfo;
+  if (stat(dtsPath.c_str(), &fileInfo) != 0) {
     throw((*dts.statusCode) = E_403_FORBIDDEN);
-  if ((*dts.path)[dts.path->length() - 1] != '/')
-    filename = *dts.path + "/" + _title;
-  else
-    filename = *dts.path + _title;
-  std::ofstream file(filename.c_str(), std::ios::binary);
-  if (!file.is_open()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  file << _content;
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
-  file.close();
-  if (file.fail()) throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
 
-  if ((*dts.originalPath)[dts.originalPath->length() - 1] != '/')
-    _location = *dts.originalPath + "/" + _title;
-  else
-    _location = *dts.originalPath + _title;
+  std::string filename;
+  if (dtsPath[dtsPath.length() - 1] != '/') {
+    filename = dtsPath + "/" + _title;
+  } else {
+    filename = dtsPath + _title;
+  }
+
+  std::ofstream file(filename.c_str(), std::ios::binary);
+  if (!file.is_open()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
+  file << _content;
+  if (file.fail()) {
+    throw((*dts.statusCode) = E_500_INTERNAL_SERVER_ERROR);
+  }
+  file.close();
+
+  const std::string& originalPath = *dts.originalPath;
+  if (originalPath[originalPath.length() - 1] != '/') {
+    _location = originalPath + "/" + _title;
+  } else {
+    _location = originalPath + _title;
+  }
 }
 
 /**
@@ -262,18 +308,18 @@ void POST::createSuccessResponse(IResponse& response) {
  * @details
  * 16진수로 인코딩된 문자열을 디코딩합니다.
  *
- * @param encoded_string
+ * @param encodedString
  * @return std::string
  *
  * @author
  * @date 2023.07.29
  */
-std::string POST::decodeURL(std::string encoded_string) {
-  std::replace(encoded_string.begin(), encoded_string.end(), '+', ' ');
-  size_t len = encoded_string.length();
+std::string POST::decodeURL(std::string encodedString) {
+  std::replace(encodedString.begin(), encodedString.end(), '+', ' ');
+  size_t len = encodedString.length();
   int buf_len = 0;
   for (size_t i = 0; i < len; ++i) {
-    if (encoded_string.at(i) == '%') {
+    if (encodedString.at(i) == '%') {
       i += 2;
     }
     ++buf_len;
@@ -283,21 +329,22 @@ std::string POST::decodeURL(std::string encoded_string) {
   char c = 0;
   size_t j = 0;
   for (size_t i = 0; i < len; ++i, ++j) {
-    if (encoded_string.at(i) == '%') {
+    if (encodedString.at(i) == '%') {
       c = 0;
-      c += encoded_string.at(i + 1) >= 'A'
-               ? 16 * (encoded_string.at(i + 1) - 55)
-               : 16 * (encoded_string.at(i + 1) - 48);
-      c += encoded_string.at(i + 2) >= 'A' ? (encoded_string.at(i + 2) - 55)
-                                           : (encoded_string.at(i + 2) - 48);
+      c += encodedString.at(i + 1) >= 'A' ? 16 * (encodedString.at(i + 1) - 55)
+                                          : 16 * (encodedString.at(i + 1) - 48);
+      c += encodedString.at(i + 2) >= 'A' ? (encodedString.at(i + 2) - 55)
+                                          : (encodedString.at(i + 2) - 48);
       i += 2;
     } else {
-      c = encoded_string.at(i);
+      c = encodedString.at(i);
     }
     buf[j] = c;
   }
   std::string decoded_string;
-  for (int i = 0; i < buf_len; ++i) decoded_string.push_back(buf[i]);
+  for (int i = 0; i < buf_len; ++i) {
+    decoded_string.push_back(buf[i]);
+  }
 
   delete[] buf;
   return decoded_string;
@@ -313,28 +360,6 @@ std::string POST::makeRandomFileName(RequestDts& dts) {
 }
 
 /**
- * @brief 특정 URL의 엔드포인트와 세션을 체크하고 POST하는 함수
- *
- * @details
- * 엔드포인트와 세션의 체크를 하고 해당하는 엔드포인트가 없거나 세션이 없으면
- * 리소스를 생성합니다. 리소스를 생성하면 201 Created를 던집니다.
- *
- * @param RequestDts
- * @param IResponse
- *
- * @author
- * @date 2023.07.29
- */
-void POST::handlePath(RequestDts& dts, IResponse& response) {
-  if (getSpecificEndpoint(dts, response))
-    return;
-  else {
-    generateResource(dts);
-    response.setStatusCode(E_201_CREATED);
-  }
-}
-
-/**
  * @brief 세션체크를 하고 특정 URL의 엔드포인트를 실행합니다.
  *
  * @param RequestDts
@@ -347,7 +372,9 @@ void POST::handlePath(RequestDts& dts, IResponse& response) {
  * @date 2023.07.29
  */
 bool POST::getSpecificEndpoint(RequestDts& dts, IResponse& response) {
-  if (*dts.is_session == false) return false;
+  if (*dts.is_session == false) {
+    return false;
+  }
   Session& session = Session::getInstance();
   const std::string& originalPath = *dts.originalPath;
   try {
